@@ -73,6 +73,7 @@ builder.Services.AddScoped<IClaseServicio, ClaseServicio>();
 builder.Services.AddScoped<IConceptoServicio, ConceptoServicio>();
 builder.Services.AddScoped<IPagoServicio, PagoServicio>();
 builder.Services.AddScoped<IUsuarioServicio, UsuarioServicio>();
+builder.Services.AddScoped<IReporteServicio, ReporteServicio>();
 builder.Services.AddTransient<IHasherServicio, Sha512HasherServicio>();
 builder.Services.AddTransient<ITokenIdentidadServicio, JwtTokenServicio>();
 builder.Services.AddScoped<IUsuariosSesionServicio, UsuarioSesionServicioSimple>();

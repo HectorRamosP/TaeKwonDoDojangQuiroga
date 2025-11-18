@@ -6,6 +6,7 @@ import Socios from "./pages/Socios/Socios";
 import Membresias from "./pages/Membresias/Membresias";
 import Pagos from "./pages/Pagos/Pagos";
 import Clases from "./pages/Clases/Clases";
+import Reportes from "./pages/Reportes/Reportes";
 import RutaPrivada from "./Components/RutaPrivada";
 import ErrorBoundary from "./Components/ErrorBoundary";
 
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="membresias" element={<Membresias />} />
           <Route path="pagos" element={<Pagos />} />
           <Route path="clases" element={<Clases />} />
+          <Route path="reportes" element={<Reportes />} />
         </Route>
       </Routes>
     </ErrorBoundary>
