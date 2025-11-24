@@ -7,11 +7,20 @@ export default function RutaPrivada({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Verificación básica del formato del token JWT
+  // Verificación del formato y expiración del token JWT
   try {
     const parts = token.split('.');
 
     if (parts.length !== 3) {
+      localStorage.removeItem("token");
+      return <Navigate to="/login" replace />;
+    }
+
+    // Verificar si el token ha expirado
+    const payload = JSON.parse(atob(parts[1]));
+    const now = Math.floor(Date.now() / 1000);
+
+    if (payload.exp && payload.exp < now) {
       localStorage.removeItem("token");
       return <Navigate to="/login" replace />;
     }
