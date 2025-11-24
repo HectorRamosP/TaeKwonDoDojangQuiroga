@@ -37,3 +37,15 @@ export const contarFaltas = async (alumnoId, fechaInicio, fechaFin) => {
   const response = await api.get(`/asistencias/faltas?${params.toString()}`);
   return response.data;
 };
+
+export const eliminarAsistenciasPorClaseYFecha = async (claseId, fecha) => {
+  // Asegurar que la fecha está en formato ISO completo
+  const fechaISO = fecha.includes('T') ? fecha : `${fecha}T00:00:00`;
+
+  const url = `/asistencias/clase/${claseId}/fecha/${encodeURIComponent(fechaISO)}`;
+  console.log('DELETE URL:', url);
+  console.log('Params:', { claseId, fecha: fechaISO });
+
+  const response = await api.delete(url);
+  return response.data;
+};

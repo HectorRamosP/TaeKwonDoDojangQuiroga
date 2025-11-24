@@ -24,7 +24,7 @@ import {
   AccordionDetails,
   Typography,
 } from "@mui/material";
-import { Search, Clear, PersonAdd, FilterList, ExpandMore } from "@mui/icons-material";
+import { Search, Clear, PersonAdd, FilterList, ExpandMore, ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import api from "../../services/api";
@@ -56,6 +56,10 @@ export default function Socios() {
   const [cintas, setCintas] = useState([]);
   const [clases, setClases] = useState([]);
   const [conceptos, setConceptos] = useState([]);
+
+  // Estados para ordenamiento
+  const [ordenarPor, setOrdenarPor] = useState(null); // 'nombre', 'edad', 'cinta'
+  const [ordenAscendente, setOrdenAscendente] = useState(true);
 
   const itemsPorPagina = 10;
 
@@ -183,13 +187,52 @@ export default function Socios() {
     filtroEdadMax,
   ]);
 
+  // Función para manejar el ordenamiento
+  const manejarOrdenamiento = (campo) => {
+    if (ordenarPor === campo) {
+      // Si ya está ordenando por este campo, invertir el orden
+      setOrdenAscendente(!ordenAscendente);
+    } else {
+      // Si es un nuevo campo, establecerlo como ascendente
+      setOrdenarPor(campo);
+      setOrdenAscendente(true);
+    }
+  };
+
+  // Aplicar ordenamiento a los datos filtrados
+  const datosOrdenados = [...filtrados].sort((a, b) => {
+    if (!ordenarPor) return 0;
+
+    let comparacion = 0;
+
+    switch (ordenarPor) {
+      case 'nombre':
+        const nombreA = a.nombreCompleto || `${a.nombre} ${a.apellidoPaterno} ${a.apellidoMaterno}`;
+        const nombreB = b.nombreCompleto || `${b.nombre} ${b.apellidoPaterno} ${b.apellidoMaterno}`;
+        comparacion = nombreA.localeCompare(nombreB);
+        break;
+
+      case 'edad':
+        comparacion = a.edad - b.edad;
+        break;
+
+      default:
+        comparacion = 0;
+    }
+
+    return ordenAscendente ? comparacion : -comparacion;
+  });
+
   const indiceInicio = (pagina - 1) * itemsPorPagina;
   const indiceFin = indiceInicio + itemsPorPagina;
-  const datosPaginados = filtrados.slice(indiceInicio, indiceFin);
+  const datosPaginados = datosOrdenados.slice(indiceInicio, indiceFin);
 
   const cambiarEstado = async (slug, nuevoEstado) => {
     try {
-      await api.patch(`/alumnos/${slug}/estado`, { activo: nuevoEstado });
+      await api.patch(`/alumnos/${slug}/estado`, {
+        slug: slug,
+        activo: nuevoEstado
+      });
 
       Swal.fire({
         icon: "success",
@@ -209,6 +252,50 @@ export default function Socios() {
     }
   };
 
+  const eliminarPermanente = (socio) => {
+    Swal.fire({
+      title: "¿Eliminar alumno permanentemente?",
+      html: `
+        <p>¿Estás seguro de eliminar <strong>${socio.nombreCompleto}</strong> de forma permanente?</p>
+        <p style="color: #d32f2f; font-weight: bold;">Esta acción NO se puede deshacer.</p>
+      `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d32f2f",
+      cancelButtonColor: "#666",
+      confirmButtonText: "Sí, eliminar permanentemente",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/alumnos/${socio.slug}/permanente`);
+
+          Swal.fire({
+            icon: "success",
+            title: "Alumno eliminado",
+            text: "El alumno ha sido eliminado permanentemente del sistema",
+            confirmButtonColor: "#d32f2f",
+          });
+
+          cargarSocios();
+        } catch (error) {
+          let mensajeError = "No se pudo eliminar el alumno";
+
+          if (error.response?.status === 400) {
+            mensajeError = error.response.data?.mensaje || "No se puede eliminar el alumno";
+          }
+
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: mensajeError,
+            confirmButtonColor: "#d32f2f",
+          });
+        }
+      }
+    });
+  };
+
   const abrirModalEditar = (socio) => {
     setSocioEditar(socio);
     setModalEditarAbierto(true);
@@ -225,6 +312,32 @@ export default function Socios() {
   };
 
   const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
+
+  // Componente para el botón de ordenamiento
+  const BotonOrdenamiento = ({ campo, children }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      {children}
+      <IconButton
+        size="small"
+        onClick={() => manejarOrdenamiento(campo)}
+        sx={{
+          color: ordenarPor === campo ? '#DC143C' : 'rgba(255, 255, 255, 0.7)',
+          padding: '4px',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            color: '#DC143C',
+            backgroundColor: 'rgba(220, 20, 60, 0.1)',
+          }
+        }}
+      >
+        {ordenarPor === campo ? (
+          ordenAscendente ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />
+        ) : (
+          <ArrowUpward fontSize="small" sx={{ opacity: 0.5 }} />
+        )}
+      </IconButton>
+    </Box>
+  );
 
   return (
     <div className="socios-container">
@@ -443,10 +556,14 @@ export default function Socios() {
                   }
                 }}>
                   <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Nombre Completo
+                    <BotonOrdenamiento campo="nombre">
+                      Nombre Completo
+                    </BotonOrdenamiento>
                   </TableCell>
                   <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Edad
+                    <BotonOrdenamiento campo="edad">
+                      Edad
+                    </BotonOrdenamiento>
                   </TableCell>
                   <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
                     Cinta
@@ -531,7 +648,7 @@ export default function Socios() {
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                        <Box sx={{ display: "flex", gap: 1, justifyContent: "center", flexWrap: "wrap" }}>
                           <Button
                             variant="outlined"
                             color="primary"
@@ -550,6 +667,22 @@ export default function Socios() {
                           >
                             {alumno.activo ? "Desactivar" : "Activar"}
                           </Button>
+                          {!alumno.activo && (
+                            <Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              onClick={() => eliminarPermanente(alumno)}
+                              sx={{
+                                background: "linear-gradient(135deg, #8B0000 0%, #5A0000 100%)",
+                                "&:hover": {
+                                  background: "linear-gradient(135deg, #B22222 0%, #8B0000 100%)",
+                                },
+                              }}
+                            >
+                              Eliminar
+                            </Button>
+                          )}
                         </Box>
                       </TableCell>
                     </TableRow>

@@ -8,7 +8,6 @@ public class Concepto : ISlug
     public string Nombre { get; set; } = string.Empty;
     public string TipoConcepto { get; set; } = string.Empty; // Mensualidad, Examen, Inscripcion, Uniforme, Otro
     public decimal Precio { get; set; }
-    public int DuracionDias { get; set; } // Para mensualidades: 7, 30, 90, etc. Para otros: 0
     public string? Descripcion { get; set; }
     public bool Activo { get; set; } = true;
     public string Slug { get; set; } = string.Empty;

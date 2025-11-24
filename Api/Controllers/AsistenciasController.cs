@@ -154,6 +154,39 @@ public class AsistenciasController : ControllerBase
         }
     }
 
+    [HttpDelete("clase/{claseId}/fecha/{fecha}")]
+    public async Task<ActionResult<ApiResponse<string>>> EliminarAsistenciasPorClaseYFecha(
+        int claseId,
+        DateTime fecha)
+    {
+        try
+        {
+            await _asistenciaServicio.EliminarAsistenciasPorClaseYFecha(claseId, fecha);
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = "Registro de asistencia eliminado exitosamente"
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new ApiResponse<string>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new ApiResponse<string>
+            {
+                Success = false,
+                Message = "Error al eliminar las asistencias",
+                Errors = new List<string> { ex.Message }
+            });
+        }
+    }
+
     [HttpGet("faltas")]
     public async Task<ActionResult<ApiResponse<int>>> ContarFaltas(
         [FromQuery] int alumnoId,

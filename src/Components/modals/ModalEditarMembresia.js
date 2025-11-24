@@ -34,33 +34,12 @@ const esquema = yup.object().shape({
         .required("El precio es obligatorio")
         .min(0, "El precio debe ser mayor o igual a 0")
         .max(999999, "El precio es demasiado alto"),
-    duracionDias: yup
-        .number()
-        .nullable()
-        .transform((value, originalValue) => originalValue === "" ? null : value)
-        .min(0, "La duración debe ser mayor o igual a 0")
-        .when('tipoConcepto', {
-            is: 'Mensualidad',
-            then: (schema) => schema.required("La duración es obligatoria para mensualidades").positive("La duración debe ser mayor a 0"),
-            otherwise: (schema) => schema.notRequired()
-        }),
     descripcion: yup
         .string()
         .max(500, "La descripción no puede exceder 500 caracteres")
         .nullable(),
     activo: yup.boolean(),
 });
-
-const duracionesPreestablecidas = [
-    { valor: 1, etiqueta: "1 día" },
-    { valor: 7, etiqueta: "1 semana" },
-    { valor: 15, etiqueta: "15 días" },
-    { valor: 30, etiqueta: "1 mes" },
-    { valor: 60, etiqueta: "2 meses" },
-    { valor: 90, etiqueta: "3 meses" },
-    { valor: 180, etiqueta: "6 meses" },
-    { valor: 365, etiqueta: "1 año" },
-];
 
 const tiposConcepto = [
     { valor: "Mensualidad", etiqueta: "Mensualidad" },
@@ -78,13 +57,10 @@ export default function ModalEditarMembresia({ abierto, cerrar, recargar, membre
         handleSubmit,
         reset,
         control,
-        watch,
         formState: { errors },
     } = useForm({
         resolver: yupResolver(esquema),
     });
-
-    const tipoConceptoSeleccionado = watch("tipoConcepto");
 
     useEffect(() => {
         if (membresia) {
@@ -92,7 +68,6 @@ export default function ModalEditarMembresia({ abierto, cerrar, recargar, membre
                 nombre: membresia.nombre,
                 tipoConcepto: membresia.tipoConcepto || "",
                 precio: membresia.precio,
-                duracionDias: membresia.duracionDias || 0,
                 descripcion: membresia.descripcion || "",
                 activo: membresia.activo,
             });
@@ -110,13 +85,12 @@ export default function ModalEditarMembresia({ abierto, cerrar, recargar, membre
         setGuardando(true);
 
         try {
-            // Incluir el slug en el body de la petición y ajustar duracionDias según el tipo
+            // Incluir el slug en el body de la petición
             const payload = {
                 slug: membresia.slug,
                 nombre: data.nombre,
                 tipoConcepto: data.tipoConcepto,
                 precio: data.precio,
-                duracionDias: data.tipoConcepto === "Mensualidad" ? data.duracionDias : 0,
                 descripcion: data.descripcion || null,
                 activo: data.activo,
             };
@@ -249,38 +223,6 @@ export default function ModalEditarMembresia({ abierto, cerrar, recargar, membre
                             ),
                         }}
                     />
-
-                    {tipoConceptoSeleccionado === "Mensualidad" && (
-                        <FormControl
-                            fullWidth
-                            margin="normal"
-                            error={!!errors.duracionDias}
-                            disabled={guardando}
-                        >
-                            <InputLabel>Duración</InputLabel>
-                            <Controller
-                                name="duracionDias"
-                                control={control}
-                                render={({ field }) => (
-                                    <Select {...field} label="Duración">
-                                        <MenuItem value="">
-                                            <em>Selecciona una duración</em>
-                                        </MenuItem>
-                                        {duracionesPreestablecidas.map((duracion) => (
-                                            <MenuItem key={duracion.valor} value={duracion.valor}>
-                                                {duracion.etiqueta}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                )}
-                            />
-                            {errors.duracionDias && (
-                                <FormHelperText>
-                                    {errors.duracionDias?.message}
-                                </FormHelperText>
-                            )}
-                        </FormControl>
-                    )}
 
                     <TextField
                         label="Descripción (opcional)"

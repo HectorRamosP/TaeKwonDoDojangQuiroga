@@ -131,4 +131,21 @@ public class AsistenciaServicio : IAsistenciaServicio
     {
         return await _asistenciaRepo.ContarFaltasPorAlumnoYRango(alumnoId, fechaInicio, fechaFin);
     }
+
+    public async Task EliminarAsistenciasPorClaseYFecha(int claseId, DateTime fecha)
+    {
+        // Verificar que la clase existe
+        var clase = await _claseRepo.ObtenerPorIdAsync(claseId);
+        if (clase == null)
+            throw new ArgumentException("La clase no existe");
+
+        // Obtener todas las asistencias de esa clase y fecha
+        var asistencias = await _asistenciaRepo.ObtenerPorClaseYFecha(claseId, fecha);
+
+        // Eliminar todas las asistencias
+        foreach (var asistencia in asistencias)
+        {
+            await _asistenciaRepo.EliminarAsync(asistencia);
+        }
+    }
 }

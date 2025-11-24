@@ -10,6 +10,8 @@ public class Alumno : ISlug
     public string Nombre { get; set; } = string.Empty;
     public string ApellidoPaterno { get; set; } = string.Empty;
     public string ApellidoMaterno { get; set; } = string.Empty;
+    public string Curp { get; set; } = string.Empty;
+    public string Enfermedades { get; set; } = "No";
     public DateTime FechaNacimiento { get; set; }
     public string? Direccion { get; set; }
     public string? Sexo { get; set; } // Masculino, Femenino

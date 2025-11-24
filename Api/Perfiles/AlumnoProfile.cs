@@ -13,6 +13,7 @@ public class AlumnoProfile : Profile
             .ForMember(dest => dest.NombreCompleto, opt => opt.MapFrom(src => $"{src.Nombre} {src.ApellidoPaterno} {src.ApellidoMaterno}"))
             .ForMember(dest => dest.CintaActualNombre, opt => opt.MapFrom(src => src.CintaActual != null ? src.CintaActual.Nombre : null))
             .ForMember(dest => dest.CintaActualColor, opt => opt.MapFrom(src => src.CintaActual != null ? src.CintaActual.ColorHex : null))
+            .ForMember(dest => dest.CintaActualOrden, opt => opt.MapFrom(src => src.CintaActual != null ? (int?)src.CintaActual.Orden : null))
             .ForMember(dest => dest.ClaseNombre, opt => opt.MapFrom(src => src.Clase != null ? src.Clase.Nombre : null))
             .ForMember(dest => dest.ClaseHorario, opt => opt.MapFrom(src => src.Clase != null ? $"{src.Clase.HoraInicio:hh\\:mm} - {src.Clase.HoraFin:hh\\:mm}" : null))
             .ForMember(dest => dest.ConceptoMensualidadNombre, opt => opt.MapFrom(src => src.ConceptoMensualidad != null ? src.ConceptoMensualidad.Nombre : null))

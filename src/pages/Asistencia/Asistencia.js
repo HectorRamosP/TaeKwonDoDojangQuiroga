@@ -16,25 +16,19 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
-import { Search, Clear, Add, Visibility } from "@mui/icons-material";
+import { Search, Clear, CheckCircle } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import Swal from "sweetalert2";
-import { obtenerClases, eliminarClase } from "../../services/clasesService";
-import ModalCrearClase from "../../Components/modals/ModalCrearClase";
-import ModalEditarClase from "../../Components/modals/ModalEditarClase";
-import ModalVerAlumnosClase from "../../Components/modals/ModalVerAlumnosClase";
-import "./Clases.css";
+import { obtenerClases } from "../../services/clasesService";
+import ModalPasarLista from "../../Components/modals/ModalPasarLista";
+import "./Asistencia.css";
 
-export default function Clases() {
+export default function Asistencia() {
   const [clases, setClases] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [pagina, setPagina] = useState(1);
   const [filtrados, setFiltrados] = useState([]);
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
-  const [modalVerAlumnosAbierto, setModalVerAlumnosAbierto] = useState(false);
-  const [claseEditar, setClaseEditar] = useState(null);
-  const [claseVerAlumnos, setClaseVerAlumnos] = useState(null);
+  const [modalPasarListaAbierto, setModalPasarListaAbierto] = useState(false);
+  const [clasePasarLista, setClasePasarLista] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
@@ -87,74 +81,17 @@ export default function Clases() {
   const datosPaginados = filtrados.slice(indiceInicio, indiceFin);
   const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
 
-  const abrirModalEditar = (clase) => {
-    setClaseEditar(clase);
-    setModalEditarAbierto(true);
-  };
-
-  const abrirModalVerAlumnos = (clase) => {
-    setClaseVerAlumnos(clase);
-    setModalVerAlumnosAbierto(true);
+  const abrirModalPasarLista = (clase) => {
+    setClasePasarLista(clase);
+    setModalPasarListaAbierto(true);
   };
 
   const limpiarFiltro = () => {
     setFiltro("");
   };
 
-  const confirmarEliminar = (clase) => {
-    Swal.fire({
-      title: "¿Eliminar clase?",
-      text: `¿Estás seguro de eliminar la clase "${clase.nombre}"? Esta acción no se puede deshacer.`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d32f2f",
-      cancelButtonColor: "#666",
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await eliminarClase(clase.slug);
-          Swal.fire({
-            icon: "success",
-            title: "Clase eliminada",
-            text: "La clase se ha eliminado exitosamente",
-            confirmButtonColor: "#d32f2f",
-          });
-          cargarClases();
-        } catch (error) {
-          let mensajeError = "No se pudo eliminar la clase";
-          let detalles = "";
-
-          if (error.response) {
-            if (error.response.status === 404) {
-              mensajeError = "Clase no encontrada";
-              detalles = "La clase que intentas eliminar no existe";
-            } else if (error.response.status === 400) {
-              mensajeError = "No se puede eliminar";
-              detalles = error.response.data?.message || "La clase tiene alumnos asignados";
-            } else {
-              mensajeError = "Error del servidor";
-              detalles = "Intenta nuevamente más tarde";
-            }
-          } else if (error.request) {
-            mensajeError = "Sin conexión";
-            detalles = "Verifica tu conexión a internet";
-          }
-
-          Swal.fire({
-            icon: "error",
-            title: mensajeError,
-            text: detalles,
-            confirmButtonColor: "#d32f2f",
-          });
-        }
-      }
-    });
-  };
-
   return (
-    <div className="clases-container">
+    <div className="asistencia-container">
       <Box
         sx={{
           display: "flex",
@@ -163,27 +100,7 @@ export default function Clases() {
           mb: 3,
         }}
       >
-        <h1 className="page-title">Gestión de Clases</h1>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => setModalAbierto(true)}
-          sx={{
-            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
-            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
-            fontWeight: 700,
-            padding: "10px 24px",
-            borderRadius: "12px",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
-              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
-              transform: "translateY(-2px)",
-            },
-          }}
-        >
-          Agregar Clase
-        </Button>
+        <h1 className="page-title">Asistencia de Clases</h1>
       </Box>
 
       <Box sx={{ mb: 2 }}>
@@ -318,33 +235,26 @@ export default function Clases() {
                         />
                       </TableCell>
                       <TableCell align="center">
-                        <Box sx={{ display: "flex", gap: 1, justifyContent: "center", flexWrap: "wrap" }}>
-                          <Button
-                            variant="outlined"
-                            color="success"
-                            size="small"
-                            startIcon={<Visibility />}
-                            onClick={() => abrirModalVerAlumnos(clase)}
-                          >
-                            Ver Alumnos
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            size="small"
-                            onClick={() => abrirModalEditar(clase)}
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            onClick={() => confirmarEliminar(clase)}
-                          >
-                            Eliminar
-                          </Button>
-                        </Box>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={<CheckCircle />}
+                          onClick={() => abrirModalPasarLista(clase)}
+                          sx={{
+                            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                            fontWeight: 600,
+                            borderRadius: "10px",
+                            transition: "all 0.3s ease",
+                            "&:hover": {
+                              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                              boxShadow: "0 6px 16px rgba(220, 20, 60, 0.4)",
+                              transform: "translateY(-2px)",
+                            },
+                          }}
+                        >
+                          Pasar Lista
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -384,29 +294,13 @@ export default function Clases() {
         </>
       )}
 
-      <ModalCrearClase
-        abierto={modalAbierto}
-        cerrar={() => setModalAbierto(false)}
-        recargar={cargarClases}
-      />
-
-      <ModalEditarClase
-        abierto={modalEditarAbierto}
+      <ModalPasarLista
+        abierto={modalPasarListaAbierto}
         cerrar={() => {
-          setModalEditarAbierto(false);
-          setClaseEditar(null);
+          setModalPasarListaAbierto(false);
+          setClasePasarLista(null);
         }}
-        recargar={cargarClases}
-        clase={claseEditar}
-      />
-
-      <ModalVerAlumnosClase
-        abierto={modalVerAlumnosAbierto}
-        cerrar={() => {
-          setModalVerAlumnosAbierto(false);
-          setClaseVerAlumnos(null);
-        }}
-        clase={claseVerAlumnos}
+        clase={clasePasarLista}
       />
     </div>
   );

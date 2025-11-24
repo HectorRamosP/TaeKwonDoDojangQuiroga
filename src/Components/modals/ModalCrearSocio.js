@@ -35,16 +35,19 @@ const esquema = yup.object().shape({
         .required("El apellido materno es obligatorio")
         .min(2, "El apellido debe tener al menos 2 caracteres")
         .max(100, "El apellido no puede exceder 100 caracteres"),
+    curp: yup
+        .string()
+        .required("El CURP es obligatorio")
+        .matches(/^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/, "Ingresa un CURP válido de 18 caracteres")
+        .length(18, "El CURP debe tener exactamente 18 caracteres"),
+    enfermedades: yup
+        .string()
+        .nullable()
+        .max(500, "El campo de enfermedades no puede exceder 500 caracteres"),
     fechaNacimiento: yup
         .date()
         .required("La fecha de nacimiento es obligatoria")
-        .max(new Date(), "La fecha no puede ser futura")
-        .test("edad-maxima", "El alumno debe ser menor de edad (máximo 17 años)", function(value) {
-            if (!value) return false;
-            const hoy = new Date();
-            const edad = hoy.getFullYear() - value.getFullYear();
-            return edad <= 17;
-        }),
+        .max(new Date(), "La fecha no puede ser futura"),
     direccion: yup.string().nullable(),
     sexo: yup.string().nullable(),
     nombreTutor: yup
@@ -93,6 +96,8 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
             nombre: "",
             apellidoPaterno: "",
             apellidoMaterno: "",
+            curp: "",
+            enfermedades: "",
             fechaNacimiento: "",
             direccion: "",
             sexo: "",
@@ -146,9 +151,11 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
         setGuardando(true);
 
         try {
-            // Convertir valores vacíos a null
+            // Convertir valores vacíos a null y asignar "No" por defecto a enfermedades
             const payload = {
                 ...data,
+                curp: data.curp.toUpperCase(),
+                enfermedades: data.enfermedades?.trim() || "No",
                 cintaActualId: data.cintaActualId || null,
                 claseId: data.claseId || null,
                 conceptoMensualidadId: data.conceptoMensualidadId || null,
@@ -293,6 +300,26 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
                             error={!!errors.direccion}
                             helperText={errors.direccion?.message}
                             disabled={guardando}
+                        />
+                        <TextField
+                            label="CURP (18 caracteres)"
+                            fullWidth
+                            {...register("curp")}
+                            error={!!errors.curp}
+                            helperText={errors.curp?.message}
+                            disabled={guardando}
+                            inputProps={{ maxLength: 18, style: { textTransform: 'uppercase' } }}
+                        />
+                        <TextField
+                            label="Enfermedades (Opcional)"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            {...register("enfermedades")}
+                            error={!!errors.enfermedades}
+                            helperText={errors.enfermedades?.message || "Deja en blanco si no tiene enfermedades"}
+                            disabled={guardando}
+                            placeholder="Ej: Asma, Diabetes, etc."
                         />
                     </Box>
 

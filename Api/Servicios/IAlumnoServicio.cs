@@ -17,6 +17,7 @@ public interface IAlumnoServicio
     Task<BuscarAlumnoDto> CrearAsync(CrearAlumnoDto dto);
     Task<BuscarAlumnoDto> ActualizarAsync(string slug, ModificarAlumnoDto dto);
     Task CambiarEstadoAsync(string slug, bool activo);
+    Task EliminarPermanenteAsync(string slug);
     Task<bool> ExisteEmailAsync(string email, string? slugExcluir = null);
     Task<bool> ExisteTelefonoAsync(string telefono, string? slugExcluir = null);
 }

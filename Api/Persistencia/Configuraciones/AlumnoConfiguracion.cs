@@ -23,6 +23,14 @@ public class AlumnoConfiguracion : IEntityTypeConfiguration<Alumno>
             .IsRequired()
             .HasMaxLength(100);
 
+        builder.Property(a => a.Curp)
+            .IsRequired()
+            .HasMaxLength(18);
+
+        builder.Property(a => a.Enfermedades)
+            .IsRequired()
+            .HasMaxLength(500);
+
         builder.Property(a => a.NombreTutor)
             .IsRequired()
             .HasMaxLength(200);
@@ -42,6 +50,10 @@ public class AlumnoConfiguracion : IEntityTypeConfiguration<Alumno>
         builder.HasIndex(a => a.Slug)
             .IsUnique()
             .HasDatabaseName("IX_Alumnos_Slug");
+
+        builder.HasIndex(a => a.Curp)
+            .IsUnique()
+            .HasDatabaseName("IX_Alumnos_Curp");
 
         builder.HasIndex(a => a.Activo)
             .HasDatabaseName("IX_Alumnos_Activo");

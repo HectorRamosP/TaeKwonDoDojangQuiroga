@@ -87,4 +87,11 @@ public class AlumnosController : ControllerBase
         await _alumnoServicio.CambiarEstadoAsync(slug, dto.Activo);
         return Ok(new { mensaje = $"Alumno {(dto.Activo ? "activado" : "desactivado")} correctamente" });
     }
+
+    [HttpDelete("{slug}/permanente")]
+    public async Task<ActionResult> EliminarPermanente(string slug)
+    {
+        await _alumnoServicio.EliminarPermanenteAsync(slug);
+        return Ok(new { mensaje = "Alumno eliminado permanentemente" });
+    }
 }

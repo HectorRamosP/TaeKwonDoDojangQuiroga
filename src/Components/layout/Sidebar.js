@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { User, Users, CreditCard, LogOut, Banknote, Calendar, BarChart3 } from "lucide-react";
+import { User, Users, CreditCard, LogOut, Banknote, Calendar, BarChart3, ClipboardCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import "./Sidebar.css";
 
@@ -61,6 +61,10 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
                     <Link to="/clases" className="sidebar-link">
                         <Calendar className="w-5 h-5" />
                         {showContent && <span className="ml-2">Clases</span>}
+                    </Link>
+                    <Link to="/asistencia" className="sidebar-link">
+                        <ClipboardCheck className="w-5 h-5" />
+                        {showContent && <span className="ml-2">Asistencia</span>}
                     </Link>
                     <Link to="/conceptos" className="sidebar-link">
                         <CreditCard className="w-5 h-5" />

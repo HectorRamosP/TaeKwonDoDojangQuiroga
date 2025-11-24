@@ -9,6 +9,8 @@ public class BuscarAlumnoDto
     public string ApellidoPaterno { get; set; } = string.Empty;
     public string ApellidoMaterno { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;
+    public string Curp { get; set; } = string.Empty;
+    public string Enfermedades { get; set; } = "No";
     public DateTime FechaNacimiento { get; set; }
     public int Edad { get; set; }
     public string? Direccion { get; set; }
@@ -23,6 +25,7 @@ public class BuscarAlumnoDto
     public int? CintaActualId { get; set; }
     public string? CintaActualNombre { get; set; }
     public string? CintaActualColor { get; set; }
+    public int? CintaActualOrden { get; set; }
 
     // Horario/Clase al que asiste
     public int? ClaseId { get; set; }

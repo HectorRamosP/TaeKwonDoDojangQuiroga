@@ -16,8 +16,5 @@ public class CrearConceptoDto
     [Range(0, double.MaxValue, ErrorMessage = "El precio debe ser mayor o igual a 0")]
     public decimal Precio { get; set; }
 
-    [Range(0, int.MaxValue, ErrorMessage = "La duración debe ser mayor o igual a 0")]
-    public int DuracionDias { get; set; }
-
     public string? Descripcion { get; set; }
 }

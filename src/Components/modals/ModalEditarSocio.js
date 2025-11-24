@@ -37,16 +37,19 @@ const esquema = yup.object().shape({
         .required("El apellido materno es obligatorio")
         .min(2, "El apellido debe tener al menos 2 caracteres")
         .max(100, "El apellido no puede exceder 100 caracteres"),
+    curp: yup
+        .string()
+        .required("El CURP es obligatorio")
+        .matches(/^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/, "Ingresa un CURP válido de 18 caracteres")
+        .length(18, "El CURP debe tener exactamente 18 caracteres"),
+    enfermedades: yup
+        .string()
+        .nullable()
+        .max(500, "El campo de enfermedades no puede exceder 500 caracteres"),
     fechaNacimiento: yup
         .date()
         .required("La fecha de nacimiento es obligatoria")
-        .max(new Date(), "La fecha no puede ser futura")
-        .test("edad-maxima", "El alumno debe ser menor de edad (máximo 17 años)", function(value) {
-            if (!value) return false;
-            const hoy = new Date();
-            const edad = hoy.getFullYear() - value.getFullYear();
-            return edad <= 17;
-        }),
+        .max(new Date(), "La fecha no puede ser futura"),
     direccion: yup.string().nullable(),
     sexo: yup.string().nullable(),
     nombreTutor: yup
@@ -111,6 +114,8 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
                 nombre: socio.nombre || "",
                 apellidoPaterno: socio.apellidoPaterno || "",
                 apellidoMaterno: socio.apellidoMaterno || "",
+                curp: socio.curp || "",
+                enfermedades: socio.enfermedades || "",
                 fechaNacimiento: fechaFormateada,
                 direccion: socio.direccion || "",
                 sexo: socio.sexo || "",
@@ -158,6 +163,8 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
             const payload = {
                 ...data,
                 slug: socio.slug,
+                curp: data.curp.toUpperCase(),
+                enfermedades: data.enfermedades?.trim() || "No",
                 cintaActualId: data.cintaActualId || null,
                 claseId: data.claseId || null,
                 conceptoMensualidadId: data.conceptoMensualidadId || null,
@@ -318,6 +325,32 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
                             error={!!errors.direccion}
                             helperText={errors.direccion?.message}
                             disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        <TextField
+                            label="CURP (18 caracteres)"
+                            fullWidth
+                            {...register("curp")}
+                            error={!!errors.curp}
+                            helperText={errors.curp?.message}
+                            disabled={guardando}
+                            inputProps={{ maxLength: 18, style: { textTransform: 'uppercase' } }}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        <TextField
+                            label="Enfermedades (Opcional)"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            {...register("enfermedades")}
+                            error={!!errors.enfermedades}
+                            helperText={errors.enfermedades?.message || "Deja en blanco si no tiene enfermedades"}
+                            disabled={guardando}
+                            placeholder="Ej: Asma, Diabetes, etc."
                             InputLabelProps={{
                                 shrink: true,
                             }}

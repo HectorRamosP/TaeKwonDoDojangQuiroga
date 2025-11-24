@@ -9,4 +9,5 @@ public interface IAsistenciaServicio
     Task<BuscarAsistenciaDto> RegistrarAsistencia(RegistrarAsistenciaDto dto, int usuarioId);
     Task RegistrarAsistenciasMasivas(RegistrarAsistenciasMasivasDto dto, int usuarioId);
     Task<int> ContarFaltasPorAlumnoYRango(int alumnoId, DateTime fechaInicio, DateTime fechaFin);
+    Task EliminarAsistenciasPorClaseYFecha(int claseId, DateTime fecha);
 }

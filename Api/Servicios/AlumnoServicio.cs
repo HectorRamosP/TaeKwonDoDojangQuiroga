@@ -1,7 +1,9 @@
 using Api.Comun.Modelos.Alumnos;
 using Api.Entidades;
+using Api.Persistencia;
 using Api.Repositorios;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Servicios;
 
@@ -9,11 +11,13 @@ public class AlumnoServicio : IAlumnoServicio
 {
     private readonly IAlumnoRepositorio _repositorio;
     private readonly IMapper _mapper;
+    private readonly AplicacionBdContexto _contexto;
 
-    public AlumnoServicio(IAlumnoRepositorio repositorio, IMapper mapper)
+    public AlumnoServicio(IAlumnoRepositorio repositorio, IMapper mapper, AplicacionBdContexto contexto)
     {
         _repositorio = repositorio;
         _mapper = mapper;
+        _contexto = contexto;
     }
 
     public async Task<IEnumerable<BuscarAlumnoDto>> ObtenerTodosAsync(
@@ -108,6 +112,31 @@ public class AlumnoServicio : IAlumnoServicio
 
         alumno.Activo = activo;
         await _repositorio.ActualizarAsync(alumno);
+    }
+
+    public async Task EliminarPermanenteAsync(string slug)
+    {
+        var alumno = await _repositorio.ObtenerPorSlugAsync(slug);
+        if (alumno == null)
+        {
+            throw new KeyNotFoundException("Alumno no encontrado");
+        }
+
+        if (alumno.Activo)
+        {
+            throw new InvalidOperationException("Solo se pueden eliminar alumnos desactivados");
+        }
+
+        // Eliminar manualmente los pagos asociados (ya que DeleteBehavior.Restrict no permite cascade)
+        var pagos = await _contexto.Pagos.Where(p => p.AlumnoId == alumno.Id).ToListAsync();
+        if (pagos.Any())
+        {
+            _contexto.Pagos.RemoveRange(pagos);
+            await _contexto.SaveChangesAsync();
+        }
+
+        // Ahora eliminar el alumno (AlumnoInscripciones y Asistencias se eliminan automáticamente por CASCADE)
+        await _repositorio.EliminarAsync(alumno);
     }
 
     public async Task<bool> ExisteEmailAsync(string email, string? slugExcluir = null)

@@ -17,12 +17,14 @@ import {
   List,
   ListItem,
   ListItemText,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { CheckCircle, CalendarToday } from "@mui/icons-material";
+import { CheckCircle, CalendarToday, Delete } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import api from "../../services/api";
-import { registrarAsistenciasMasivas, obtenerAsistencias } from "../../services/asistenciasService";
+import { registrarAsistenciasMasivas, obtenerAsistencias, eliminarAsistenciasPorClaseYFecha } from "../../services/asistenciasService";
 import ModernModal from "./ModernModal";
 
 export default function ModalPasarLista({ abierto, cerrar, clase }) {
@@ -218,6 +220,70 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
     });
   };
 
+  const handleEliminarFecha = async (fechaAEliminar) => {
+    const result = await Swal.fire({
+      title: '¿Eliminar registro?',
+      html: `¿Estás seguro de que deseas eliminar el registro de asistencia del <strong>${formatearFecha(fechaAEliminar)}</strong>?<br><br>Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#DC143C',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      customClass: {
+        container: 'swal-on-top'
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        console.log('Eliminando fecha:', fechaAEliminar);
+        console.log('ClaseId:', clase.id);
+        await eliminarAsistenciasPorClaseYFecha(clase.id, fechaAEliminar);
+
+        // Recargar el historial
+        await cargarHistorialFechas();
+
+        // Si la fecha eliminada era la que estaba seleccionada, cambiar a hoy
+        if (fechaAEliminar === fecha) {
+          setFecha(new Date().toISOString().split('T')[0]);
+          setAsistencias({});
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Registro eliminado',
+          text: 'El registro de asistencia ha sido eliminado exitosamente',
+          confirmButtonColor: '#DC143C',
+          timer: 3000,
+          showConfirmButton: true,
+          customClass: {
+            container: 'swal-on-top'
+          }
+        });
+      } catch (error) {
+        console.error('Error completo:', error);
+        console.error('Response:', error.response);
+        let mensajeError = 'No se pudo eliminar el registro de asistencia';
+
+        if (error.response?.data?.message) {
+          mensajeError = error.response.data.message;
+        } else if (error.response?.data?.errors) {
+          mensajeError = error.response.data.errors.join(', ');
+        } else if (error.message) {
+          mensajeError = error.message;
+        }
+
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al eliminar',
+          text: mensajeError,
+          confirmButtonColor: '#d32f2f',
+        });
+      }
+    }
+  };
+
   return (
     <>
       <ModernModal
@@ -301,6 +367,26 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                         transform: "translateX(4px)"
                       }
                     }}
+                    secondaryAction={
+                      <Tooltip title="Eliminar registro" arrow>
+                        <IconButton
+                          edge="end"
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEliminarFecha(fechaHistorial);
+                          }}
+                          sx={{
+                            color: "#DC143C",
+                            "&:hover": {
+                              backgroundColor: "rgba(220, 20, 60, 0.1)",
+                            }
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    }
                   >
                     <ListItemText
                       primary={formatearFecha(fechaHistorial)}
@@ -319,7 +405,8 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                           fontSize: "0.7rem",
                           fontWeight: 700,
                           background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
-                          color: "white"
+                          color: "white",
+                          mr: 1
                         }}
                       />
                     )}

@@ -190,16 +190,6 @@ export default function Membresias() {
     });
   };
 
-  const getDuracionTexto = (dias) => {
-    if (dias === 1) return "1 día";
-    if (dias === 7) return "1 semana";
-    if (dias === 30) return "1 mes";
-    if (dias === 90) return "3 meses";
-    if (dias === 180) return "6 meses";
-    if (dias === 365) return "1 año";
-    return `${dias} días`;
-  };
-
   return (
     <div className="membresias-container">
       <Box
@@ -356,9 +346,6 @@ export default function Membresias() {
                     Precio
                   </TableCell>
                   <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Duración
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
                     Descripción
                   </TableCell>
                   <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
@@ -375,7 +362,7 @@ export default function Membresias() {
               <TableBody>
                 {filtrados.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={6} align="center">
                       No se encontraron conceptos
                     </TableCell>
                   </TableRow>
@@ -404,7 +391,6 @@ export default function Membresias() {
                       <TableCell>
                         ${membresia.precio.toLocaleString("es-MX")}
                       </TableCell>
-                      <TableCell>{getDuracionTexto(membresia.duracionDias)}</TableCell>
                       <TableCell>
                         {membresia.descripcion || "Sin descripción"}
                       </TableCell>
