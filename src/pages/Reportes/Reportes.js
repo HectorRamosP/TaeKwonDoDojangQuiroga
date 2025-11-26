@@ -39,23 +39,52 @@ export default function Reportes() {
 
   return (
     <Container maxWidth="xl" className="reportes-container">
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          <Assessment sx={{ mr: 1, verticalAlign: "middle" }} />
-          Reportes y Estadísticas
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Genera reportes detallados y visualiza estadísticas del sistema
-        </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <h1 className="page-title">Reportes y Estadísticas</h1>
       </Box>
 
-      <Paper sx={{ width: "100%" }}>
+      <Paper
+        elevation={0}
+        sx={{
+          width: "100%",
+          borderRadius: "16px",
+          overflow: "hidden",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(220, 20, 60, 0.1)",
+        }}
+      >
         <Tabs
           value={tabActual}
           onChange={handleCambiarTab}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ borderBottom: 1, borderColor: "divider" }}
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            "& .MuiTab-root": {
+              color: "#666",
+              fontWeight: 600,
+              transition: "all 0.3s ease",
+              "&:hover": {
+                color: "#DC143C",
+                backgroundColor: "rgba(220, 20, 60, 0.04)",
+              },
+            },
+            "& .Mui-selected": {
+              color: "#DC143C !important",
+            },
+            "& .MuiTabs-indicator": {
+              backgroundColor: "#DC143C",
+              height: "3px",
+            },
+          }}
         >
           <Tab
             icon={<AttachMoney />}

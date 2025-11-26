@@ -140,6 +140,7 @@ export default function ReportePagos() {
               label="Fecha Inicio"
               type="date"
               fullWidth
+              size="small"
               value={filtros.fechaInicio}
               onChange={(e) => handleFiltroChange("fechaInicio", e.target.value)}
               InputLabelProps={{ shrink: true }}
@@ -150,18 +151,21 @@ export default function ReportePagos() {
               label="Fecha Fin"
               type="date"
               fullWidth
+              size="small"
               value={filtros.fechaFin}
               onChange={(e) => handleFiltroChange("fechaFin", e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
           <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Estado</InputLabel>
+            <FormControl fullWidth size="small">
+              <InputLabel shrink>Estado</InputLabel>
               <Select
                 value={filtros.estado}
                 onChange={(e) => handleFiltroChange("estado", e.target.value)}
                 label="Estado"
+                displayEmpty
+                notched
               >
                 <MenuItem value="">Todos</MenuItem>
                 <MenuItem value="Confirmado">Confirmado</MenuItem>
@@ -171,12 +175,14 @@ export default function ReportePagos() {
             </FormControl>
           </Grid>
           <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Método Pago</InputLabel>
+            <FormControl fullWidth size="small">
+              <InputLabel shrink>Método</InputLabel>
               <Select
                 value={filtros.metodoPago}
                 onChange={(e) => handleFiltroChange("metodoPago", e.target.value)}
-                label="Método Pago"
+                label="Método"
+                displayEmpty
+                notched
               >
                 <MenuItem value="">Todos</MenuItem>
                 <MenuItem value="Efectivo">Efectivo</MenuItem>
@@ -190,7 +196,18 @@ export default function ReportePagos() {
               variant="contained"
               fullWidth
               onClick={cargarReporte}
-              sx={{ height: "56px" }}
+              sx={{
+                height: "40px",
+                background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                fontWeight: 700,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                  boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+                  transform: "translateY(-2px)",
+                },
+              }}
             >
               Generar Reporte
             </Button>
@@ -204,6 +221,19 @@ export default function ReportePagos() {
           variant="contained"
           startIcon={<Download />}
           onClick={exportarCSV}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
         >
           Exportar a Excel
         </Button>
@@ -223,7 +253,7 @@ export default function ReportePagos() {
                       </Typography>
                       <Typography variant="h4">{reporte.resumen.totalPagos}</Typography>
                     </Box>
-                    <AttachMoney color="primary" sx={{ fontSize: 40 }} />
+                    <AttachMoney sx={{ fontSize: 40, color: "#DC143C" }} />
                   </Box>
                 </CardContent>
               </Card>
@@ -313,7 +343,7 @@ export default function ReportePagos() {
                             sx={{
                               width: `${item.porcentaje}%`,
                               height: "100%",
-                              bgcolor: "primary.main",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
                               borderRadius: 1,
                             }}
                           />
@@ -353,7 +383,7 @@ export default function ReportePagos() {
                             sx={{
                               width: `${item.porcentaje}%`,
                               height: "100%",
-                              bgcolor: "success.main",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
                               borderRadius: 1,
                             }}
                           />
@@ -395,7 +425,7 @@ export default function ReportePagos() {
                             sx={{
                               width: `${item.porcentaje}%`,
                               height: "100%",
-                              bgcolor: "secondary.main",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
                               borderRadius: 1,
                             }}
                           />
@@ -410,17 +440,39 @@ export default function ReportePagos() {
           </Grid>
 
           {/* Tabla de Pagos */}
-          <TableContainer component={Paper} className="reporte-tabla">
+          <TableContainer
+            component={Paper}
+            className="reporte-tabla"
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
             <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Alumno</TableCell>
-                  <TableCell>Concepto</TableCell>
-                  <TableCell align="right">Monto</TableCell>
-                  <TableCell>Fecha</TableCell>
-                  <TableCell>Método</TableCell>
-                  <TableCell>Estado</TableCell>
+                <TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>ID</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Alumno</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Concepto</TableCell>
+                  <TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Monto</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Método</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Estado</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -434,7 +486,17 @@ export default function ReportePagos() {
                   </TableRow>
                 ) : (
                   reporte.pagos.map((pago) => (
-                    <TableRow key={pago.id}>
+                    <TableRow
+                      key={pago.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
                       <TableCell>{pago.id}</TableCell>
                       <TableCell>{pago.alumnoNombre}</TableCell>
                       <TableCell>{pago.conceptoNombre}</TableCell>

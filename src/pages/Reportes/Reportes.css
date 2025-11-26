@@ -1,56 +1,103 @@
 .reportes-container {
   padding: 20px;
+  min-height: 100vh;
 }
 
 .reporte-filtros {
-  padding: 20px;
-  margin-bottom: 20px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(220, 20, 60, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .reporte-stats-card {
   height: 100%;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  border-radius: 16px !important;
+  border: 1px solid rgba(220, 20, 60, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
 }
 
 .reporte-stats-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-6px);
+  box-shadow: 0 8px 24px rgba(220, 20, 60, 0.15) !important;
+  border-color: rgba(220, 20, 60, 0.3);
 }
 
 .reporte-chart-container {
-  padding: 20px;
-  margin-top: 20px;
+  padding: 24px;
+  margin-top: 24px;
+  border-radius: 16px;
+  background: #ffffff;
 }
 
 .reporte-tabla {
-  margin-top: 20px;
+  margin-top: 24px;
 }
 
 .reporte-sin-datos {
   text-align: center;
-  padding: 40px;
+  padding: 60px 40px;
   color: #999;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 .reporte-acciones {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 24px;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .reporte-loading {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 60px;
+  padding: 80px;
+  min-height: 400px;
+}
+
+/* Estilos adicionales para mejorar la consistencia */
+.reporte-stats-card .MuiCardContent-root {
+  padding: 24px !important;
+}
+
+.reporte-stats-card h4 {
+  font-weight: 700;
+  color: #DC143C;
 }
 
 @media print {
   .reporte-filtros,
   .reporte-acciones {
     display: none;
+  }
+
+  .reporte-stats-card,
+  .reporte-tabla {
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}
+
+@media (max-width: 768px) {
+  .reportes-container {
+    padding: 16px;
+  }
+
+  .reporte-filtros {
+    padding: 16px;
+  }
+
+  .reporte-acciones {
+    justify-content: stretch;
+  }
+
+  .reporte-acciones button {
+    flex: 1;
   }
 }

@@ -176,15 +176,26 @@ public class ReporteServicio : IReporteServicio
             .OrderByDescending(e => e.Cantidad)
             .ToList();
 
+        // Definir orden de rangos
+        var ordenRangos = new Dictionary<string, int>
+        {
+            { "0-5 años", 1 },
+            { "6-8 años", 2 },
+            { "9-11 años", 3 },
+            { "12-14 años", 4 },
+            { "15-17 años", 5 },
+            { "Mayor a 18", 6 }
+        };
+
         var distribucionPorEdad = estudianteItems
             .GroupBy(e =>
             {
                 if (e.Edad < 6) return "0-5 años";
-                if (e.Edad < 12) return "6-11 años";
-                if (e.Edad < 18) return "12-17 años";
-                if (e.Edad < 30) return "18-29 años";
-                if (e.Edad < 50) return "30-49 años";
-                return "50+ años";
+                if (e.Edad < 9) return "6-8 años";
+                if (e.Edad < 12) return "9-11 años";
+                if (e.Edad < 15) return "12-14 años";
+                if (e.Edad < 18) return "15-17 años";
+                return "Mayor a 18";
             })
             .Select(g => new DistribucionEdades
             {
@@ -192,7 +203,7 @@ public class ReporteServicio : IReporteServicio
                 Cantidad = g.Count(),
                 Porcentaje = estudianteItems.Count > 0 ? ((decimal)g.Count() / estudianteItems.Count) * 100 : 0
             })
-            .OrderBy(d => d.RangoEdad)
+            .OrderBy(d => ordenRangos.ContainsKey(d.RangoEdad) ? ordenRangos[d.RangoEdad] : 999)
             .ToList();
 
         return new ReporteEstudiantesDto

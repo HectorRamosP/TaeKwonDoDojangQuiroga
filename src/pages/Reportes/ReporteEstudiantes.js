@@ -32,6 +32,16 @@ export default function ReporteEstudiantes() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
+  // Rangos de edad predefinidos
+  const rangosEdadPredefinidos = [
+    "0-5 años",
+    "6-8 años",
+    "9-11 años",
+    "12-14 años",
+    "15-17 años",
+    "Mayor a 18"
+  ];
+
   const cargarReporte = async () => {
     setCargando(true);
     setError(null);
@@ -103,6 +113,19 @@ export default function ReporteEstudiantes() {
           variant="contained"
           startIcon={<Download />}
           onClick={exportarCSV}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
         >
           Exportar a Excel
         </Button>
@@ -122,7 +145,7 @@ export default function ReporteEstudiantes() {
                       </Typography>
                       <Typography variant="h4">{reporte.resumen.totalEstudiantes}</Typography>
                     </Box>
-                    <People color="primary" sx={{ fontSize: 40 }} />
+                    <People sx={{ fontSize: 40, color: "#DC143C" }} />
                   </Box>
                 </CardContent>
               </Card>
@@ -209,7 +232,7 @@ export default function ReporteEstudiantes() {
                             sx={{
                               width: `${item.porcentaje}%`,
                               height: "100%",
-                              bgcolor: "primary.main",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
                               borderRadius: 1,
                             }}
                           />
@@ -249,7 +272,7 @@ export default function ReporteEstudiantes() {
                             sx={{
                               width: `${item.porcentaje}%`,
                               height: "100%",
-                              bgcolor: "success.main",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
                               borderRadius: 1,
                             }}
                           />
@@ -268,53 +291,82 @@ export default function ReporteEstudiantes() {
                   <Typography variant="h6" gutterBottom>
                     Por Edad
                   </Typography>
-                  {reporte.distribucionPorEdad.map((item, index) => (
-                    <Box key={index} sx={{ mb: 2 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                        <Typography variant="body2">{item.rangoEdad}</Typography>
-                        <Typography variant="body2" fontWeight="bold">
-                          {item.cantidad} estudiantes
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        <Box
-                          sx={{
-                            flex: 1,
-                            height: 8,
-                            bgcolor: "#e0e0e0",
-                            borderRadius: 1,
-                          }}
-                        >
+                  {rangosEdadPredefinidos.map((rango, index) => {
+                    // Buscar los datos para este rango en el array del backend
+                    const datosRango = reporte.distribucionPorEdad?.find(item => item.rangoEdad === rango);
+                    const cantidad = datosRango?.cantidad || 0;
+                    const porcentaje = datosRango?.porcentaje || 0;
+
+                    return (
+                      <Box key={index} sx={{ mb: 2 }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5, gap: 2 }}>
+                          <Typography variant="body2">{rango}</Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {cantidad} estudiantes
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                           <Box
                             sx={{
-                              width: `${item.porcentaje}%`,
-                              height: "100%",
-                              bgcolor: "secondary.main",
+                              flex: 1,
+                              height: 8,
+                              bgcolor: "#e0e0e0",
                               borderRadius: 1,
                             }}
-                          />
+                          >
+                            <Box
+                              sx={{
+                                width: `${porcentaje}%`,
+                                height: "100%",
+                                background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                                borderRadius: 1,
+                              }}
+                            />
+                          </Box>
+                          <Typography variant="caption">{porcentaje.toFixed(1)}%</Typography>
                         </Box>
-                        <Typography variant="caption">{item.porcentaje.toFixed(1)}%</Typography>
                       </Box>
-                    </Box>
-                  ))}
+                    );
+                  })}
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
 
           {/* Tabla de Estudiantes */}
-          <TableContainer component={Paper} className="reporte-tabla">
+          <TableContainer
+            component={Paper}
+            className="reporte-tabla"
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
             <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Nombre Completo</TableCell>
-                  <TableCell>Edad</TableCell>
-                  <TableCell>Cinta</TableCell>
-                  <TableCell>Clases</TableCell>
-                  <TableCell>Fecha Inscripción</TableCell>
-                  <TableCell>Estado</TableCell>
+                <TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>ID</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Nombre Completo</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Edad</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Cinta</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Clases</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha Inscripción</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Estado</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -328,7 +380,17 @@ export default function ReporteEstudiantes() {
                   </TableRow>
                 ) : (
                   reporte.estudiantes.map((estudiante) => (
-                    <TableRow key={estudiante.id}>
+                    <TableRow
+                      key={estudiante.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
                       <TableCell>{estudiante.id}</TableCell>
                       <TableCell>
                         {`${estudiante.nombre} ${estudiante.apellidoPaterno} ${estudiante.apellidoMaterno}`}

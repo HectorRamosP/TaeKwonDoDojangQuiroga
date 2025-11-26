@@ -115,6 +115,7 @@ export default function ReporteAsistencias() {
               label="Fecha Inicio"
               type="date"
               fullWidth
+              size="small"
               value={filtros.fechaInicio}
               onChange={(e) => handleFiltroChange("fechaInicio", e.target.value)}
               InputLabelProps={{ shrink: true }}
@@ -125,6 +126,7 @@ export default function ReporteAsistencias() {
               label="Fecha Fin"
               type="date"
               fullWidth
+              size="small"
               value={filtros.fechaFin}
               onChange={(e) => handleFiltroChange("fechaFin", e.target.value)}
               InputLabelProps={{ shrink: true }}
@@ -135,7 +137,18 @@ export default function ReporteAsistencias() {
               variant="contained"
               fullWidth
               onClick={cargarReporte}
-              sx={{ height: "56px" }}
+              sx={{
+                height: "40px",
+                background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                fontWeight: 700,
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                  boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+                  transform: "translateY(-2px)",
+                },
+              }}
             >
               Generar Reporte
             </Button>
@@ -149,6 +162,19 @@ export default function ReporteAsistencias() {
           variant="contained"
           startIcon={<Download />}
           onClick={exportarCSV}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
         >
           Exportar a Excel
         </Button>
@@ -168,7 +194,7 @@ export default function ReporteAsistencias() {
                       </Typography>
                       <Typography variant="h4">{reporte.resumen.totalAsistencias}</Typography>
                     </Box>
-                    <EventAvailable color="primary" sx={{ fontSize: 40 }} />
+                    <EventAvailable sx={{ fontSize: 40, color: "#DC143C" }} />
                   </Box>
                 </CardContent>
               </Card>
@@ -254,7 +280,7 @@ export default function ReporteAsistencias() {
                             sx={{
                               width: `${item.porcentajeAsistencia}%`,
                               height: "100%",
-                              bgcolor: "primary.main",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
                               borderRadius: 1,
                             }}
                           />
@@ -298,7 +324,7 @@ export default function ReporteAsistencias() {
                             sx={{
                               width: `${item.porcentajeAsistencia}%`,
                               height: "100%",
-                              bgcolor: "success.main",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
                               borderRadius: 1,
                             }}
                           />
@@ -315,7 +341,12 @@ export default function ReporteAsistencias() {
           </Grid>
 
           {/* Tabla de Asistencias Por Día */}
-          <Card sx={{ mb: 3 }}>
+          <Card sx={{
+            mb: 3,
+            borderRadius: "16px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+            border: "1px solid rgba(220, 20, 60, 0.1)",
+          }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Asistencias Por Día
@@ -323,12 +354,24 @@ export default function ReporteAsistencias() {
               <TableContainer>
                 <Table size="small">
                   <TableHead>
-                    <TableRow>
-                      <TableCell>Fecha</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                      <TableCell align="right">Presentes</TableCell>
-                      <TableCell align="right">Ausentes</TableCell>
-                      <TableCell align="right">% Asistencia</TableCell>
+                    <TableRow sx={{
+                      background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                      position: "relative",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: "3px",
+                        background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                      }
+                    }}>
+                      <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha</TableCell>
+                      <TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Total</TableCell>
+                      <TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Presentes</TableCell>
+                      <TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Ausentes</TableCell>
+                      <TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>% Asistencia</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -354,15 +397,37 @@ export default function ReporteAsistencias() {
           </Card>
 
           {/* Tabla Detallada */}
-          <TableContainer component={Paper} className="reporte-tabla">
+          <TableContainer
+            component={Paper}
+            className="reporte-tabla"
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
             <Table>
               <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Alumno</TableCell>
-                  <TableCell>Clase</TableCell>
-                  <TableCell>Fecha</TableCell>
-                  <TableCell>Asistencia</TableCell>
+                <TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>ID</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Alumno</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Clase</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Asistencia</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -376,7 +441,17 @@ export default function ReporteAsistencias() {
                   </TableRow>
                 ) : (
                   reporte.asistencias.slice(0, 100).map((asistencia) => (
-                    <TableRow key={asistencia.id}>
+                    <TableRow
+                      key={asistencia.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
                       <TableCell>{asistencia.id}</TableCell>
                       <TableCell>{asistencia.alumnoNombre}</TableCell>
                       <TableCell>{asistencia.claseNombre}</TableCell>
