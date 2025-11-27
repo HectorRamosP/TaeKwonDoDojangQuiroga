@@ -39,9 +39,12 @@ const esquema = yup.object().shape({
         .max(100, "El apellido no puede exceder 100 caracteres"),
     curp: yup
         .string()
-        .required("El CURP es obligatorio")
-        .matches(/^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/, "Ingresa un CURP válido de 18 caracteres")
-        .length(18, "El CURP debe tener exactamente 18 caracteres"),
+        .nullable()
+        .transform((value, originalValue) => (originalValue === "" ? null : value))
+        .test('curp-valido', 'Ingresa un CURP válido de 18 caracteres', function(value) {
+            if (!value) return true; // CURP es opcional
+            return /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/.test(value) && value.length === 18;
+        }),
     enfermedades: yup
         .string()
         .nullable()
@@ -163,7 +166,7 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
             const payload = {
                 ...data,
                 slug: socio.slug,
-                curp: data.curp.toUpperCase(),
+                curp: data.curp ? data.curp.toUpperCase() : null,
                 enfermedades: data.enfermedades?.trim() || "No",
                 cintaActualId: data.cintaActualId || null,
                 claseId: data.claseId || null,
@@ -330,16 +333,17 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
                             }}
                         />
                         <TextField
-                            label="CURP (18 caracteres)"
+                            label="CURP (18 caracteres) - Opcional"
                             fullWidth
                             {...register("curp")}
                             error={!!errors.curp}
-                            helperText={errors.curp?.message}
+                            helperText={errors.curp?.message || "Deja en blanco si no tienes el CURP"}
                             disabled={guardando}
                             inputProps={{ maxLength: 18, style: { textTransform: 'uppercase' } }}
                             InputLabelProps={{
                                 shrink: true,
                             }}
+                            placeholder="Opcional"
                         />
                         <TextField
                             label="Enfermedades (Opcional)"

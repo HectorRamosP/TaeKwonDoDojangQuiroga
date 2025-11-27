@@ -24,7 +24,6 @@ public class AlumnoConfiguracion : IEntityTypeConfiguration<Alumno>
             .HasMaxLength(100);
 
         builder.Property(a => a.Curp)
-            .IsRequired()
             .HasMaxLength(18);
 
         builder.Property(a => a.Enfermedades)
@@ -53,6 +52,7 @@ public class AlumnoConfiguracion : IEntityTypeConfiguration<Alumno>
 
         builder.HasIndex(a => a.Curp)
             .IsUnique()
+            .HasFilter("[Curp] IS NOT NULL")
             .HasDatabaseName("IX_Alumnos_Curp");
 
         builder.HasIndex(a => a.Activo)

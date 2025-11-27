@@ -581,6 +581,12 @@ export default function Socios() {
                     Teléfono Tutor
                   </TableCell>
                   <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    CURP
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Enfermedades
+                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
                     Mensualidad
                   </TableCell>
                   <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
@@ -597,7 +603,7 @@ export default function Socios() {
               <TableBody>
                 {datosPaginados.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center">
+                    <TableCell colSpan={12} align="center">
                       No se encontraron alumnos
                     </TableCell>
                   </TableRow>
@@ -629,6 +635,8 @@ export default function Socios() {
                       </TableCell>
                       <TableCell>{alumno.nombreTutor}</TableCell>
                       <TableCell>{alumno.telefonoTutor || "N/A"}</TableCell>
+                      <TableCell>{alumno.curp || "-"}</TableCell>
+                      <TableCell>{alumno.enfermedades || "No"}</TableCell>
                       <TableCell>
                         {alumno.conceptoMensualidadNombre ? (
                           <Chip
