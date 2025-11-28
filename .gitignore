@@ -60,3 +60,6 @@ appsettings.*.json
 Api/appsettings.Development.json
 Api/appsettings.Development.json
 Api/appsettings.Development.json
+.claude/settings.local.json
+Api/obj/Debug/net7.0/Api.AssemblyInfo.cs
+Api/obj/Debug/net7.0/Api.AssemblyInfoInputs.cache
