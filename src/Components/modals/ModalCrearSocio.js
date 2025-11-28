@@ -37,11 +37,17 @@ const esquema = yup.object().shape({
         .max(100, "El apellido no puede exceder 100 caracteres"),
     curp: yup
         .string()
+        .transform((value, originalValue) => {
+            if (!originalValue || originalValue === "" || originalValue.trim() === "") return null;
+            return originalValue;
+        })
         .nullable()
-        .transform((value, originalValue) => (originalValue === "" ? null : value))
+        .notRequired()
         .test('curp-valido', 'Ingresa un CURP válido de 18 caracteres', function(value) {
             if (!value) return true; // CURP es opcional
-            return /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/.test(value) && value.length === 18;
+            const valorLimpio = value.trim();
+            if (valorLimpio === "") return true;
+            return /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/.test(valorLimpio) && valorLimpio.length === 18;
         }),
     enfermedades: yup
         .string()
