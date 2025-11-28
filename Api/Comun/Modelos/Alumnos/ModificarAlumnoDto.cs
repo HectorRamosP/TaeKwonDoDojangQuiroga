@@ -19,10 +19,9 @@ public class ModificarAlumnoDto
     [MaxLength(100)]
     public string ApellidoMaterno { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El CURP es requerido")]
     [StringLength(18, MinimumLength = 18, ErrorMessage = "El CURP debe tener exactamente 18 caracteres")]
     [RegularExpression(@"^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$", ErrorMessage = "Formato de CURP inválido")]
-    public string Curp { get; set; } = string.Empty;
+    public string? Curp { get; set; }
 
     [Required(ErrorMessage = "El campo de enfermedades es requerido")]
     [MaxLength(500)]

@@ -37,9 +37,18 @@ const esquema = yup.object().shape({
         .max(100, "El apellido no puede exceder 100 caracteres"),
     curp: yup
         .string()
-        .required("El CURP es obligatorio")
-        .matches(/^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/, "Ingresa un CURP válido de 18 caracteres")
-        .length(18, "El CURP debe tener exactamente 18 caracteres"),
+        .transform((value, originalValue) => {
+            if (!originalValue || originalValue === "" || originalValue.trim() === "") return null;
+            return originalValue;
+        })
+        .nullable()
+        .notRequired()
+        .test('curp-valido', 'Ingresa un CURP válido de 18 caracteres', function(value) {
+            if (!value) return true; // CURP es opcional
+            const valorLimpio = value.trim();
+            if (valorLimpio === "") return true;
+            return /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/.test(valorLimpio) && valorLimpio.length === 18;
+        }),
     enfermedades: yup
         .string()
         .nullable()
@@ -154,7 +163,7 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
             // Convertir valores vacíos a null y asignar "No" por defecto a enfermedades
             const payload = {
                 ...data,
-                curp: data.curp.toUpperCase(),
+                curp: data.curp ? data.curp.toUpperCase() : null,
                 enfermedades: data.enfermedades?.trim() || "No",
                 cintaActualId: data.cintaActualId || null,
                 claseId: data.claseId || null,
@@ -302,13 +311,14 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
                             disabled={guardando}
                         />
                         <TextField
-                            label="CURP (18 caracteres)"
+                            label="CURP (18 caracteres) - Opcional"
                             fullWidth
                             {...register("curp")}
                             error={!!errors.curp}
-                            helperText={errors.curp?.message}
+                            helperText={errors.curp?.message || "Deja en blanco si no tienes el CURP"}
                             disabled={guardando}
                             inputProps={{ maxLength: 18, style: { textTransform: 'uppercase' } }}
+                            placeholder="Opcional"
                         />
                         <TextField
                             label="Enfermedades (Opcional)"
