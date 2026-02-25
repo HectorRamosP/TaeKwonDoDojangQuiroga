@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: utils/manejarErrorApi.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: utils/manejarErrorApi.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import Swal from "sweetalert2";
+
+/**
+ * Maneja errores de peticiones a la API mostrando alertas con SweetAlert2.
+ * Interpreta el código HTTP de la respuesta y muestra un mensaje descriptivo al usuario.
+ *
+ * @param {import('axios').AxiosError} error - El error capturado del bloque catch.
+ * @param {string} [contexto="la operación"] - Descripción de la acción que falló (ej. "crear alumno").
+ * @returns {void}
+ *
+ * @example
+ * try {
+ *   await axios.post('/api/alumnos', datos);
+ * } catch (error) {
+ *   manejarErrorApi(error, "crear alumno");
+ * }
+ */
+export function manejarErrorApi(error, contexto = "la operación") {
+    let titulo = "Error inesperado";
+    let detalle = `Ocurrió un error al ${contexto}`;
+
+    if (error.response) {
+        switch (error.response.status) {
+            case 400:
+                titulo = "Datos inválidos";
+                detalle = error.response.data?.message || "Verifica que todos los datos sean correctos";
+                break;
+            case 404:
+                titulo = "No encontrado";
+                detalle = error.response.data?.message || "El recurso solicitado no existe";
+                break;
+            case 409:
+                titulo = "Dato duplicado";
+                detalle = error.response.data?.message || "Ya existe un registro con estos datos";
+                break;
+            default:
+                titulo = "Error del servidor";
+                detalle = `No se pudo ${contexto}. Intenta nuevamente.`;
+                break;
+        }
+    } else if (error.request) {
+        titulo = "Sin conexión";
+        detalle = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+    }
+
+    Swal.fire({
+        icon: "error",
+        title: titulo,
+        text: detalle,
+        confirmButtonColor: "#d32f2f",
+    });
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/pagosService.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/pagosService.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import api from './api';
+
+/**
+ * Obtiene la lista de pagos con filtros opcionales.
+ *
+ * @param {object} [filtros={}] - Filtros para la búsqueda.
+ * @param {number} [filtros.alumnoId] - ID del alumno.
+ * @param {number} [filtros.conceptoId] - ID del concepto.
+ * @param {string} [filtros.estado] - Estado del pago.
+ * @param {string} [filtros.fechaInicio] - Fecha de inicio del rango (ISO).
+ * @param {string} [filtros.fechaFin] - Fecha de fin del rango (ISO).
+ * @returns {Promise&lt;Array>} Lista de pagos.
+ */
+export const obtenerPagos = async (filtros = {}) => {
+  const params = new URLSearchParams();
+
+  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
+  if (filtros.conceptoId) params.append('conceptoId', filtros.conceptoId);
+  if (filtros.estado) params.append('estado', filtros.estado);
+  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
+  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
+
+  const response = await api.get(`/pagos?${params.toString()}`);
+  return response.data;
+};
+
+/**
+ * Obtiene un pago por su ID.
+ *
+ * @param {number} id - ID del pago.
+ * @returns {Promise&lt;object>} Datos del pago.
+ */
+export const obtenerPago = async (id) => {
+  const response = await api.get(`/pagos/${id}`);
+  return response.data;
+};
+
+/**
+ * Registra un nuevo pago en el sistema.
+ *
+ * @param {object} pago - Datos del pago a registrar.
+ * @param {number} pago.alumnoId - ID del alumno.
+ * @param {number} pago.conceptoId - ID del concepto.
+ * @param {number} pago.monto - Monto del pago.
+ * @param {string} pago.metodoPago - Método de pago (Efectivo, Tarjeta, Transferencia).
+ * @param {string} [pago.referencia] - Referencia o folio del pago.
+ * @param {string} [pago.notas] - Notas adicionales.
+ * @returns {Promise&lt;object>} Pago registrado.
+ */
+export const registrarPago = async (pago) => {
+  const response = await api.post('/pagos', pago);
+  return response.data;
+};
+
+/**
+ * Modifica un pago existente.
+ *
+ * @param {number} id - ID del pago a modificar.
+ * @param {object} pago - Datos actualizados del pago.
+ * @returns {Promise&lt;object>} Pago actualizado.
+ */
+export const modificarPago = async (id, pago) => {
+  const response = await api.put(`/pagos/${id}`, pago);
+  return response.data;
+};
+
+/**
+ * Elimina un pago por su ID.
+ *
+ * @param {number} id - ID del pago a eliminar.
+ * @returns {Promise&lt;object>} Resultado de la operación.
+ */
+export const eliminarPago = async (id) => {
+  const response = await api.delete(`/pagos/${id}`);
+  return response.data;
+};
+
+/**
+ * Obtiene estadísticas de pagos en un rango de fechas.
+ *
+ * @param {object} [filtros={}] - Filtros para las estadísticas.
+ * @param {string} [filtros.fechaInicio] - Fecha de inicio (ISO).
+ * @param {string} [filtros.fechaFin] - Fecha de fin (ISO).
+ * @returns {Promise&lt;object>} Estadísticas de pagos.
+ */
+export const obtenerEstadisticasPagos = async (filtros = {}) => {
+  const params = new URLSearchParams();
+
+  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
+  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
+
+  const response = await api.get(`/pagos/estadisticas?${params.toString()}`);
+  return response.data;
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

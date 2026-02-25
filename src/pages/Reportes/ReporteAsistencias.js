@@ -28,6 +28,13 @@ import {
 import { generarReporteAsistencias } from "../../services/reportesService";
 import Swal from "sweetalert2";
 
+/**
+ * Subcomponente del módulo de Reportes. Genera estadísticas de asistencia
+ * filtradas por rango de fechas. Muestra porcentaje de asistencia por clase
+ * y top de alumnos. Permite exportar a CSV.
+ * @component
+ * @returns {JSX.Element} Reporte de asistencias con tarjetas resumen, gráficos y tabla por día.
+ */
 export default function ReporteAsistencias() {
   const [reporte, setReporte] = useState(null);
   const [cargando, setCargando] = useState(false);

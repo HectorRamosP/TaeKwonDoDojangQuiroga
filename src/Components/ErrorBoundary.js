@@ -3,6 +3,23 @@ import PropTypes from 'prop-types';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
+/**
+ * Componente de clase que captura errores de JavaScript en el árbol de componentes hijo
+ * y muestra una interfaz de error amigable en lugar de que la aplicación se rompa.
+ * En modo desarrollo también muestra el stack trace del error.
+ *
+ * @component
+ * @extends {React.Component}
+ * @param {object} props
+ * @param {React.ReactNode} props.children - Componentes hijos a proteger.
+ * @param {string} [props.fallbackMessage] - Mensaje personalizado a mostrar en caso de error.
+ * @param {Function} [props.onError] - Callback opcional que se ejecuta cuando se captura un error.
+ *
+ * @example
+ * <ErrorBoundary fallbackMessage="Ocurrió un error en esta sección.">
+ *   <ComponenteComplejo />
+ * </ErrorBoundary>
+ */
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

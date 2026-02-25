@@ -12,6 +12,11 @@ import Reportes from "./pages/Reportes/Reportes";
 import RutaPrivada from "./Components/RutaPrivada";
 import ErrorBoundary from "./Components/ErrorBoundary";
 
+/**
+ * Componente que redirige al usuario según el estado de su token JWT.
+ * Si el token es válido y no ha expirado, redirige a /alumnos; de lo contrario a /login.
+ * @returns {JSX.Element} Componente Navigate de React Router.
+ */
 function RedirectToLoginOrAlumnos() {
   const token = localStorage.getItem("token");
 
@@ -46,7 +51,11 @@ function RedirectToLoginOrAlumnos() {
   return <Navigate to="/login" replace />;
 }
 
-// Función para validar y limpiar el token al inicio
+/**
+ * Valida y limpia el token JWT almacenado en localStorage al iniciar la aplicación.
+ * Elimina el token si tiene formato inválido o si ya expiró.
+ * @returns {void}
+ */
 function validarTokenAlInicio() {
   const token = localStorage.getItem("token");
 
@@ -73,6 +82,12 @@ function validarTokenAlInicio() {
   }
 }
 
+/**
+ * Componente raíz de la aplicación. Define todas las rutas del sistema,
+ * envueltas en un ErrorBoundary y con protección de rutas privadas.
+ * @component
+ * @returns {JSX.Element} Árbol de rutas de la aplicación.
+ */
 export default function App() {
   // Validar token al cargar la aplicación
   useEffect(() => {

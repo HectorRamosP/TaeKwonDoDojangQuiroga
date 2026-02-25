@@ -1,6 +1,22 @@
 import PropTypes from "prop-types";
 import "./CintaChip.css";
 
+/**
+ * Componente visual que muestra el nivel de cinta de un alumno de Taekwondo.
+ * Aplica estilos CSS dinámicos según el nombre de la cinta detectado,
+ * soportando cintas simples (blanca, amarilla, verde, azul, roja, negra)
+ * y cintas de transición (ej. blanca-amarilla, azul-roja).
+ *
+ * @component
+ * @param {object} props
+ * @param {string} [props.nombreCinta] - Nombre de la cinta del alumno.
+ *   Si no se proporciona o es vacío, muestra "Sin cinta".
+ *
+ * @example
+ * <CintaChip nombreCinta="Cinta Azul" />
+ * <CintaChip nombreCinta="Cinta Roja Avanzada" />
+ * <CintaChip /> // Muestra "Sin cinta"
+ */
 export default function CintaChip({ nombreCinta }) {
   if (!nombreCinta) {
     return (

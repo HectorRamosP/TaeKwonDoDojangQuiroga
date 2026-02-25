@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/modals/ModalCrearClase.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/modals/ModalCrearClase.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+    TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Box,
+    Chip,
+    Typography,
+} from "@mui/material";
+import { Class } from "@mui/icons-material";
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import Swal from "sweetalert2";
+import { crearClase } from "../../services/clasesService";
+import ModernModal from "./ModernModal";
+import { manejarErrorApi } from "../../utils/manejarErrorApi";
+
+const esquema = yup.object().shape({
+    nombre: yup
+        .string()
+        .required("El nombre es obligatorio")
+        .min(3, "El nombre debe tener al menos 3 caracteres")
+        .max(100, "El nombre no puede exceder 100 caracteres"),
+    dias: yup
+        .string()
+        .required("Los días son obligatorios")
+        .max(50, "Los días no pueden exceder 50 caracteres"),
+    horaInicio: yup
+        .string()
+        .required("La hora de inicio es obligatoria")
+        .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato de hora inválido (HH:MM)"),
+    horaFin: yup
+        .string()
+        .required("La hora de fin es obligatoria")
+        .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Formato de hora inválido (HH:MM)"),
+    cupoMaximo: yup
+        .number()
+        .nullable()
+        .transform((value, originalValue) => (originalValue === "" ? null : value))
+        .positive("El cupo debe ser mayor a 0")
+        .integer("El cupo debe ser un número entero")
+        .min(1, "El cupo mínimo es 1")
+        .max(100, "El cupo máximo es 100"),
+    tipoClase: yup
+        .string()
+        .required("El tipo de clase es obligatorio"),
+});
+
+const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+/**
+ * Modal para crear una nueva clase en el sistema.
+ * Permite seleccionar días de la semana mediante chips interactivos,
+ * configurar horario, cupo máximo y tipo de clase.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de clases tras crear una.
+ */
+export default function ModalCrearClase({ abierto, cerrar, recargar }) {
+    const [guardando, setGuardando] = useState(false);
+    const [diasSeleccionados, setDiasSeleccionados] = useState([]);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        setValue,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(esquema),
+        defaultValues: {
+            nombre: "",
+            dias: "",
+            horaInicio: "",
+            horaFin: "",
+            cupoMaximo: 20,
+            tipoClase: "",
+        },
+    });
+
+    const toggleDia = (dia) => {
+        let nuevosDias;
+        if (diasSeleccionados.includes(dia)) {
+            nuevosDias = diasSeleccionados.filter(d => d !== dia);
+        } else {
+            nuevosDias = [...diasSeleccionados, dia];
+        }
+        setDiasSeleccionados(nuevosDias);
+        setValue("dias", nuevosDias.join(", "));
+    };
+
+    const handleClose = () => {
+        if (!guardando) {
+            reset();
+            setDiasSeleccionados([]);
+            cerrar();
+        }
+    };
+
+    const onSubmit = async (data) => {
+        setGuardando(true);
+
+        try {
+            const payload = {
+                ...data,
+                horaInicio: `${data.horaInicio}:00`,
+                horaFin: `${data.horaFin}:00`,
+            };
+
+            await crearClase(payload);
+
+            Swal.fire({
+                icon: "success",
+                title: "Clase creada",
+                text: "La clase se ha registrado exitosamente",
+                confirmButtonColor: "#d32f2f",
+            });
+
+            reset();
+            setDiasSeleccionados([]);
+            cerrar();
+            recargar();
+        } catch (error) {
+            manejarErrorApi(error, "guardar la clase");
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    return (
+        &lt;ModernModal
+            open={abierto}
+            onClose={handleClose}
+            title="Nueva Clase"
+            icon={&lt;Class />}
+            maxWidth="sm"
+            formId="form-crear-clase"
+            loading={guardando}
+        >
+            &lt;form id="form-crear-clase" onSubmit={handleSubmit(onSubmit)}>
+                    &lt;TextField
+                        label="Nombre de la Clase"
+                        fullWidth
+                        {...register("nombre")}
+                        error={!!errors.nombre}
+                        helperText={errors.nombre?.message}
+                        margin="normal"
+                        disabled={guardando}
+                        autoFocus
+                    />
+                    &lt;Box sx={{ mt: 2, mb: 1 }}>
+                        &lt;Typography variant="subtitle2" sx={{ mb: 1, color: "#666" }}>
+                            Días de la semana
+                        &lt;/Typography>
+                        &lt;Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                            {diasSemana.map((dia) => (
+                                &lt;Chip
+                                    key={dia}
+                                    label={dia}
+                                    onClick={() => toggleDia(dia)}
+                                    color={diasSeleccionados.includes(dia) ? "primary" : "default"}
+                                    variant={diasSeleccionados.includes(dia) ? "filled" : "outlined"}
+                                    disabled={guardando}
+                                    sx={{ cursor: "pointer" }}
+                                />
+                            ))}
+                        &lt;/Box>
+                        {errors.dias &amp;&amp; (
+                            &lt;Typography variant="caption" sx={{ color: "#d32f2f", mt: 1, display: "block" }}>
+                                {errors.dias?.message}
+                            &lt;/Typography>
+                        )}
+                    &lt;/Box>
+                    &lt;input type="hidden" {...register("dias")} />
+                    &lt;Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mt: 2 }}>
+                        &lt;TextField
+                            label="Hora de Inicio"
+                            type="time"
+                            fullWidth
+                            {...register("horaInicio")}
+                            error={!!errors.horaInicio}
+                            helperText={errors.horaInicio?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;TextField
+                            label="Hora de Fin"
+                            type="time"
+                            fullWidth
+                            {...register("horaFin")}
+                            error={!!errors.horaFin}
+                            helperText={errors.horaFin?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                    &lt;/Box>
+                    &lt;TextField
+                        label="Cupo Máximo"
+                        type="number"
+                        fullWidth
+                        {...register("cupoMaximo")}
+                        error={!!errors.cupoMaximo}
+                        helperText={errors.cupoMaximo?.message}
+                        margin="normal"
+                        disabled={guardando}
+                    />
+                    &lt;TextField
+                        label="Tipo de Clase (ej: Infantil, Juvenil, Adultos)"
+                        fullWidth
+                        {...register("tipoClase")}
+                        error={!!errors.tipoClase}
+                        helperText={errors.tipoClase?.message || "Puedes escribir cualquier tipo de clase"}
+                        margin="normal"
+                        disabled={guardando}
+                        placeholder="Infantil"
+                    />
+            &lt;/form>
+        &lt;/ModernModal>
+    );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

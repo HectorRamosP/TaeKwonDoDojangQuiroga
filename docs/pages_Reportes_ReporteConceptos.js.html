@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Reportes/ReporteConceptos.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Reportes/ReporteConceptos.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useState, useEffect } from "react";
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  CircularProgress,
+  Alert,
+  Chip,
+} from "@mui/material";
+import {
+  Category,
+  TrendingUp,
+  AttachMoney,
+  Inventory,
+  Download,
+} from "@mui/icons-material";
+import { generarReporteConceptos } from "../../services/reportesService";
+import Swal from "sweetalert2";
+
+/**
+ * Subcomponente del módulo de Reportes. Muestra estadísticas de conceptos de pago,
+ * incluyendo los más vendidos e ingresos generados por cada uno. Permite exportar a CSV.
+ * @component
+ * @returns {JSX.Element} Reporte de conceptos con tarjetas resumen, ranking y tabla detallada.
+ */
+export default function ReporteConceptos() {
+  const [reporte, setReporte] = useState(null);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
+
+  const cargarReporte = async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const data = await generarReporteConceptos();
+      setReporte(data);
+    } catch (err) {
+      setError("Error al generar el reporte de conceptos");
+      Swal.fire("Error", "No se pudo generar el reporte", "error");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarReporte();
+  }, []);
+
+  const formatearMoneda = (monto) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(monto);
+  };
+
+  const exportarCSV = () => {
+    if (!reporte || !reporte.conceptos.length) return;
+
+    const headers = ["ID", "Nombre", "Costo", "Tipo", "Veces Vendido", "Ingreso Total", "Activo"];
+    const rows = reporte.conceptos.map(c => [
+      c.id,
+      c.nombre,
+      c.costo,
+      c.tipo,
+      c.vecesVendido,
+      c.ingresoTotal,
+      c.activo ? "Si" : "No",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(",")),
+    ].join("\n");
+
+    // UTF-8 BOM para que Excel reconozca correctamente los caracteres especiales
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `reporte_conceptos_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
+  if (cargando) {
+    return (
+      &lt;Box className="reporte-loading">
+        &lt;CircularProgress />
+      &lt;/Box>
+    );
+  }
+
+  if (error) {
+    return &lt;Alert severity="error">{error}&lt;/Alert>;
+  }
+
+  return (
+    &lt;Box sx={{ p: 3 }}>
+      {/* Acciones */}
+      &lt;Box className="reporte-acciones">
+        &lt;Button
+          variant="contained"
+          startIcon={&lt;Download />}
+          onClick={exportarCSV}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&amp;:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
+        >
+          Exportar a Excel
+        &lt;/Button>
+      &lt;/Box>
+
+      {reporte &amp;&amp; (
+        &lt;>
+          {/* Tarjetas de Resumen */}
+          &lt;Grid container spacing={3} sx={{ mb: 3 }}>
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Total Conceptos
+                      &lt;/Typography>
+                      &lt;Typography variant="h4">{reporte.resumen.totalConceptos}&lt;/Typography>
+                    &lt;/Box>
+                    &lt;Category sx={{ fontSize: 40, color: "#DC143C" }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Total Ventas
+                      &lt;/Typography>
+                      &lt;Typography variant="h4">{reporte.resumen.totalVentas}&lt;/Typography>
+                    &lt;/Box>
+                    &lt;TrendingUp color="success" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Ingreso Total
+                      &lt;/Typography>
+                      &lt;Typography variant="h5">
+                        {formatearMoneda(reporte.resumen.ingresoTotal)}
+                      &lt;/Typography>
+                    &lt;/Box>
+                    &lt;AttachMoney color="success" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Costo Promedio
+                      &lt;/Typography>
+                      &lt;Typography variant="h5">
+                        {formatearMoneda(reporte.resumen.costoPromedio)}
+                      &lt;/Typography>
+                    &lt;/Box>
+                    &lt;Inventory color="info" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+          &lt;/Grid>
+
+          {/* Gráficos de Distribución */}
+          &lt;Grid container spacing={3} sx={{ mb: 3 }}>
+            &lt;Grid item xs={12} md={6}>
+              &lt;Card>
+                &lt;CardContent>
+                  &lt;Typography variant="h6" gutterBottom>
+                    Conceptos Más Vendidos
+                  &lt;/Typography>
+                  {reporte.conceptosMasVendidos.map((item, index) => (
+                    &lt;Box key={index} sx={{ mb: 2 }}>
+                      &lt;Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        &lt;Typography variant="body2" noWrap sx={{ maxWidth: "60%" }}>
+                          {index + 1}. {item.concepto}
+                        &lt;/Typography>
+                        &lt;Typography variant="body2" fontWeight="bold">
+                          {item.cantidadVentas} ventas
+                        &lt;/Typography>
+                      &lt;/Box>
+                      &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        &lt;Box
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            bgcolor: "#e0e0e0",
+                            borderRadius: 1,
+                          }}
+                        >
+                          &lt;Box
+                            sx={{
+                              width: `${item.porcentaje}%`,
+                              height: "100%",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                              borderRadius: 1,
+                            }}
+                          />
+                        &lt;/Box>
+                        &lt;Typography variant="caption">{item.porcentaje.toFixed(1)}%&lt;/Typography>
+                      &lt;/Box>
+                    &lt;/Box>
+                  ))}
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} md={6}>
+              &lt;Card>
+                &lt;CardContent>
+                  &lt;Typography variant="h6" gutterBottom>
+                    Conceptos Por Ingreso
+                  &lt;/Typography>
+                  {reporte.conceptosPorIngreso.map((item, index) => (
+                    &lt;Box key={index} sx={{ mb: 2 }}>
+                      &lt;Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        &lt;Typography variant="body2" noWrap sx={{ maxWidth: "50%" }}>
+                          {index + 1}. {item.concepto}
+                        &lt;/Typography>
+                        &lt;Typography variant="body2" fontWeight="bold">
+                          {formatearMoneda(item.ingresoTotal)}
+                        &lt;/Typography>
+                      &lt;/Box>
+                      &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        &lt;Box
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            bgcolor: "#e0e0e0",
+                            borderRadius: 1,
+                          }}
+                        >
+                          &lt;Box
+                            sx={{
+                              width: `${item.porcentaje}%`,
+                              height: "100%",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                              borderRadius: 1,
+                            }}
+                          />
+                        &lt;/Box>
+                        &lt;Typography variant="caption">{item.porcentaje.toFixed(1)}%&lt;/Typography>
+                      &lt;/Box>
+                    &lt;/Box>
+                  ))}
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+          &lt;/Grid>
+
+          {/* Tabla de Conceptos */}
+          &lt;TableContainer
+            component={Paper}
+            className="reporte-tabla"
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
+            &lt;Table>
+              &lt;TableHead>
+                &lt;TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&amp;::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>ID&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Nombre&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Tipo&lt;/TableCell>
+                  &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Costo&lt;/TableCell>
+                  &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Veces Vendido&lt;/TableCell>
+                  &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Ingreso Total&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Estado&lt;/TableCell>
+                &lt;/TableRow>
+              &lt;/TableHead>
+              &lt;TableBody>
+                {reporte.conceptos.length === 0 ? (
+                  &lt;TableRow>
+                    &lt;TableCell colSpan={7} align="center">
+                      &lt;Typography className="reporte-sin-datos">
+                        No hay datos para mostrar
+                      &lt;/Typography>
+                    &lt;/TableCell>
+                  &lt;/TableRow>
+                ) : (
+                  reporte.conceptos.map((concepto) => (
+                    &lt;TableRow
+                      key={concepto.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&amp;:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
+                      &lt;TableCell>{concepto.id}&lt;/TableCell>
+                      &lt;TableCell>{concepto.nombre}&lt;/TableCell>
+                      &lt;TableCell>{concepto.tipo}&lt;/TableCell>
+                      &lt;TableCell align="right">{formatearMoneda(concepto.costo)}&lt;/TableCell>
+                      &lt;TableCell align="right">{concepto.vecesVendido}&lt;/TableCell>
+                      &lt;TableCell align="right">{formatearMoneda(concepto.ingresoTotal)}&lt;/TableCell>
+                      &lt;TableCell>
+                        &lt;Chip
+                          label={concepto.activo ? "Activo" : "Inactivo"}
+                          color={concepto.activo ? "success" : "default"}
+                          size="small"
+                        />
+                      &lt;/TableCell>
+                    &lt;/TableRow>
+                  ))
+                )}
+              &lt;/TableBody>
+            &lt;/Table>
+          &lt;/TableContainer>
+        &lt;/>
+      )}
+    &lt;/Box>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

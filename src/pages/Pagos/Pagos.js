@@ -31,6 +31,12 @@ import { obtenerPagos, eliminarPago, obtenerEstadisticasPagos } from "../../serv
 import ModalPago from "../../Components/modals/ModalPago";
 import "./Pagos.css";
 
+/**
+ * Página de Gestión de Pagos. Muestra estadísticas de ingresos y una tabla
+ * de todos los pagos, con filtros por texto, fecha y estado.
+ * @component
+ * @returns {JSX.Element} Dashboard de pagos con tarjetas de resumen y tabla filtrable.
+ */
 export default function Pagos() {
   const [pagos, setPagos] = useState([]);
   const [filtro, setFiltro] = useState("");

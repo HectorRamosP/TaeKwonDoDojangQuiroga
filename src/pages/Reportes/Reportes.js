@@ -22,6 +22,14 @@ import ReporteConceptos from "./ReporteConceptos";
 import ReporteClases from "./ReporteClases";
 import "./Reportes.css";
 
+/**
+ * Componente auxiliar que muestra u oculta contenido según el tab seleccionado.
+ * @param {object} props
+ * @param {React.ReactNode} props.children - Contenido del panel.
+ * @param {number} props.value - Índice del tab actualmente activo.
+ * @param {number} props.index - Índice de este panel.
+ * @returns {JSX.Element}
+ */
 function TabPanel({ children, value, index }) {
   return (
     <div hidden={value !== index} style={{ marginTop: "20px" }}>
@@ -30,6 +38,12 @@ function TabPanel({ children, value, index }) {
   );
 }
 
+/**
+ * Página de Reportes y Estadísticas. Organiza los distintos tipos de reporte
+ * en pestañas: Pagos, Estudiantes, Asistencias, Conceptos y Clases.
+ * @component
+ * @returns {JSX.Element} Contenedor de tabs con los subcomponentes de cada reporte.
+ */
 export default function Reportes() {
   const [tabActual, setTabActual] = useState(0);
 

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/RutaPrivada.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/RutaPrivada.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Navigate } from "react-router-dom";
+
+/**
+ * Componente de protección de rutas que valida la autenticación del usuario.
+ * Verifica la existencia, formato JWT (tres segmentos) y expiración del token
+ * almacenado en localStorage antes de permitir el acceso a la ruta solicitada.
+ * Si el token es inválido o ha expirado, lo elimina y redirige al login.
+ *
+ * @component
+ * @param {object} props
+ * @param {React.ReactNode} props.children - Componente a renderizar si el usuario está autenticado.
+ * @returns {React.ReactNode} El componente hijo o una redirección a /login.
+ *
+ * @example
+ * &lt;RutaPrivada>
+ *   &lt;Dashboard />
+ * &lt;/RutaPrivada>
+ */
+export default function RutaPrivada({ children }) {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return &lt;Navigate to="/login" replace />;
+  }
+
+  // Verificación del formato y expiración del token JWT
+  try {
+    const parts = token.split('.');
+
+    if (parts.length !== 3) {
+      localStorage.removeItem("token");
+      return &lt;Navigate to="/login" replace />;
+    }
+
+    // Verificar si el token ha expirado
+    const payload = JSON.parse(atob(parts[1]));
+    const now = Math.floor(Date.now() / 1000);
+
+    if (payload.exp &amp;&amp; payload.exp &lt; now) {
+      localStorage.removeItem("token");
+      return &lt;Navigate to="/login" replace />;
+    }
+  } catch (error) {
+    localStorage.removeItem("token");
+    return &lt;Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

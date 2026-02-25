@@ -4,6 +4,20 @@ import { User, Users, CreditCard, LogOut, Banknote, Calendar, BarChart3, Clipboa
 import { useState, useEffect } from "react";
 import "./Sidebar.css";
 
+/**
+ * Barra lateral de navegación del sistema.
+ * Contiene los enlaces a todos los módulos (Usuarios, Alumnos, Clases, Asistencia,
+ * Conceptos, Pagos, Reportes) y el botón de cierre de sesión.
+ * Soporta un estado abierto/cerrado con transición animada.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.isOpen - Indica si el sidebar está expandido o colapsado.
+ * @param {Function} props.toggleSidebar - Callback para alternar el estado del sidebar.
+ *
+ * @example
+ * <Sidebar isOpen={sidebarAbierto} toggleSidebar={toggleSidebar} />
+ */
 export default function Sidebar({ isOpen, toggleSidebar }) {
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [showContent, setShowContent] = useState(isOpen);

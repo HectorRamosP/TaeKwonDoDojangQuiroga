@@ -1,17 +1,3 @@
-/* ============================================
-   ESTILOS GLOBALES MODERNOS PARA MODALES
-   Taekwondo Dojang Quiroga
-   ============================================ */
-
-/* Backdrop del modal optimizado */
-.MuiBackdrop-root {
-  backdrop-filter: blur(4px) !important;
-  background-color: rgba(10, 10, 10, 0.6) !important;
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-}
-
-/* Contenedor principal del modal */
 .modal-modern {
   animation: modalSlideIn 0.25s ease-out;
 }
@@ -27,7 +13,6 @@
   }
 }
 
-/* Paper del modal de MUI */
 .modal-modern .MuiDialog-paper {
   border-radius: 16px !important;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2) !important;
@@ -37,48 +22,6 @@
   backface-visibility: hidden;
 }
 
-/* Header del modal optimizado */
-.modal-header {
-  background: #C41E3A;
-  color: white;
-  padding: 24px 32px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-  border-radius: 16px 16px 0 0;
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-}
-
-/* Título del modal */
-.modal-header-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.modal-header-title h2 {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-}
-
-.modal-header-icon {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-}
-
-/* Botón de cerrar optimizado */
 .modal-close-button {
   position: relative;
   z-index: 1;
@@ -95,7 +38,6 @@
   transform: scale(1.05);
 }
 
-/* Contenido del modal */
 .modal-content {
   padding: 32px;
   background: #FFFFFF;
@@ -105,7 +47,6 @@
   backface-visibility: hidden;
 }
 
-/* Scrollbar personalizado en modales */
 .modal-content::-webkit-scrollbar {
   width: 8px;
 }
@@ -124,7 +65,6 @@
   background: #B22222;
 }
 
-/* Footer del modal */
 .modal-footer {
   padding: 20px 32px 32px;
   background: #FFFFFF;
@@ -134,7 +74,6 @@
   border-radius: 0 0 16px 16px;
 }
 
-/* Botones del modal */
 .modal-button-primary {
   background: #C41E3A !important;
   color: white !important;
@@ -178,7 +117,6 @@
   color: #DC143C !important;
 }
 
-/* Campos de formulario en modales */
 .modal-content .MuiTextField-root {
   margin-bottom: 20px;
 }
@@ -202,25 +140,21 @@
   font-weight: 600;
 }
 
-/* Dividers en modales */
 .modal-divider {
   margin: 24px 0;
   border-color: rgba(220, 20, 60, 0.1);
   border-width: 2px;
 }
 
-/* Badges y chips en modales */
 .modal-content .MuiChip-root {
   border-radius: 10px;
   font-weight: 600;
 }
 
-/* Select mejorado en modales */
 .modal-content .MuiSelect-root {
   border-radius: 12px;
 }
 
-/* Animación simplificada para elementos dentro del modal */
 .modal-content > * {
   animation: modalContentFadeIn 0.3s ease forwards;
 }
@@ -234,7 +168,6 @@
   }
 }
 
-/* SweetAlert sobre modales */
 .swal-on-top {
   z-index: 10000 !important;
 }
@@ -243,7 +176,6 @@
   z-index: 10000 !important;
 }
 
-/* Responsive */
 @media (max-width: 600px) {
   .modal-modern .MuiDialog-paper {
     margin: 16px !important;

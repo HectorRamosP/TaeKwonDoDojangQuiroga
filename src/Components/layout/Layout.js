@@ -2,6 +2,15 @@ import { useState } from "react";
 import Sidebar from './Sidebar';
 import { Outlet } from "react-router-dom";
 
+/**
+ * Componente de estructura principal de la aplicación.
+ * Combina el Sidebar lateral con el área de contenido principal,
+ * administrando el estado de apertura/cierre del menú de navegación.
+ * Utiliza Outlet de React Router para renderizar las rutas hijas.
+ *
+ * @component
+ * @returns {JSX.Element} Estructura principal con sidebar y área de contenido.
+ */
 export default function Layout() {
     const [sidebarAbierto, setSidebarAbierto] = useState(true);
 

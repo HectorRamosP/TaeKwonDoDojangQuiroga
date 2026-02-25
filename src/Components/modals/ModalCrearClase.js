@@ -1,11 +1,9 @@
 import {
-    Button,
     TextField,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
-    CircularProgress,
     Box,
     Chip,
     Typography,
@@ -18,6 +16,7 @@ import * as yup from "yup";
 import Swal from "sweetalert2";
 import { crearClase } from "../../services/clasesService";
 import ModernModal from "./ModernModal";
+import { manejarErrorApi } from "../../utils/manejarErrorApi";
 
 const esquema = yup.object().shape({
     nombre: yup
@@ -52,6 +51,17 @@ const esquema = yup.object().shape({
 
 const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
+/**
+ * Modal para crear una nueva clase en el sistema.
+ * Permite seleccionar días de la semana mediante chips interactivos,
+ * configurar horario, cupo máximo y tipo de clase.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de clases tras crear una.
+ */
 export default function ModalCrearClase({ abierto, cerrar, recargar }) {
     const [guardando, setGuardando] = useState(false);
     const [diasSeleccionados, setDiasSeleccionados] = useState([]);
@@ -98,7 +108,6 @@ export default function ModalCrearClase({ abierto, cerrar, recargar }) {
         setGuardando(true);
 
         try {
-            // Convertir horas a TimeSpan format
             const payload = {
                 ...data,
                 horaInicio: `${data.horaInicio}:00`,
@@ -119,32 +128,7 @@ export default function ModalCrearClase({ abierto, cerrar, recargar }) {
             cerrar();
             recargar();
         } catch (error) {
-            let mensajeError = "Ocurrió un error inesperado al guardar la clase";
-            let detalles = "";
-
-            if (error.response) {
-                if (error.response.status === 400) {
-                    mensajeError = "Datos inválidos";
-                    detalles = error.response.data?.message || "Verifica que todos los datos sean correctos";
-                } else if (error.response.status === 409) {
-                    mensajeError = "Clase duplicada";
-                    detalles = error.response.data?.message || "Ya existe una clase con este nombre.";
-                } else {
-                    mensajeError = "Error del servidor";
-                    detalles = "No se pudo guardar la clase. Intenta nuevamente.";
-                }
-            } else if (error.request) {
-                mensajeError = "Sin conexión";
-                detalles =
-                    "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-            }
-
-            Swal.fire({
-                icon: "error",
-                title: mensajeError,
-                text: detalles,
-                confirmButtonColor: "#d32f2f",
-            });
+            manejarErrorApi(error, "guardar la clase");
         } finally {
             setGuardando(false);
         }
@@ -157,26 +141,8 @@ export default function ModalCrearClase({ abierto, cerrar, recargar }) {
             title="Nueva Clase"
             icon={<Class />}
             maxWidth="sm"
-            actions={
-                <>
-                    <Button
-                        onClick={handleClose}
-                        className="modal-button-secondary"
-                        disabled={guardando}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        form="form-crear-clase"
-                        className="modal-button-primary"
-                        disabled={guardando}
-                        startIcon={guardando && <CircularProgress size={20} />}
-                    >
-                        {guardando ? "Guardando..." : "Guardar"}
-                    </Button>
-                </>
-            }
+            formId="form-crear-clase"
+            loading={guardando}
         >
             <form id="form-crear-clase" onSubmit={handleSubmit(onSubmit)}>
                     <TextField

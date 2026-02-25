@@ -1,12 +1,10 @@
 import {
-  Button,
   TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   FormHelperText,
-  CircularProgress,
   InputAdornment,
   Chip,
   Autocomplete,
@@ -20,6 +18,7 @@ import Swal from "sweetalert2";
 import api from "../../services/api";
 import { registrarPago } from "../../services/pagosService";
 import ModernModal from "./ModernModal";
+import { manejarErrorApi } from "../../utils/manejarErrorApi";
 
 const esquema = yup.object().shape({
   alumnoId: yup
@@ -43,6 +42,18 @@ const esquema = yup.object().shape({
   notas: yup.string().nullable(),
 });
 
+/**
+ * Modal para registrar un nuevo pago en el sistema.
+ * Permite buscar alumnos por nombre, seleccionar un concepto de pago
+ * y registrar el método de pago. El monto se actualiza automáticamente
+ * al seleccionar un concepto.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de pagos tras registrar uno.
+ */
 export default function ModalPago({ abierto, cerrar, recargar }) {
   const [guardando, setGuardando] = useState(false);
   const [alumnos, setAlumnos] = useState([]);
@@ -88,12 +99,7 @@ export default function ModalPago({ abierto, cerrar, recargar }) {
       const res = await api.get("/alumnos?activo=true");
       setAlumnos(res.data || []);
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron cargar los alumnos",
-        confirmButtonColor: "#d32f2f",
-      });
+      manejarErrorApi(error, "cargar los alumnos");
     }
   };
 
@@ -102,12 +108,7 @@ export default function ModalPago({ abierto, cerrar, recargar }) {
       const res = await api.get("/conceptos?activo=true");
       setConceptos(res.data || []);
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "No se pudieron cargar los conceptos",
-        confirmButtonColor: "#d32f2f",
-      });
+      manejarErrorApi(error, "cargar los conceptos");
     }
   };
 
@@ -154,36 +155,7 @@ export default function ModalPago({ abierto, cerrar, recargar }) {
       cerrar();
       recargar();
     } catch (error) {
-      let mensajeError = "Ocurrió un error inesperado al registrar el pago";
-      let detalles = "";
-
-      if (error.response) {
-        if (error.response.status === 400) {
-          mensajeError = "Datos inválidos";
-          detalles =
-            error.response.data?.message ||
-            "Verifica los datos ingresados";
-        } else if (error.response.status === 404) {
-          mensajeError = "Datos no encontrados";
-          detalles =
-            error.response.data?.message ||
-            "El alumno o concepto no existe";
-        } else {
-          mensajeError = "Error del servidor";
-          detalles = "No se pudo registrar el pago. Intenta nuevamente.";
-        }
-      } else if (error.request) {
-        mensajeError = "Sin conexión";
-        detalles =
-          "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-      }
-
-      Swal.fire({
-        icon: "error",
-        title: mensajeError,
-        text: detalles,
-        confirmButtonColor: "#d32f2f",
-      });
+      manejarErrorApi(error, "registrar el pago");
     } finally {
       setGuardando(false);
     }
@@ -196,26 +168,10 @@ export default function ModalPago({ abierto, cerrar, recargar }) {
       title="Registrar Pago"
       icon={<Payment />}
       maxWidth="sm"
-      actions={
-        <>
-          <Button
-            onClick={handleClose}
-            className="modal-button-secondary"
-            disabled={guardando}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            form="form-pago"
-            className="modal-button-primary"
-            disabled={guardando}
-            startIcon={guardando && <CircularProgress size={20} />}
-          >
-            {guardando ? "Registrando..." : "Registrar Pago"}
-          </Button>
-        </>
-      }
+      formId="form-pago"
+      loading={guardando}
+      submitLabel="Registrar Pago"
+      loadingLabel="Registrando..."
     >
       <form id="form-pago" onSubmit={handleSubmit(onSubmit)}>
           <Controller

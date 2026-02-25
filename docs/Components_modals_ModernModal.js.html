@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/modals/ModernModal.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/modals/ModernModal.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Box, Button, CircularProgress } from "@mui/material";
+import { Close } from "@mui/icons-material";
+import PropTypes from "prop-types";
+import "./ModalsGlobal.css";
+
+const estilos = {
+  paper: {
+    sx: {
+      borderRadius: "20px",
+      boxShadow: "0 24px 48px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(220, 20, 60, 0.1)",
+      overflow: "visible",
+    },
+  },
+  backdrop: {
+    sx: {
+      backdropFilter: "blur(8px)",
+      backgroundColor: "rgba(10, 10, 10, 0.7)",
+    },
+  },
+  header: {
+    background: "linear-gradient(135deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+    color: "white",
+    padding: "24px 32px",
+    position: "relative",
+    overflow: "hidden",
+    borderTopLeftRadius: "20px",
+    borderTopRightRadius: "20px",
+    "&amp;::before": {
+      content: '""',
+      position: "absolute",
+      top: "-50%",
+      left: "-50%",
+      width: "200%",
+      height: "200%",
+      background: "radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%)",
+      animation: "modalPulse 4s ease-in-out infinite",
+    },
+  },
+  headerContent: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    position: "relative",
+    zIndex: 1,
+  },
+  titleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 1.5,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(255, 255, 255, 0.15)",
+    borderRadius: "12px",
+    backdropFilter: "blur(10px)",
+  },
+  titleText: {
+    margin: 0,
+    fontSize: "1.75rem",
+    fontWeight: 800,
+    letterSpacing: "-0.5px",
+    textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
+  },
+};
+
+/**
+ * Modal moderno reutilizable con estilos consistentes del sistema.
+ * Incluye encabezado con gradiente, botón de cierre, área de contenido
+ * y footer de acciones configurable.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.open - Controla si el modal está visible.
+ * @param {Function} props.onClose - Callback que se ejecuta al cerrar el modal.
+ * @param {string} props.title - Título mostrado en el encabezado.
+ * @param {React.ReactNode} [props.icon] - Ícono opcional en el encabezado.
+ * @param {React.ReactNode} props.children - Contenido del cuerpo del modal.
+ * @param {React.ReactNode} [props.actions] - Acciones personalizadas en el footer.
+ * @param {string} [props.formId] - ID del formulario para submit automático.
+ * @param {boolean} [props.loading=false] - Muestra estado de carga en el botón.
+ * @param {string} [props.submitLabel="Guardar"] - Texto del botón de submit.
+ * @param {string} [props.loadingLabel="Guardando..."] - Texto durante la carga.
+ * @param {"xs"|"sm"|"md"|"lg"|"xl"} [props.maxWidth="sm"] - Ancho máximo del modal.
+ * @param {boolean} [props.fullWidth=true] - Si el modal ocupa todo el ancho disponible.
+ *
+ * @example
+ * &lt;ModernModal
+ *   open={abierto}
+ *   onClose={() => setAbierto(false)}
+ *   title="Crear Alumno"
+ *   formId="form-crear-alumno"
+ * >
+ *   &lt;FormularioAlumno />
+ * &lt;/ModernModal>
+ */
+export default function ModernModal({
+  open,
+  onClose,
+  title,
+  icon,
+  children,
+  actions,
+  formId,
+  loading = false,
+  submitLabel = "Guardar",
+  loadingLabel = "Guardando...",
+  maxWidth = "sm",
+  fullWidth = true,
+}) {
+  const accionesRenderizadas = actions || (formId ? (
+    &lt;>
+      &lt;Button
+        onClick={onClose}
+        className="modal-button-secondary"
+        disabled={loading}
+      >
+        Cancelar
+      &lt;/Button>
+      &lt;Button
+        type="submit"
+        form={formId}
+        className="modal-button-primary"
+        disabled={loading}
+        startIcon={loading &amp;&amp; &lt;CircularProgress size={20} />}
+      >
+        {loading ? loadingLabel : submitLabel}
+      &lt;/Button>
+    &lt;/>
+  ) : null);
+
+  return (
+    &lt;Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={maxWidth}
+      fullWidth={fullWidth}
+      className="modal-modern"
+      slotProps={{ paper: estilos.paper, backdrop: estilos.backdrop }}
+    >
+      &lt;DialogTitle sx={estilos.header}>
+        &lt;Box sx={estilos.headerContent}>
+          &lt;Box sx={estilos.titleRow}>
+            {icon &amp;&amp; &lt;Box sx={estilos.iconContainer}>{icon}&lt;/Box>}
+            &lt;Box component="h2" sx={estilos.titleText}>
+              {title}
+            &lt;/Box>
+          &lt;/Box>
+
+          &lt;IconButton onClick={onClose} className="modal-close-button">
+            &lt;Close />
+          &lt;/IconButton>
+        &lt;/Box>
+      &lt;/DialogTitle>
+
+      &lt;DialogContent className="modal-content">
+        {children}
+      &lt;/DialogContent>
+
+      {accionesRenderizadas &amp;&amp; (
+        &lt;DialogActions className="modal-footer">
+          {accionesRenderizadas}
+        &lt;/DialogActions>
+      )}
+    &lt;/Dialog>
+  );
+}
+
+ModernModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+  icon: PropTypes.node,
+  children: PropTypes.node.isRequired,
+  actions: PropTypes.node,
+  formId: PropTypes.string,
+  loading: PropTypes.bool,
+  submitLabel: PropTypes.string,
+  loadingLabel: PropTypes.string,
+  maxWidth: PropTypes.oneOf(["xs", "sm", "md", "lg", "xl"]),
+  fullWidth: PropTypes.bool,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

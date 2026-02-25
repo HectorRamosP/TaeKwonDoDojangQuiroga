@@ -1,14 +1,11 @@
 import {
-    Button,
     TextField,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
-    FormHelperText,
     FormControlLabel,
     Switch,
-    CircularProgress,
     Box,
     Typography,
 } from "@mui/material";
@@ -20,6 +17,7 @@ import * as yup from "yup";
 import Swal from "sweetalert2";
 import api from "../../services/api";
 import ModernModal from "./ModernModal";
+import { manejarErrorApi } from "../../utils/manejarErrorApi";
 
 const esquema = yup.object().shape({
     nombre: yup
@@ -46,7 +44,7 @@ const esquema = yup.object().shape({
         .nullable()
         .notRequired()
         .test('curp-valido', 'Ingresa un CURP válido de 18 caracteres', function(value) {
-            if (!value) return true; // CURP es opcional
+            if (!value) return true;
             const valorLimpio = value.trim();
             if (valorLimpio === "") return true;
             return /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/.test(valorLimpio) && valorLimpio.length === 18;
@@ -90,6 +88,18 @@ const esquema = yup.object().shape({
     activo: yup.boolean(),
 });
 
+/**
+ * Modal para editar los datos de un alumno existente en el sistema.
+ * Pre-carga los datos actuales del alumno en el formulario y permite
+ * modificar todos sus campos incluyendo el estado activo/inactivo.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista tras editar.
+ * @param {object} props.socio - Datos actuales del alumno a editar.
+ */
 export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
     const [guardando, setGuardando] = useState(false);
     const [cintas, setCintas] = useState([]);
@@ -114,7 +124,6 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
 
     useEffect(() => {
         if (socio && cintas.length > 0 && clases.length > 0 && conceptos.length > 0) {
-            // Convertir fecha a formato YYYY-MM-DD para el input
             const fechaFormateada = socio.fechaNacimiento
                 ? new Date(socio.fechaNacimiento).toISOString().split("T")[0]
                 : "";
@@ -147,14 +156,13 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
                 api.get("/conceptos?activo=true&tipoConcepto=Mensualidad"),
             ]);
 
-            // Ordenar cintas por jerarquía (orden)
             const cintasOrdenadas = (resCintas.data || []).sort((a, b) => a.orden - b.orden);
 
             setCintas(cintasOrdenadas);
             setClases(resClases.data || []);
             setConceptos(resConceptos.data || []);
         } catch (error) {
-            // Error al cargar datos
+            manejarErrorApi(error, "cargar los datos necesarios");
         }
     };
 
@@ -194,40 +202,7 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
             cerrar();
             recargar();
         } catch (error) {
-            let mensajeError = "Ocurrió un error inesperado";
-            let detalles = "";
-
-            if (error.response) {
-                if (error.response.status === 400) {
-                    mensajeError = "Datos inválidos";
-                    detalles = error.response.data?.message || "Verifica que todos los datos sean correctos";
-                } else if (error.response.status === 404) {
-                    mensajeError = "Alumno no encontrado";
-                    detalles = "El alumno que intentas editar no existe";
-                } else {
-                    mensajeError = "Error del servidor";
-                    detalles = "No se pudo actualizar el alumno. Intenta nuevamente.";
-                }
-            } else if (error.request) {
-                mensajeError = "Sin conexión";
-                detalles =
-                    "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-            }
-
-            // Cerrar modal primero
-            setGuardando(false);
-            reset();
-            cerrar();
-
-            // Mostrar error después de cerrar
-            setTimeout(() => {
-                Swal.fire({
-                    icon: "error",
-                    title: mensajeError,
-                    text: detalles,
-                    confirmButtonColor: "#d32f2f",
-                });
-            }, 300);
+            manejarErrorApi(error, "actualizar el alumno");
         } finally {
             setGuardando(false);
         }
@@ -240,26 +215,8 @@ export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
             title="Editar Alumno"
             icon={<Edit />}
             maxWidth="md"
-            actions={
-                <>
-                    <Button
-                        onClick={handleClose}
-                        className="modal-button-secondary"
-                        disabled={guardando}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        form="form-editar-socio"
-                        className="modal-button-primary"
-                        disabled={guardando}
-                        startIcon={guardando && <CircularProgress size={20} />}
-                    >
-                        {guardando ? "Guardando..." : "Guardar"}
-                    </Button>
-                </>
-            }
+            formId="form-editar-socio"
+            loading={guardando}
         >
             <form id="form-editar-socio" onSubmit={handleSubmit(onSubmit)}>
                 <Typography variant="subtitle2" sx={{ mb: 2, color: "#666", fontWeight: "bold" }}>

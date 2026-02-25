@@ -33,6 +33,12 @@ import {
 import { generarReportePagos } from "../../services/reportesService";
 import Swal from "sweetalert2";
 
+/**
+ * Subcomponente del módulo de Reportes. Genera y muestra estadísticas de pagos
+ * con filtros por fecha, estado y método de pago. Permite exportar a CSV.
+ * @component
+ * @returns {JSX.Element} Reporte detallado de pagos con tarjetas resumen, gráficos y tabla.
+ */
 export default function ReportePagos() {
   const [reporte, setReporte] = useState(null);
   const [cargando, setCargando] = useState(false);

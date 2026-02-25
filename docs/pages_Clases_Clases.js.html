@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Clases/Clases.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Clases/Clases.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Chip,
+  TextField,
+  Pagination,
+  CircularProgress,
+  Alert,
+  Box,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
+import { Search, Clear, Add, Visibility } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import { obtenerClases, eliminarClase } from "../../services/clasesService";
+import ModalCrearClase from "../../Components/modals/ModalCrearClase";
+import ModalEditarClase from "../../Components/modals/ModalEditarClase";
+import ModalVerAlumnosClase from "../../Components/modals/ModalVerAlumnosClase";
+import "./Clases.css";
+
+/**
+ * Página de Gestión de Clases. Permite crear, editar, eliminar y consultar
+ * los alumnos de cada clase mediante modales especializados.
+ * @component
+ * @returns {JSX.Element} Tabla de clases con opciones de CRUD y visualización de alumnos.
+ */
+export default function Clases() {
+  const [clases, setClases] = useState([]);
+  const [filtro, setFiltro] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [filtrados, setFiltrados] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [modalVerAlumnosAbierto, setModalVerAlumnosAbierto] = useState(false);
+  const [claseEditar, setClaseEditar] = useState(null);
+  const [claseVerAlumnos, setClaseVerAlumnos] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  const itemsPorPagina = 10;
+
+  const cargarClases = async () => {
+    setCargando(true);
+    setError(null);
+
+    try {
+      const data = await obtenerClases();
+      setClases(data || []);
+    } catch (error) {
+      let mensajeError = "Ocurrió un error inesperado al cargar las clases.";
+
+      if (error.response) {
+        if (error.response.status === 401) {
+          mensajeError = "Sesión expirada. Por favor, inicia sesión nuevamente.";
+        } else if (error.response.status === 500) {
+          mensajeError = "Error del servidor. Intenta nuevamente más tarde.";
+        }
+      } else if (error.request) {
+        mensajeError =
+          "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+      }
+
+      setError(mensajeError);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarClases();
+  }, []);
+
+  useEffect(() => {
+    const datosFiltrados = clases.filter((c) =>
+      [c.nombre, c.dias, c.tipoClase]
+        .join(" ")
+        .toLowerCase()
+        .includes(filtro.toLowerCase())
+    );
+    setFiltrados(datosFiltrados);
+    setPagina(1);
+  }, [filtro, clases]);
+
+  const indiceInicio = (pagina - 1) * itemsPorPagina;
+  const indiceFin = indiceInicio + itemsPorPagina;
+  const datosPaginados = filtrados.slice(indiceInicio, indiceFin);
+  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
+
+  const abrirModalEditar = (clase) => {
+    setClaseEditar(clase);
+    setModalEditarAbierto(true);
+  };
+
+  const abrirModalVerAlumnos = (clase) => {
+    setClaseVerAlumnos(clase);
+    setModalVerAlumnosAbierto(true);
+  };
+
+  const limpiarFiltro = () => {
+    setFiltro("");
+  };
+
+  const confirmarEliminar = (clase) => {
+    Swal.fire({
+      title: "¿Eliminar clase?",
+      text: `¿Estás seguro de eliminar la clase "${clase.nombre}"? Esta acción no se puede deshacer.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d32f2f",
+      cancelButtonColor: "#666",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await eliminarClase(clase.slug);
+          Swal.fire({
+            icon: "success",
+            title: "Clase eliminada",
+            text: "La clase se ha eliminado exitosamente",
+            confirmButtonColor: "#d32f2f",
+          });
+          cargarClases();
+        } catch (error) {
+          let mensajeError = "No se pudo eliminar la clase";
+          let detalles = "";
+
+          if (error.response) {
+            if (error.response.status === 404) {
+              mensajeError = "Clase no encontrada";
+              detalles = "La clase que intentas eliminar no existe";
+            } else if (error.response.status === 400) {
+              mensajeError = "No se puede eliminar";
+              detalles = error.response.data?.message || "La clase tiene alumnos asignados";
+            } else {
+              mensajeError = "Error del servidor";
+              detalles = "Intenta nuevamente más tarde";
+            }
+          } else if (error.request) {
+            mensajeError = "Sin conexión";
+            detalles = "Verifica tu conexión a internet";
+          }
+
+          Swal.fire({
+            icon: "error",
+            title: mensajeError,
+            text: detalles,
+            confirmButtonColor: "#d32f2f",
+          });
+        }
+      }
+    });
+  };
+
+  return (
+    &lt;div className="clases-container">
+      &lt;Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        &lt;h1 className="page-title">Gestión de Clases&lt;/h1>
+        &lt;Button
+          variant="contained"
+          startIcon={&lt;Add />}
+          onClick={() => setModalAbierto(true)}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&amp;:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
+        >
+          Agregar Clase
+        &lt;/Button>
+      &lt;/Box>
+
+      &lt;Box sx={{ mb: 2 }}>
+        &lt;TextField
+          placeholder="Buscar por nombre, días o tipo..."
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              &lt;InputAdornment position="start">
+                &lt;Search />
+              &lt;/InputAdornment>
+            ),
+            endAdornment: filtro &amp;&amp; (
+              &lt;InputAdornment position="end">
+                &lt;IconButton onClick={limpiarFiltro} size="small">
+                  &lt;Clear />
+                &lt;/IconButton>
+              &lt;/InputAdornment>
+            ),
+          }}
+        />
+      &lt;/Box>
+
+      {error &amp;&amp; (
+        &lt;Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        &lt;/Alert>
+      )}
+
+      {cargando ? (
+        &lt;Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+          &lt;CircularProgress />
+        &lt;/Box>
+      ) : (
+        &lt;>
+          &lt;TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
+            &lt;Table>
+              &lt;TableHead>
+                &lt;TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&amp;::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Nombre
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Días
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Horario
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Cupo
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Tipo
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Estado
+                  &lt;/TableCell>
+                  &lt;TableCell
+                    sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}
+                    align="center"
+                  >
+                    Acciones
+                  &lt;/TableCell>
+                &lt;/TableRow>
+              &lt;/TableHead>
+              &lt;TableBody>
+                {datosPaginados.length === 0 ? (
+                  &lt;TableRow>
+                    &lt;TableCell colSpan={7} align="center">
+                      No se encontraron clases
+                    &lt;/TableCell>
+                  &lt;/TableRow>
+                ) : (
+                  datosPaginados.map((clase) => (
+                    &lt;TableRow
+                      key={clase.slug}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&amp;:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
+                      &lt;TableCell>{clase.nombre}&lt;/TableCell>
+                      &lt;TableCell>{clase.dias}&lt;/TableCell>
+                      &lt;TableCell>
+                        {clase.horaInicio} - {clase.horaFin}
+                      &lt;/TableCell>
+                      &lt;TableCell>
+                        {clase.alumnosInscritos || 0} / {clase.cupoMaximo}
+                      &lt;/TableCell>
+                      &lt;TableCell>
+                        &lt;Chip
+                          label={clase.tipoClase}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                        />
+                      &lt;/TableCell>
+                      &lt;TableCell>
+                        &lt;Chip
+                          label={clase.activo ? "Activo" : "Inactivo"}
+                          color={clase.activo ? "success" : "error"}
+                          size="small"
+                        />
+                      &lt;/TableCell>
+                      &lt;TableCell align="center">
+                        &lt;Box sx={{ display: "flex", gap: 1, justifyContent: "center", flexWrap: "wrap" }}>
+                          &lt;Button
+                            variant="outlined"
+                            color="success"
+                            size="small"
+                            startIcon={&lt;Visibility />}
+                            onClick={() => abrirModalVerAlumnos(clase)}
+                          >
+                            Ver Alumnos
+                          &lt;/Button>
+                          &lt;Button
+                            variant="outlined"
+                            color="primary"
+                            size="small"
+                            onClick={() => abrirModalEditar(clase)}
+                          >
+                            Editar
+                          &lt;/Button>
+                          &lt;Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            onClick={() => confirmarEliminar(clase)}
+                          >
+                            Eliminar
+                          &lt;/Button>
+                        &lt;/Box>
+                      &lt;/TableCell>
+                    &lt;/TableRow>
+                  ))
+                )}
+              &lt;/TableBody>
+            &lt;/Table>
+          &lt;/TableContainer>
+
+          {totalPaginas > 1 &amp;&amp; (
+            &lt;Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              &lt;Pagination
+                count={totalPaginas}
+                page={pagina}
+                onChange={(_, value) => setPagina(value)}
+                sx={{
+                  "&amp; .MuiPaginationItem-root": {
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    borderRadius: "10px",
+                    transition: "all 0.3s ease",
+                  },
+                  "&amp; .MuiPaginationItem-root.Mui-selected": {
+                    background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                    color: "white",
+                    boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                    "&amp;:hover": {
+                      background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                    },
+                  },
+                  "&amp; .MuiPaginationItem-root:hover": {
+                    backgroundColor: "rgba(220, 20, 60, 0.1)",
+                  }
+                }}
+              />
+            &lt;/Box>
+          )}
+        &lt;/>
+      )}
+
+      &lt;ModalCrearClase
+        abierto={modalAbierto}
+        cerrar={() => setModalAbierto(false)}
+        recargar={cargarClases}
+      />
+
+      &lt;ModalEditarClase
+        abierto={modalEditarAbierto}
+        cerrar={() => {
+          setModalEditarAbierto(false);
+          setClaseEditar(null);
+        }}
+        recargar={cargarClases}
+        clase={claseEditar}
+      />
+
+      &lt;ModalVerAlumnosClase
+        abierto={modalVerAlumnosAbierto}
+        cerrar={() => {
+          setModalVerAlumnosAbierto(false);
+          setClaseVerAlumnos(null);
+        }}
+        clase={claseVerAlumnos}
+      />
+    &lt;/div>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

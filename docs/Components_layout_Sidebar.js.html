@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/layout/Sidebar.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/layout/Sidebar.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
+import { User, Users, CreditCard, LogOut, Banknote, Calendar, BarChart3, ClipboardCheck } from "lucide-react";
+import { useState, useEffect } from "react";
+import "./Sidebar.css";
+
+/**
+ * Barra lateral de navegación del sistema.
+ * Contiene los enlaces a todos los módulos (Usuarios, Alumnos, Clases, Asistencia,
+ * Conceptos, Pagos, Reportes) y el botón de cierre de sesión.
+ * Soporta un estado abierto/cerrado con transición animada.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.isOpen - Indica si el sidebar está expandido o colapsado.
+ * @param {Function} props.toggleSidebar - Callback para alternar el estado del sidebar.
+ *
+ * @example
+ * &lt;Sidebar isOpen={sidebarAbierto} toggleSidebar={toggleSidebar} />
+ */
+export default function Sidebar({ isOpen, toggleSidebar }) {
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [showContent, setShowContent] = useState(isOpen);
+
+    useEffect(() => {
+        if (isOpen) {
+            // Cuando se abre, mostrar contenido después de iniciar transición
+            setIsTransitioning(true);
+            const timer = setTimeout(() => {
+                setShowContent(true);
+                setIsTransitioning(false);
+            }, 100);
+            return () => clearTimeout(timer);
+        } else {
+            // Cuando se cierra, ocultar contenido inmediatamente
+            setShowContent(false);
+            setIsTransitioning(true);
+            const timer = setTimeout(() => {
+                setIsTransitioning(false);
+            }, 250);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
+
+    return (
+        &lt;div
+            className={`sidebar ${isOpen ? "open" : "closed"}`}
+        >
+            &lt;div>
+                &lt;div className="sidebar-header">
+                    {showContent &amp;&amp; &lt;h2 className="text-2xl font-bold text-red-600">Taekwondo  Dojang Quiroga&lt;/h2>}
+                    &lt;div className={`button-container ${isOpen ? '' : 'button-container-closed'}`}>
+                        &lt;button
+                            onClick={toggleSidebar}
+                            className="menu-toggle-button"
+                            aria-label="Toggle menu"
+                        >
+                            &lt;div className="hamburger">
+                                &lt;span>&lt;/span>
+                                &lt;span>&lt;/span>
+                                &lt;span>&lt;/span>
+                            &lt;/div>
+                        &lt;/button>
+                    &lt;/div>
+                &lt;/div>
+                &lt;nav className="flex flex-col space-y-4">
+                    &lt;Link to="/usuarios" className="sidebar-link">
+                        &lt;User className="w-5 h-5" />
+                        {showContent &amp;&amp; &lt;span className="ml-2">Usuarios&lt;/span>}
+                    &lt;/Link>
+                    &lt;Link to="/alumnos" className="sidebar-link">
+                        &lt;Users className="w-5 h-5" />
+                        {showContent &amp;&amp; &lt;span className="ml-2">Alumnos&lt;/span>}
+                    &lt;/Link>
+                    &lt;Link to="/clases" className="sidebar-link">
+                        &lt;Calendar className="w-5 h-5" />
+                        {showContent &amp;&amp; &lt;span className="ml-2">Clases&lt;/span>}
+                    &lt;/Link>
+                    &lt;Link to="/asistencia" className="sidebar-link">
+                        &lt;ClipboardCheck className="w-5 h-5" />
+                        {showContent &amp;&amp; &lt;span className="ml-2">Asistencia&lt;/span>}
+                    &lt;/Link>
+                    &lt;Link to="/conceptos" className="sidebar-link">
+                        &lt;CreditCard className="w-5 h-5" />
+                        {showContent &amp;&amp; &lt;span className="ml-2">Conceptos&lt;/span>}
+                    &lt;/Link>
+                    &lt;Link to="/pagos" className="sidebar-link">
+                        &lt;Banknote className="w-5 h-5" />
+                        {showContent &amp;&amp; &lt;span className="ml-2">Pagos&lt;/span>}
+                    &lt;/Link>
+                    &lt;Link to="/reportes" className="sidebar-link">
+                        &lt;BarChart3 className="w-5 h-5" />
+                        {showContent &amp;&amp; &lt;span className="ml-2">Reportes&lt;/span>}
+                    &lt;/Link>
+                &lt;/nav>
+            &lt;/div>
+            &lt;button
+                className="logout-button"
+                onClick={() => {
+                    localStorage.removeItem("token");
+                    window.location.href = "/login";
+                }}
+            >
+                &lt;LogOut className="w-5 h-5" />
+                {showContent &amp;&amp; &lt;span>Cerrar sesion&lt;/span>}
+            &lt;/button>
+        &lt;/div>
+    );
+}
+
+Sidebar.propTypes = {
+    isOpen: PropTypes.bool.isRequired,
+    toggleSidebar: PropTypes.func.isRequired
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/CintaChip.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/CintaChip.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import PropTypes from "prop-types";
+import "./CintaChip.css";
+
+/**
+ * Componente visual que muestra el nivel de cinta de un alumno de Taekwondo.
+ * Aplica estilos CSS dinámicos según el nombre de la cinta detectado,
+ * soportando cintas simples (blanca, amarilla, verde, azul, roja, negra)
+ * y cintas de transición (ej. blanca-amarilla, azul-roja).
+ *
+ * @component
+ * @param {object} props
+ * @param {string} [props.nombreCinta] - Nombre de la cinta del alumno.
+ *   Si no se proporciona o es vacío, muestra "Sin cinta".
+ *
+ * @example
+ * &lt;CintaChip nombreCinta="Cinta Azul" />
+ * &lt;CintaChip nombreCinta="Cinta Roja Avanzada" />
+ * &lt;CintaChip /> // Muestra "Sin cinta"
+ */
+export default function CintaChip({ nombreCinta }) {
+  if (!nombreCinta) {
+    return (
+      &lt;span className="cinta-chip cinta-sin-cinta">
+        Sin cinta
+      &lt;/span>
+    );
+  }
+
+  // Normalizar el nombre de la cinta (quitar acentos, convertir a minúsculas)
+  const nombreNormalizado = nombreCinta
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+  // Determinar la clase CSS según el nombre de la cinta
+  let claseCSS = "cinta-chip";
+
+  if (nombreNormalizado.includes("blanca avanzada") || nombreNormalizado.includes("blanca-amarilla")) {
+    claseCSS += " cinta-blanca-avanzada";
+  } else if (nombreNormalizado.includes("amarilla avanzada") || nombreNormalizado.includes("amarilla-verde")) {
+    claseCSS += " cinta-amarilla-avanzada";
+  } else if (nombreNormalizado.includes("verde avanzada") || nombreNormalizado.includes("verde-azul")) {
+    claseCSS += " cinta-verde-avanzada";
+  } else if (nombreNormalizado.includes("azul avanzada") || nombreNormalizado.includes("azul-roja") || nombreNormalizado.includes("azul-rojo")) {
+    claseCSS += " cinta-azul-avanzada";
+  } else if (nombreNormalizado.includes("roja avanzada") || nombreNormalizado.includes("roja-negra") || nombreNormalizado.includes("roja-negro")) {
+    claseCSS += " cinta-roja-avanzada";
+  } else if (nombreNormalizado.includes("poom")) {
+    claseCSS += " cinta-poom-1";
+  } else if (nombreNormalizado.includes("blanca")) {
+    claseCSS += " cinta-blanca";
+  } else if (nombreNormalizado.includes("amarilla")) {
+    claseCSS += " cinta-amarilla";
+  } else if (nombreNormalizado.includes("verde")) {
+    claseCSS += " cinta-verde";
+  } else if (nombreNormalizado.includes("azul")) {
+    claseCSS += " cinta-azul";
+  } else if (nombreNormalizado.includes("roja") || nombreNormalizado.includes("rojo")) {
+    claseCSS += " cinta-roja";
+  } else if (nombreNormalizado.includes("negra") || nombreNormalizado.includes("negro")) {
+    claseCSS += " cinta-negra";
+  } else {
+    claseCSS += " cinta-sin-cinta";
+  }
+
+  return (
+    &lt;span className={claseCSS}>
+      {nombreCinta}
+    &lt;/span>
+  );
+}
+
+CintaChip.propTypes = {
+  nombreCinta: PropTypes.string,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

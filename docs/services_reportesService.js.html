@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/reportesService.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/reportesService.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import api from './api';
+
+/**
+ * Genera un reporte de pagos con filtros opcionales.
+ *
+ * @param {object} [filtros={}] - Filtros para el reporte.
+ * @param {string} [filtros.fechaInicio] - Fecha de inicio del rango (ISO).
+ * @param {string} [filtros.fechaFin] - Fecha de fin del rango (ISO).
+ * @param {number} [filtros.alumnoId] - ID del alumno a filtrar.
+ * @param {number} [filtros.conceptoId] - ID del concepto a filtrar.
+ * @param {string} [filtros.estado] - Estado del pago a filtrar.
+ * @param {string} [filtros.metodoPago] - Método de pago a filtrar.
+ * @returns {Promise&lt;object>} Datos del reporte de pagos.
+ */
+export const generarReportePagos = async (filtros = {}) => {
+  const params = new URLSearchParams();
+
+  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
+  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
+  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
+  if (filtros.conceptoId) params.append('conceptoId', filtros.conceptoId);
+  if (filtros.estado) params.append('estado', filtros.estado);
+  if (filtros.metodoPago) params.append('metodoPago', filtros.metodoPago);
+
+  const response = await api.get(`/reportes/pagos?${params.toString()}`);
+  return response.data;
+};
+
+/**
+ * Genera un reporte de estudiantes con filtros opcionales.
+ *
+ * @param {object} [filtros={}] - Filtros para el reporte.
+ * @param {number} [filtros.cintaId] - ID de la cinta para filtrar alumnos.
+ * @param {number} [filtros.claseId] - ID de la clase para filtrar alumnos.
+ * @returns {Promise&lt;object>} Datos del reporte de estudiantes.
+ */
+export const generarReporteEstudiantes = async (filtros = {}) => {
+  const params = new URLSearchParams();
+
+  if (filtros.cintaId) params.append('cintaId', filtros.cintaId);
+  if (filtros.claseId) params.append('claseId', filtros.claseId);
+
+  const response = await api.get(`/reportes/estudiantes?${params.toString()}`);
+  return response.data;
+};
+
+/**
+ * Genera un reporte de asistencias con filtros opcionales.
+ *
+ * @param {object} [filtros={}] - Filtros para el reporte.
+ * @param {string} [filtros.fechaInicio] - Fecha de inicio del rango (ISO).
+ * @param {string} [filtros.fechaFin] - Fecha de fin del rango (ISO).
+ * @param {number} [filtros.alumnoId] - ID del alumno a filtrar.
+ * @param {number} [filtros.claseId] - ID de la clase a filtrar.
+ * @returns {Promise&lt;object>} Datos del reporte de asistencias.
+ */
+export const generarReporteAsistencias = async (filtros = {}) => {
+  const params = new URLSearchParams();
+
+  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
+  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
+  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
+  if (filtros.claseId) params.append('claseId', filtros.claseId);
+
+  const response = await api.get(`/reportes/asistencias?${params.toString()}`);
+  return response.data;
+};
+
+/**
+ * Genera un reporte de todos los conceptos de pago registrados en el sistema.
+ *
+ * @returns {Promise&lt;object>} Datos del reporte de conceptos.
+ */
+export const generarReporteConceptos = async () => {
+  const response = await api.get('/reportes/conceptos');
+  return response.data;
+};
+
+/**
+ * Genera un reporte de todas las clases registradas en el sistema.
+ *
+ * @returns {Promise&lt;object>} Datos del reporte de clases.
+ */
+export const generarReporteClases = async () => {
+  const response = await api.get('/reportes/clases');
+  return response.data;
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

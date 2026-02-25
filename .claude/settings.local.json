@@ -36,7 +36,8 @@
       "Bash(dir /s /b \"C:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api\")",
       "Bash(cmd /c \"dir /s /b C:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api | findstr \\.old\")",
       "Bash(cmd /c \"dir /s /b C:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api\\Comun\\Modelos\\Reportes\")",
-      "Bash(cmd /c \"dir /s /b C:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api | findstr Controller.cs\")"
+      "Bash(cmd /c \"dir /s /b C:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api | findstr Controller.cs\")",
+      "Bash(cmd /c \"dir /s /b C:\\\\Users\\\\Hector\\\\Documents\\\\GitHub\\\\ControlFitnessGym\\\\Api\\\\Comun\\\\Modelos\")"
     ],
     "deny": [],
     "ask": []

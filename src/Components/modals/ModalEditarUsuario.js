@@ -54,6 +54,17 @@ const esquema = yup.object().shape({
     habilitado: yup.boolean().default(true),
 });
 
+/**
+ * Modal para editar los datos de un usuario existente del sistema.
+ * La contraseña es opcional: si se deja en blanco, no se modifica.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.onClose - Callback para cerrar el modal.
+ * @param {object} props.usuario - Datos actuales del usuario a editar.
+ * @param {Function} props.onActualizado - Callback ejecutado tras actualizar el usuario exitosamente.
+ */
 export default function ModalEditarUsuario({ abierto, onClose, usuario, onActualizado }) {
     const [guardando, setGuardando] = useState(false);
     const [mostrarPassword, setMostrarPassword] = useState(false);

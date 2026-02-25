@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Pagos/Pagos.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Pagos/Pagos.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Chip,
+  TextField,
+  Pagination,
+  CircularProgress,
+  Alert,
+  Box,
+  InputAdornment,
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+} from "@mui/material";
+import { Search, Clear, PaymentRounded, AttachMoney, TrendingUp, CalendarToday } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import { obtenerPagos, eliminarPago, obtenerEstadisticasPagos } from "../../services/pagosService";
+import ModalPago from "../../Components/modals/ModalPago";
+import "./Pagos.css";
+
+/**
+ * Página de Gestión de Pagos. Muestra estadísticas de ingresos y una tabla
+ * de todos los pagos, con filtros por texto, fecha y estado.
+ * @component
+ * @returns {JSX.Element} Dashboard de pagos con tarjetas de resumen y tabla filtrable.
+ */
+export default function Pagos() {
+  const [pagos, setPagos] = useState([]);
+  const [filtro, setFiltro] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState("");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [filtrados, setFiltrados] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+  const [estadisticas, setEstadisticas] = useState(null);
+
+  const itemsPorPagina = 10;
+
+  const cargarEstadisticas = async () => {
+    try {
+      const data = await obtenerEstadisticasPagos();
+      setEstadisticas(data);
+    } catch (error) {
+      // Error al cargar estadísticas
+    }
+  };
+
+  const cargarPagos = async () => {
+    setCargando(true);
+    setError(null);
+
+    try {
+      const filtros = {};
+      if (estadoFiltro) filtros.estado = estadoFiltro;
+
+      const data = await obtenerPagos(filtros);
+      setPagos(data || []);
+    } catch (error) {
+      let mensajeError = "Ocurrió un error inesperado al cargar los pagos.";
+
+      if (error.response) {
+        mensajeError = "Error al cargar los pagos del servidor.";
+      } else if (error.request) {
+        mensajeError = "No se pudo conectar con el servidor. Verifica tu conexión.";
+      }
+
+      setError(mensajeError);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error al cargar pagos",
+        text: mensajeError,
+        confirmButtonColor: "#d32f2f",
+      });
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarPagos();
+  }, [estadoFiltro]);
+
+  useEffect(() => {
+    cargarEstadisticas();
+  }, [pagos]);
+
+  useEffect(() => {
+    let datosFiltrados = pagos.filter((p) =>
+      [p.alumnoNombre, p.conceptoNombre, p.metodoPago, p.referencia]
+        .join(" ")
+        .toLowerCase()
+        .includes(filtro.toLowerCase())
+    );
+
+    // Filtrar por rango de fechas
+    if (fechaInicio) {
+      const inicio = new Date(fechaInicio);
+      inicio.setHours(0, 0, 0, 0);
+      datosFiltrados = datosFiltrados.filter((p) => {
+        const fechaPago = new Date(p.fecha);
+        return fechaPago >= inicio;
+      });
+    }
+
+    if (fechaFin) {
+      const fin = new Date(fechaFin);
+      fin.setHours(23, 59, 59, 999);
+      datosFiltrados = datosFiltrados.filter((p) => {
+        const fechaPago = new Date(p.fecha);
+        return fechaPago &lt;= fin;
+      });
+    }
+
+    setFiltrados(datosFiltrados);
+    setPagina(1);
+  }, [filtro, pagos, fechaInicio, fechaFin]);
+
+  const indiceInicio = (pagina - 1) * itemsPorPagina;
+  const indiceFin = indiceInicio + itemsPorPagina;
+  const datosPaginados = filtrados.slice(indiceInicio, indiceFin);
+
+  const handleEliminarPago = async (id) => {
+    const result = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción no se puede deshacer",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d32f2f",
+      cancelButtonColor: "#757575",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await eliminarPago(id);
+
+        Swal.fire({
+          icon: "success",
+          title: "Pago eliminado",
+          text: "El pago se ha eliminado exitosamente",
+          confirmButtonColor: "#d32f2f",
+        });
+
+        cargarPagos();
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "No se pudo eliminar el pago",
+          confirmButtonColor: "#d32f2f",
+        });
+      }
+    }
+  };
+
+  const formatearFecha = (fecha) => {
+    return new Date(fecha).toLocaleDateString("es-MX", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatearMonto = (monto) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(monto);
+  };
+
+  const obtenerColorEstado = (estado) => {
+    switch (estado) {
+      case "Confirmado":
+        return "success";
+      case "Pendiente":
+        return "warning";
+      case "Rechazado":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
+
+  return (
+    &lt;div className="pagos-container">
+      &lt;Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        &lt;h1 className="page-title">Gestión de Pagos&lt;/h1>
+        &lt;Button
+          variant="contained"
+          startIcon={&lt;PaymentRounded />}
+          onClick={() => setModalAbierto(true)}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&amp;:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
+        >
+          Registrar Pago
+        &lt;/Button>
+      &lt;/Box>
+
+      {estadisticas &amp;&amp; (
+        &lt;Grid container spacing={2} sx={{ mb: 3 }}>
+          &lt;Grid item xs={12} md={3}>
+            &lt;Card sx={{ backgroundColor: "#e3f2fd" }}>
+              &lt;CardContent>
+                &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  &lt;AttachMoney sx={{ color: "#1976d2" }} />
+                  &lt;Typography variant="h6" component="div">
+                    Total Ingresos
+                  &lt;/Typography>
+                &lt;/Box>
+                &lt;Typography variant="h4" sx={{ mt: 1, color: "#1976d2" }}>
+                  {formatearMonto(estadisticas.totalMonto)}
+                &lt;/Typography>
+              &lt;/CardContent>
+            &lt;/Card>
+          &lt;/Grid>
+          &lt;Grid item xs={12} md={3}>
+            &lt;Card sx={{ backgroundColor: "#e8f5e9" }}>
+              &lt;CardContent>
+                &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  &lt;TrendingUp sx={{ color: "#388e3c" }} />
+                  &lt;Typography variant="h6" component="div">
+                    Confirmados
+                  &lt;/Typography>
+                &lt;/Box>
+                &lt;Typography variant="h4" sx={{ mt: 1, color: "#388e3c" }}>
+                  {estadisticas.pagosConfirmados}
+                &lt;/Typography>
+              &lt;/CardContent>
+            &lt;/Card>
+          &lt;/Grid>
+          &lt;Grid item xs={12} md={3}>
+            &lt;Card sx={{ backgroundColor: "#fff3e0" }}>
+              &lt;CardContent>
+                &lt;Typography variant="h6" component="div">
+                  Pendientes
+                &lt;/Typography>
+                &lt;Typography variant="h4" sx={{ mt: 1, color: "#f57c00" }}>
+                  {estadisticas.pagosPendientes}
+                &lt;/Typography>
+              &lt;/CardContent>
+            &lt;/Card>
+          &lt;/Grid>
+          &lt;Grid item xs={12} md={3}>
+            &lt;Card sx={{ backgroundColor: "#ffebee" }}>
+              &lt;CardContent>
+                &lt;Typography variant="h6" component="div">
+                  Rechazados
+                &lt;/Typography>
+                &lt;Typography variant="h4" sx={{ mt: 1, color: "#d32f2f" }}>
+                  {estadisticas.pagosRechazados}
+                &lt;/Typography>
+              &lt;/CardContent>
+            &lt;/Card>
+          &lt;/Grid>
+        &lt;/Grid>
+      )}
+
+      &lt;Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
+        &lt;TextField
+          placeholder="Buscar por alumno, concepto o referencia..."
+          variant="outlined"
+          size="small"
+          sx={{ flex: 1, minWidth: "250px" }}
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              &lt;InputAdornment position="start">
+                &lt;Search />
+              &lt;/InputAdornment>
+            ),
+            endAdornment: filtro &amp;&amp; (
+              &lt;InputAdornment position="end">
+                &lt;IconButton onClick={() => setFiltro("")} edge="end">
+                  &lt;Clear />
+                &lt;/IconButton>
+              &lt;/InputAdornment>
+            ),
+          }}
+        />
+
+        &lt;TextField
+          label="Fecha Inicio"
+          type="date"
+          size="small"
+          sx={{ minWidth: 160 }}
+          value={fechaInicio}
+          onChange={(e) => setFechaInicio(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          InputProps={{
+            startAdornment: (
+              &lt;InputAdornment position="start">
+                &lt;CalendarToday fontSize="small" />
+              &lt;/InputAdornment>
+            ),
+            endAdornment: fechaInicio &amp;&amp; (
+              &lt;InputAdornment position="end">
+                &lt;IconButton onClick={() => setFechaInicio("")} edge="end" size="small">
+                  &lt;Clear fontSize="small" />
+                &lt;/IconButton>
+              &lt;/InputAdornment>
+            ),
+          }}
+        />
+
+        &lt;TextField
+          label="Fecha Fin"
+          type="date"
+          size="small"
+          sx={{ minWidth: 160 }}
+          value={fechaFin}
+          onChange={(e) => setFechaFin(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          InputProps={{
+            startAdornment: (
+              &lt;InputAdornment position="start">
+                &lt;CalendarToday fontSize="small" />
+              &lt;/InputAdornment>
+            ),
+            endAdornment: fechaFin &amp;&amp; (
+              &lt;InputAdornment position="end">
+                &lt;IconButton onClick={() => setFechaFin("")} edge="end" size="small">
+                  &lt;Clear fontSize="small" />
+                &lt;/IconButton>
+              &lt;/InputAdornment>
+            ),
+          }}
+        />
+
+        &lt;FormControl size="small" sx={{ minWidth: 150 }}>
+          &lt;InputLabel>Estado&lt;/InputLabel>
+          &lt;Select
+            value={estadoFiltro}
+            label="Estado"
+            onChange={(e) => setEstadoFiltro(e.target.value)}
+          >
+            &lt;MenuItem value="">Todos&lt;/MenuItem>
+            &lt;MenuItem value="Confirmado">Confirmado&lt;/MenuItem>
+            &lt;MenuItem value="Pendiente">Pendiente&lt;/MenuItem>
+            &lt;MenuItem value="Rechazado">Rechazado&lt;/MenuItem>
+          &lt;/Select>
+        &lt;/FormControl>
+
+        {(filtro || fechaInicio || fechaFin || estadoFiltro) &amp;&amp; (
+          &lt;Button
+            variant="outlined"
+            size="small"
+            onClick={() => {
+              setFiltro("");
+              setFechaInicio("");
+              setFechaFin("");
+              setEstadoFiltro("");
+            }}
+            startIcon={&lt;Clear />}
+            sx={{
+              borderColor: "#d32f2f",
+              color: "#d32f2f",
+              "&amp;:hover": {
+                borderColor: "#b71c1c",
+                backgroundColor: "rgba(211, 47, 47, 0.04)",
+              },
+            }}
+          >
+            Limpiar Filtros
+          &lt;/Button>
+        )}
+      &lt;/Box>
+
+      {error &amp;&amp; (
+        &lt;Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        &lt;/Alert>
+      )}
+
+      {cargando ? (
+        &lt;Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          &lt;CircularProgress />
+        &lt;/Box>
+      ) : (
+        &lt;>
+          &lt;TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
+            &lt;Table>
+              &lt;TableHead>
+                &lt;TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&amp;::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Fecha
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Alumno
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Concepto
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Monto
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Método
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Estado
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Referencia
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Notas
+                  &lt;/TableCell>
+                  &lt;TableCell
+                    sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}
+                    align="center"
+                  >
+                    Acciones
+                  &lt;/TableCell>
+                &lt;/TableRow>
+              &lt;/TableHead>
+              &lt;TableBody>
+                {datosPaginados.length === 0 ? (
+                  &lt;TableRow>
+                    &lt;TableCell colSpan={9} align="center">
+                      No se encontraron pagos
+                    &lt;/TableCell>
+                  &lt;/TableRow>
+                ) : (
+                  datosPaginados.map((pago) => (
+                    &lt;TableRow
+                      key={pago.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&amp;:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
+                      &lt;TableCell>{formatearFecha(pago.fecha)}&lt;/TableCell>
+                      &lt;TableCell>{pago.alumnoNombre}&lt;/TableCell>
+                      &lt;TableCell>
+                        {pago.conceptoNombre}
+                        {pago.tipoConcepto &amp;&amp; (
+                          &lt;Chip
+                            label={pago.tipoConcepto}
+                            size="small"
+                            sx={{ ml: 1 }}
+                          />
+                        )}
+                      &lt;/TableCell>
+                      &lt;TableCell sx={{ fontWeight: "bold" }}>
+                        {formatearMonto(pago.monto)}
+                      &lt;/TableCell>
+                      &lt;TableCell>{pago.metodoPago}&lt;/TableCell>
+                      &lt;TableCell>
+                        &lt;Chip
+                          label={pago.estado}
+                          color={obtenerColorEstado(pago.estado)}
+                          size="small"
+                        />
+                      &lt;/TableCell>
+                      &lt;TableCell>{pago.referencia || "N/A"}&lt;/TableCell>
+                      &lt;TableCell>{pago.notas || "N/A"}&lt;/TableCell>
+                      &lt;TableCell align="center">
+                        &lt;Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          onClick={() => handleEliminarPago(pago.id)}
+                        >
+                          Eliminar
+                        &lt;/Button>
+                      &lt;/TableCell>
+                    &lt;/TableRow>
+                  ))
+                )}
+              &lt;/TableBody>
+            &lt;/Table>
+          &lt;/TableContainer>
+
+          {totalPaginas > 1 &amp;&amp; (
+            &lt;Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              &lt;Pagination
+                count={totalPaginas}
+                page={pagina}
+                onChange={(e, val) => setPagina(val)}
+                sx={{
+                  "&amp; .MuiPaginationItem-root": {
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    borderRadius: "10px",
+                    transition: "all 0.3s ease",
+                  },
+                  "&amp; .MuiPaginationItem-root.Mui-selected": {
+                    background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                    color: "white",
+                    boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                    "&amp;:hover": {
+                      background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                    },
+                  },
+                  "&amp; .MuiPaginationItem-root:hover": {
+                    backgroundColor: "rgba(220, 20, 60, 0.1)",
+                  }
+                }}
+              />
+            &lt;/Box>
+          )}
+        &lt;/>
+      )}
+
+      &lt;ModalPago
+        abierto={modalAbierto}
+        cerrar={() => setModalAbierto(false)}
+        recargar={cargarPagos}
+      />
+    &lt;/div>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

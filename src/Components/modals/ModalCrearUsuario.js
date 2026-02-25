@@ -48,6 +48,16 @@ const esquema = yup.object().shape({
     habilitado: yup.boolean().default(true),
 });
 
+/**
+ * Modal para crear un nuevo usuario del sistema con credenciales de acceso.
+ * Valida fortaleza de contraseña: mínimo 8 caracteres, mayúscula, minúscula y número.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.onClose - Callback para cerrar el modal.
+ * @param {Function} props.onGuardado - Callback ejecutado tras crear el usuario exitosamente.
+ */
 export default function ModalCrearUsuario({ abierto, onClose, onGuardado }) {
     const [guardando, setGuardando] = useState(false);
     const [mostrarPassword, setMostrarPassword] = useState(false);

@@ -25,6 +25,12 @@ import ModalEditarClase from "../../Components/modals/ModalEditarClase";
 import ModalVerAlumnosClase from "../../Components/modals/ModalVerAlumnosClase";
 import "./Clases.css";
 
+/**
+ * Página de Gestión de Clases. Permite crear, editar, eliminar y consultar
+ * los alumnos de cada clase mediante modales especializados.
+ * @component
+ * @returns {JSX.Element} Tabla de clases con opciones de CRUD y visualización de alumnos.
+ */
 export default function Clases() {
   const [clases, setClases] = useState([]);
   const [filtro, setFiltro] = useState("");

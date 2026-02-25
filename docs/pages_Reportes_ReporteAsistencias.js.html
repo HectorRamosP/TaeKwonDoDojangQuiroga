@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Reportes/ReporteAsistencias.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Reportes/ReporteAsistencias.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useState, useEffect } from "react";
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  CircularProgress,
+  Alert,
+  Chip,
+} from "@mui/material";
+import {
+  EventAvailable,
+  CheckCircle,
+  Cancel,
+  TrendingUp,
+  Download,
+} from "@mui/icons-material";
+import { generarReporteAsistencias } from "../../services/reportesService";
+import Swal from "sweetalert2";
+
+/**
+ * Subcomponente del módulo de Reportes. Genera estadísticas de asistencia
+ * filtradas por rango de fechas. Muestra porcentaje de asistencia por clase
+ * y top de alumnos. Permite exportar a CSV.
+ * @component
+ * @returns {JSX.Element} Reporte de asistencias con tarjetas resumen, gráficos y tabla por día.
+ */
+export default function ReporteAsistencias() {
+  const [reporte, setReporte] = useState(null);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [filtros, setFiltros] = useState({
+    fechaInicio: "",
+    fechaFin: "",
+  });
+
+  const cargarReporte = async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const data = await generarReporteAsistencias(filtros);
+      setReporte(data);
+    } catch (err) {
+      setError("Error al generar el reporte de asistencias");
+      Swal.fire("Error", "No se pudo generar el reporte", "error");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarReporte();
+  }, []);
+
+  const handleFiltroChange = (campo, valor) => {
+    setFiltros({ ...filtros, [campo]: valor });
+  };
+
+  const formatearFecha = (fecha) => {
+    return new Date(fecha).toLocaleDateString("es-MX");
+  };
+
+  const exportarCSV = () => {
+    if (!reporte || !reporte.asistencias.length) return;
+
+    const headers = ["ID", "Alumno", "Clase", "Fecha", "Presente"];
+    const rows = reporte.asistencias.map(a => [
+      a.id,
+      a.alumnoNombre,
+      a.claseNombre,
+      formatearFecha(a.fecha),
+      a.presente ? "Si" : "No",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(",")),
+    ].join("\n");
+
+    // UTF-8 BOM para que Excel reconozca correctamente los caracteres especiales
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `reporte_asistencias_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
+  if (cargando) {
+    return (
+      &lt;Box className="reporte-loading">
+        &lt;CircularProgress />
+      &lt;/Box>
+    );
+  }
+
+  if (error) {
+    return &lt;Alert severity="error">{error}&lt;/Alert>;
+  }
+
+  return (
+    &lt;Box sx={{ p: 3 }}>
+      {/* Filtros */}
+      &lt;Box className="reporte-filtros">
+        &lt;Typography variant="h6" gutterBottom>
+          Filtros
+        &lt;/Typography>
+        &lt;Grid container spacing={2}>
+          &lt;Grid item xs={12} sm={4}>
+            &lt;TextField
+              label="Fecha Inicio"
+              type="date"
+              fullWidth
+              size="small"
+              value={filtros.fechaInicio}
+              onChange={(e) => handleFiltroChange("fechaInicio", e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          &lt;/Grid>
+          &lt;Grid item xs={12} sm={4}>
+            &lt;TextField
+              label="Fecha Fin"
+              type="date"
+              fullWidth
+              size="small"
+              value={filtros.fechaFin}
+              onChange={(e) => handleFiltroChange("fechaFin", e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          &lt;/Grid>
+          &lt;Grid item xs={12} sm={4}>
+            &lt;Button
+              variant="contained"
+              fullWidth
+              onClick={cargarReporte}
+              sx={{
+                height: "40px",
+                background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                fontWeight: 700,
+                transition: "all 0.3s ease",
+                "&amp;:hover": {
+                  background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                  boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+                  transform: "translateY(-2px)",
+                },
+              }}
+            >
+              Generar Reporte
+            &lt;/Button>
+          &lt;/Grid>
+        &lt;/Grid>
+      &lt;/Box>
+
+      {/* Acciones */}
+      &lt;Box className="reporte-acciones">
+        &lt;Button
+          variant="contained"
+          startIcon={&lt;Download />}
+          onClick={exportarCSV}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&amp;:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
+        >
+          Exportar a Excel
+        &lt;/Button>
+      &lt;/Box>
+
+      {reporte &amp;&amp; (
+        &lt;>
+          {/* Tarjetas de Resumen */}
+          &lt;Grid container spacing={3} sx={{ mb: 3 }}>
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Total Asistencias
+                      &lt;/Typography>
+                      &lt;Typography variant="h4">{reporte.resumen.totalAsistencias}&lt;/Typography>
+                    &lt;/Box>
+                    &lt;EventAvailable sx={{ fontSize: 40, color: "#DC143C" }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Presentes
+                      &lt;/Typography>
+                      &lt;Typography variant="h4">{reporte.resumen.totalPresentes}&lt;/Typography>
+                    &lt;/Box>
+                    &lt;CheckCircle color="success" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Ausentes
+                      &lt;/Typography>
+                      &lt;Typography variant="h4">{reporte.resumen.totalAusentes}&lt;/Typography>
+                    &lt;/Box>
+                    &lt;Cancel color="error" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        % Asistencia
+                      &lt;/Typography>
+                      &lt;Typography variant="h4">
+                        {reporte.resumen.porcentajeAsistencia.toFixed(1)}%
+                      &lt;/Typography>
+                    &lt;/Box>
+                    &lt;TrendingUp color="info" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+          &lt;/Grid>
+
+          {/* Gráficos de Distribución */}
+          &lt;Grid container spacing={3} sx={{ mb: 3 }}>
+            &lt;Grid item xs={12} md={6}>
+              &lt;Card>
+                &lt;CardContent>
+                  &lt;Typography variant="h6" gutterBottom>
+                    Asistencias Por Clase
+                  &lt;/Typography>
+                  {reporte.asistenciasPorClase.slice(0, 5).map((item, index) => (
+                    &lt;Box key={index} sx={{ mb: 2 }}>
+                      &lt;Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        &lt;Typography variant="body2">{item.clase}&lt;/Typography>
+                        &lt;Typography variant="body2" fontWeight="bold">
+                          {item.porcentajeAsistencia.toFixed(1)}%
+                        &lt;/Typography>
+                      &lt;/Box>
+                      &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        &lt;Box
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            bgcolor: "#e0e0e0",
+                            borderRadius: 1,
+                          }}
+                        >
+                          &lt;Box
+                            sx={{
+                              width: `${item.porcentajeAsistencia}%`,
+                              height: "100%",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                              borderRadius: 1,
+                            }}
+                          />
+                        &lt;/Box>
+                        &lt;Typography variant="caption">
+                          {item.presentes}/{item.totalAsistencias}
+                        &lt;/Typography>
+                      &lt;/Box>
+                    &lt;/Box>
+                  ))}
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} md={6}>
+              &lt;Card>
+                &lt;CardContent>
+                  &lt;Typography variant="h6" gutterBottom>
+                    Top 10 Alumnos
+                  &lt;/Typography>
+                  {reporte.topAlumnos.map((item, index) => (
+                    &lt;Box key={index} sx={{ mb: 2 }}>
+                      &lt;Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        &lt;Typography variant="body2" noWrap sx={{ maxWidth: "60%" }}>
+                          {index + 1}. {item.alumnoNombre}
+                        &lt;/Typography>
+                        &lt;Typography variant="body2" fontWeight="bold">
+                          {item.porcentajeAsistencia.toFixed(1)}%
+                        &lt;/Typography>
+                      &lt;/Box>
+                      &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        &lt;Box
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            bgcolor: "#e0e0e0",
+                            borderRadius: 1,
+                          }}
+                        >
+                          &lt;Box
+                            sx={{
+                              width: `${item.porcentajeAsistencia}%`,
+                              height: "100%",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                              borderRadius: 1,
+                            }}
+                          />
+                        &lt;/Box>
+                        &lt;Typography variant="caption">
+                          {item.presentes}/{item.totalAsistencias}
+                        &lt;/Typography>
+                      &lt;/Box>
+                    &lt;/Box>
+                  ))}
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+          &lt;/Grid>
+
+          {/* Tabla de Asistencias Por Día */}
+          &lt;Card sx={{
+            mb: 3,
+            borderRadius: "16px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+            border: "1px solid rgba(220, 20, 60, 0.1)",
+          }}>
+            &lt;CardContent>
+              &lt;Typography variant="h6" gutterBottom>
+                Asistencias Por Día
+              &lt;/Typography>
+              &lt;TableContainer>
+                &lt;Table size="small">
+                  &lt;TableHead>
+                    &lt;TableRow sx={{
+                      background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                      position: "relative",
+                      "&amp;::after": {
+                        content: '""',
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: "3px",
+                        background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                      }
+                    }}>
+                      &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha&lt;/TableCell>
+                      &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Total&lt;/TableCell>
+                      &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Presentes&lt;/TableCell>
+                      &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Ausentes&lt;/TableCell>
+                      &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>% Asistencia&lt;/TableCell>
+                    &lt;/TableRow>
+                  &lt;/TableHead>
+                  &lt;TableBody>
+                    {reporte.asistenciasPorDia.map((dia, index) => (
+                      &lt;TableRow key={index}>
+                        &lt;TableCell>{formatearFecha(dia.fecha)}&lt;/TableCell>
+                        &lt;TableCell align="right">{dia.totalAsistencias}&lt;/TableCell>
+                        &lt;TableCell align="right">{dia.presentes}&lt;/TableCell>
+                        &lt;TableCell align="right">{dia.ausentes}&lt;/TableCell>
+                        &lt;TableCell align="right">
+                          &lt;Chip
+                            label={`${dia.porcentajeAsistencia.toFixed(1)}%`}
+                            color={dia.porcentajeAsistencia >= 80 ? "success" : dia.porcentajeAsistencia >= 60 ? "warning" : "error"}
+                            size="small"
+                          />
+                        &lt;/TableCell>
+                      &lt;/TableRow>
+                    ))}
+                  &lt;/TableBody>
+                &lt;/Table>
+              &lt;/TableContainer>
+            &lt;/CardContent>
+          &lt;/Card>
+
+          {/* Tabla Detallada */}
+          &lt;TableContainer
+            component={Paper}
+            className="reporte-tabla"
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
+            &lt;Table>
+              &lt;TableHead>
+                &lt;TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&amp;::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>ID&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Alumno&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Clase&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Asistencia&lt;/TableCell>
+                &lt;/TableRow>
+              &lt;/TableHead>
+              &lt;TableBody>
+                {reporte.asistencias.length === 0 ? (
+                  &lt;TableRow>
+                    &lt;TableCell colSpan={5} align="center">
+                      &lt;Typography className="reporte-sin-datos">
+                        No hay datos para mostrar
+                      &lt;/Typography>
+                    &lt;/TableCell>
+                  &lt;/TableRow>
+                ) : (
+                  reporte.asistencias.slice(0, 100).map((asistencia) => (
+                    &lt;TableRow
+                      key={asistencia.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&amp;:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
+                      &lt;TableCell>{asistencia.id}&lt;/TableCell>
+                      &lt;TableCell>{asistencia.alumnoNombre}&lt;/TableCell>
+                      &lt;TableCell>{asistencia.claseNombre}&lt;/TableCell>
+                      &lt;TableCell>{formatearFecha(asistencia.fecha)}&lt;/TableCell>
+                      &lt;TableCell>
+                        &lt;Chip
+                          label={asistencia.presente ? "Presente" : "Ausente"}
+                          color={asistencia.presente ? "success" : "error"}
+                          size="small"
+                        />
+                      &lt;/TableCell>
+                    &lt;/TableRow>
+                  ))
+                )}
+              &lt;/TableBody>
+            &lt;/Table>
+            {reporte.asistencias.length > 100 &amp;&amp; (
+              &lt;Box sx={{ p: 2, textAlign: "center" }}>
+                &lt;Typography variant="caption" color="text.secondary">
+                  Mostrando primeros 100 registros de {reporte.asistencias.length}
+                &lt;/Typography>
+              &lt;/Box>
+            )}
+          &lt;/TableContainer>
+        &lt;/>
+      )}
+    &lt;/Box>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

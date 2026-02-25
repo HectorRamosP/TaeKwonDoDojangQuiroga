@@ -1,5 +1,11 @@
 import axios from "axios";
 
+/**
+ * @module api
+ * @description Instancia de Axios configurada con la URL base de la API y los interceptores
+ * de autenticación JWT. Agrega automáticamente el token Bearer en cada petición y redirige
+ * al login cuando el servidor devuelve un error 401 (no autorizado).
+ */
 const api = axios.create({
     baseURL: process.env.REACT_APP_API_URL || "http://localhost:5230",
 });

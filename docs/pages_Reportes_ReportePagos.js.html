@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Reportes/ReportePagos.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Reportes/ReportePagos.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useState, useEffect } from "react";
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  CircularProgress,
+  Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+} from "@mui/material";
+import {
+  AttachMoney,
+  TrendingUp,
+  PendingActions,
+  Cancel,
+  CheckCircle,
+  Download,
+} from "@mui/icons-material";
+import { generarReportePagos } from "../../services/reportesService";
+import Swal from "sweetalert2";
+
+/**
+ * Subcomponente del módulo de Reportes. Genera y muestra estadísticas de pagos
+ * con filtros por fecha, estado y método de pago. Permite exportar a CSV.
+ * @component
+ * @returns {JSX.Element} Reporte detallado de pagos con tarjetas resumen, gráficos y tabla.
+ */
+export default function ReportePagos() {
+  const [reporte, setReporte] = useState(null);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [filtros, setFiltros] = useState({
+    fechaInicio: "",
+    fechaFin: "",
+    estado: "",
+    metodoPago: "",
+  });
+
+  const cargarReporte = async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const data = await generarReportePagos(filtros);
+      setReporte(data);
+    } catch (err) {
+      setError("Error al generar el reporte de pagos");
+      Swal.fire("Error", "No se pudo generar el reporte", "error");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarReporte();
+  }, []);
+
+  const handleFiltroChange = (campo, valor) => {
+    setFiltros({ ...filtros, [campo]: valor });
+  };
+
+  const formatearMoneda = (monto) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(monto);
+  };
+
+  const formatearFecha = (fecha) => {
+    return new Date(fecha).toLocaleDateString("es-MX");
+  };
+
+  const getEstadoChip = (estado) => {
+    const colores = {
+      Confirmado: "success",
+      Pendiente: "warning",
+      Rechazado: "error",
+    };
+    return &lt;Chip label={estado} color={colores[estado] || "default"} size="small" />;
+  };
+
+  const exportarCSV = () => {
+    if (!reporte || !reporte.pagos.length) return;
+
+    const headers = ["ID", "Alumno", "Concepto", "Monto", "Fecha", "Metodo Pago", "Estado"];
+    const rows = reporte.pagos.map(p => [
+      p.id,
+      p.alumnoNombre,
+      p.conceptoNombre,
+      p.monto,
+      formatearFecha(p.fecha),
+      p.metodoPago,
+      p.estado,
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(",")),
+    ].join("\n");
+
+    // UTF-8 BOM para que Excel reconozca correctamente los caracteres especiales
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `reporte_pagos_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+  };
+
+  if (cargando) {
+    return (
+      &lt;Box className="reporte-loading">
+        &lt;CircularProgress />
+      &lt;/Box>
+    );
+  }
+
+  if (error) {
+    return &lt;Alert severity="error">{error}&lt;/Alert>;
+  }
+
+  return (
+    &lt;Box sx={{ p: 3 }}>
+      {/* Filtros */}
+      &lt;Box className="reporte-filtros">
+        &lt;Typography variant="h6" gutterBottom>
+          Filtros
+        &lt;/Typography>
+        &lt;Grid container spacing={2}>
+          &lt;Grid item xs={12} sm={6} md={3}>
+            &lt;TextField
+              label="Fecha Inicio"
+              type="date"
+              fullWidth
+              size="small"
+              value={filtros.fechaInicio}
+              onChange={(e) => handleFiltroChange("fechaInicio", e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          &lt;/Grid>
+          &lt;Grid item xs={12} sm={6} md={3}>
+            &lt;TextField
+              label="Fecha Fin"
+              type="date"
+              fullWidth
+              size="small"
+              value={filtros.fechaFin}
+              onChange={(e) => handleFiltroChange("fechaFin", e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          &lt;/Grid>
+          &lt;Grid item xs={12} sm={6} md={2}>
+            &lt;FormControl fullWidth size="small">
+              &lt;InputLabel shrink>Estado&lt;/InputLabel>
+              &lt;Select
+                value={filtros.estado}
+                onChange={(e) => handleFiltroChange("estado", e.target.value)}
+                label="Estado"
+                displayEmpty
+                notched
+              >
+                &lt;MenuItem value="">Todos&lt;/MenuItem>
+                &lt;MenuItem value="Confirmado">Confirmado&lt;/MenuItem>
+                &lt;MenuItem value="Pendiente">Pendiente&lt;/MenuItem>
+                &lt;MenuItem value="Rechazado">Rechazado&lt;/MenuItem>
+              &lt;/Select>
+            &lt;/FormControl>
+          &lt;/Grid>
+          &lt;Grid item xs={12} sm={6} md={2}>
+            &lt;FormControl fullWidth size="small">
+              &lt;InputLabel shrink>Método&lt;/InputLabel>
+              &lt;Select
+                value={filtros.metodoPago}
+                onChange={(e) => handleFiltroChange("metodoPago", e.target.value)}
+                label="Método"
+                displayEmpty
+                notched
+              >
+                &lt;MenuItem value="">Todos&lt;/MenuItem>
+                &lt;MenuItem value="Efectivo">Efectivo&lt;/MenuItem>
+                &lt;MenuItem value="Tarjeta">Tarjeta&lt;/MenuItem>
+                &lt;MenuItem value="Transferencia">Transferencia&lt;/MenuItem>
+              &lt;/Select>
+            &lt;/FormControl>
+          &lt;/Grid>
+          &lt;Grid item xs={12} sm={12} md={2}>
+            &lt;Button
+              variant="contained"
+              fullWidth
+              onClick={cargarReporte}
+              sx={{
+                height: "40px",
+                background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                fontWeight: 700,
+                transition: "all 0.3s ease",
+                "&amp;:hover": {
+                  background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                  boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+                  transform: "translateY(-2px)",
+                },
+              }}
+            >
+              Generar Reporte
+            &lt;/Button>
+          &lt;/Grid>
+        &lt;/Grid>
+      &lt;/Box>
+
+      {/* Acciones */}
+      &lt;Box className="reporte-acciones">
+        &lt;Button
+          variant="contained"
+          startIcon={&lt;Download />}
+          onClick={exportarCSV}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&amp;:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
+        >
+          Exportar a Excel
+        &lt;/Button>
+      &lt;/Box>
+
+      {reporte &amp;&amp; (
+        &lt;>
+          {/* Tarjetas de Resumen */}
+          &lt;Grid container spacing={3} sx={{ mb: 3 }}>
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Total Pagos
+                      &lt;/Typography>
+                      &lt;Typography variant="h4">{reporte.resumen.totalPagos}&lt;/Typography>
+                    &lt;/Box>
+                    &lt;AttachMoney sx={{ fontSize: 40, color: "#DC143C" }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Monto Total
+                      &lt;/Typography>
+                      &lt;Typography variant="h5">
+                        {formatearMoneda(reporte.resumen.montoTotal)}
+                      &lt;/Typography>
+                    &lt;/Box>
+                    &lt;TrendingUp color="success" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Confirmado
+                      &lt;/Typography>
+                      &lt;Typography variant="h5">
+                        {formatearMoneda(reporte.resumen.montoConfirmado)}
+                      &lt;/Typography>
+                    &lt;/Box>
+                    &lt;CheckCircle color="success" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} sm={6} md={3}>
+              &lt;Card className="reporte-stats-card">
+                &lt;CardContent>
+                  &lt;Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    &lt;Box>
+                      &lt;Typography color="text.secondary" variant="body2">
+                        Pendiente
+                      &lt;/Typography>
+                      &lt;Typography variant="h5">
+                        {formatearMoneda(reporte.resumen.montoPendiente)}
+                      &lt;/Typography>
+                    &lt;/Box>
+                    &lt;PendingActions color="warning" sx={{ fontSize: 40 }} />
+                  &lt;/Box>
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+          &lt;/Grid>
+
+          {/* Gráficos de Distribución */}
+          &lt;Grid container spacing={3} sx={{ mb: 3 }}>
+            &lt;Grid item xs={12} md={4}>
+              &lt;Card>
+                &lt;CardContent>
+                  &lt;Typography variant="h6" gutterBottom>
+                    Por Método de Pago
+                  &lt;/Typography>
+                  {reporte.pagosPorMetodoPago.map((item, index) => (
+                    &lt;Box key={index} sx={{ mb: 2 }}>
+                      &lt;Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        &lt;Typography variant="body2">{item.metodoPago}&lt;/Typography>
+                        &lt;Typography variant="body2" fontWeight="bold">
+                          {formatearMoneda(item.montoTotal)}
+                        &lt;/Typography>
+                      &lt;/Box>
+                      &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        &lt;Box
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            bgcolor: "#e0e0e0",
+                            borderRadius: 1,
+                          }}
+                        >
+                          &lt;Box
+                            sx={{
+                              width: `${item.porcentaje}%`,
+                              height: "100%",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                              borderRadius: 1,
+                            }}
+                          />
+                        &lt;/Box>
+                        &lt;Typography variant="caption">{item.porcentaje.toFixed(1)}%&lt;/Typography>
+                      &lt;/Box>
+                    &lt;/Box>
+                  ))}
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} md={4}>
+              &lt;Card>
+                &lt;CardContent>
+                  &lt;Typography variant="h6" gutterBottom>
+                    Por Estado
+                  &lt;/Typography>
+                  {reporte.pagosPorEstado.map((item, index) => (
+                    &lt;Box key={index} sx={{ mb: 2 }}>
+                      &lt;Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        &lt;Typography variant="body2">{item.estado}&lt;/Typography>
+                        &lt;Typography variant="body2" fontWeight="bold">
+                          {formatearMoneda(item.montoTotal)}
+                        &lt;/Typography>
+                      &lt;/Box>
+                      &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        &lt;Box
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            bgcolor: "#e0e0e0",
+                            borderRadius: 1,
+                          }}
+                        >
+                          &lt;Box
+                            sx={{
+                              width: `${item.porcentaje}%`,
+                              height: "100%",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                              borderRadius: 1,
+                            }}
+                          />
+                        &lt;/Box>
+                        &lt;Typography variant="caption">{item.porcentaje.toFixed(1)}%&lt;/Typography>
+                      &lt;/Box>
+                    &lt;/Box>
+                  ))}
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+
+            &lt;Grid item xs={12} md={4}>
+              &lt;Card>
+                &lt;CardContent>
+                  &lt;Typography variant="h6" gutterBottom>
+                    Por Concepto (Top 5)
+                  &lt;/Typography>
+                  {reporte.pagosPorConcepto.slice(0, 5).map((item, index) => (
+                    &lt;Box key={index} sx={{ mb: 2 }}>
+                      &lt;Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                        &lt;Typography variant="body2" noWrap sx={{ maxWidth: "60%" }}>
+                          {item.concepto}
+                        &lt;/Typography>
+                        &lt;Typography variant="body2" fontWeight="bold">
+                          {formatearMoneda(item.montoTotal)}
+                        &lt;/Typography>
+                      &lt;/Box>
+                      &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        &lt;Box
+                          sx={{
+                            flex: 1,
+                            height: 8,
+                            bgcolor: "#e0e0e0",
+                            borderRadius: 1,
+                          }}
+                        >
+                          &lt;Box
+                            sx={{
+                              width: `${item.porcentaje}%`,
+                              height: "100%",
+                              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                              borderRadius: 1,
+                            }}
+                          />
+                        &lt;/Box>
+                        &lt;Typography variant="caption">{item.porcentaje.toFixed(1)}%&lt;/Typography>
+                      &lt;/Box>
+                    &lt;/Box>
+                  ))}
+                &lt;/CardContent>
+              &lt;/Card>
+            &lt;/Grid>
+          &lt;/Grid>
+
+          {/* Tabla de Pagos */}
+          &lt;TableContainer
+            component={Paper}
+            className="reporte-tabla"
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
+            &lt;Table>
+              &lt;TableHead>
+                &lt;TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&amp;::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>ID&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Alumno&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Concepto&lt;/TableCell>
+                  &lt;TableCell align="right" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Monto&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Método&lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Estado&lt;/TableCell>
+                &lt;/TableRow>
+              &lt;/TableHead>
+              &lt;TableBody>
+                {reporte.pagos.length === 0 ? (
+                  &lt;TableRow>
+                    &lt;TableCell colSpan={7} align="center">
+                      &lt;Typography className="reporte-sin-datos">
+                        No hay datos para mostrar
+                      &lt;/Typography>
+                    &lt;/TableCell>
+                  &lt;/TableRow>
+                ) : (
+                  reporte.pagos.map((pago) => (
+                    &lt;TableRow
+                      key={pago.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&amp;:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
+                      &lt;TableCell>{pago.id}&lt;/TableCell>
+                      &lt;TableCell>{pago.alumnoNombre}&lt;/TableCell>
+                      &lt;TableCell>{pago.conceptoNombre}&lt;/TableCell>
+                      &lt;TableCell align="right">{formatearMoneda(pago.monto)}&lt;/TableCell>
+                      &lt;TableCell>{formatearFecha(pago.fecha)}&lt;/TableCell>
+                      &lt;TableCell>{pago.metodoPago}&lt;/TableCell>
+                      &lt;TableCell>{getEstadoChip(pago.estado)}&lt;/TableCell>
+                    &lt;/TableRow>
+                  ))
+                )}
+              &lt;/TableBody>
+            &lt;/Table>
+          &lt;/TableContainer>
+        &lt;/>
+      )}
+    &lt;/Box>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -27,6 +27,21 @@ import api from "../../services/api";
 import { registrarAsistenciasMasivas, obtenerAsistencias, eliminarAsistenciasPorClaseYFecha } from "../../services/asistenciasService";
 import ModernModal from "./ModernModal";
 
+/**
+ * Modal para registrar asistencias de una clase de forma masiva.
+ * Muestra la lista de alumnos inscritos en la clase con checkboxes de asistencia,
+ * un selector de fecha, historial de las últimas 10 fechas registradas
+ * y contadores de presentes/ausentes en tiempo real.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {object} props.clase - Datos de la clase para la cual se pasa lista.
+ * @param {number} props.clase.id - ID de la clase.
+ * @param {string} props.clase.nombre - Nombre de la clase.
+ * @param {string} props.clase.dias - Días de la semana de la clase.
+ */
 export default function ModalPasarLista({ abierto, cerrar, clase }) {
   const [alumnos, setAlumnos] = useState([]);
   const [asistencias, setAsistencias] = useState({});

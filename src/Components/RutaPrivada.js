@@ -1,5 +1,21 @@
 import { Navigate } from "react-router-dom";
 
+/**
+ * Componente de protección de rutas que valida la autenticación del usuario.
+ * Verifica la existencia, formato JWT (tres segmentos) y expiración del token
+ * almacenado en localStorage antes de permitir el acceso a la ruta solicitada.
+ * Si el token es inválido o ha expirado, lo elimina y redirige al login.
+ *
+ * @component
+ * @param {object} props
+ * @param {React.ReactNode} props.children - Componente a renderizar si el usuario está autenticado.
+ * @returns {React.ReactNode} El componente hijo o una redirección a /login.
+ *
+ * @example
+ * <RutaPrivada>
+ *   <Dashboard />
+ * </RutaPrivada>
+ */
 export default function RutaPrivada({ children }) {
   const token = localStorage.getItem("token");
 

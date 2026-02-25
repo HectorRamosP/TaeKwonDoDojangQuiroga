@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/asistenciasService.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/asistenciasService.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import api from './api';
+
+/**
+ * Obtiene la lista de asistencias con filtros opcionales.
+ *
+ * @param {object} [filtros={}] - Filtros para la búsqueda.
+ * @param {number} [filtros.claseId] - ID de la clase.
+ * @param {number} [filtros.alumnoId] - ID del alumno.
+ * @param {string} [filtros.fecha] - Fecha de la asistencia (ISO).
+ * @returns {Promise&lt;Array>} Lista de asistencias.
+ */
+export const obtenerAsistencias = async (filtros = {}) => {
+  const params = new URLSearchParams();
+
+  if (filtros.claseId) params.append('claseId', filtros.claseId);
+  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
+  if (filtros.fecha) params.append('fecha', filtros.fecha);
+
+  const response = await api.get(`/asistencias?${params.toString()}`);
+  // El backend devuelve { success, data, message }, necesitamos acceder a .data
+  return response.data?.data || response.data || [];
+};
+
+/**
+ * Obtiene una asistencia por su ID.
+ *
+ * @param {number} id - ID de la asistencia.
+ * @returns {Promise&lt;object>} Datos de la asistencia.
+ */
+export const obtenerAsistenciaPorId = async (id) => {
+  const response = await api.get(`/asistencias/${id}`);
+  return response.data;
+};
+
+/**
+ * Registra una asistencia individual para un alumno en una clase.
+ *
+ * @param {object} asistencia - Datos de la asistencia a registrar.
+ * @param {number} asistencia.alumnoId - ID del alumno.
+ * @param {number} asistencia.claseId - ID de la clase.
+ * @param {string} asistencia.fecha - Fecha de la asistencia (ISO).
+ * @returns {Promise&lt;object>} Asistencia registrada.
+ */
+export const registrarAsistencia = async (asistencia) => {
+  const response = await api.post('/asistencias', asistencia);
+  return response.data;
+};
+
+/**
+ * Registra asistencias de forma masiva para una clase en una fecha determinada.
+ *
+ * @param {object} datos - Datos para el registro masivo.
+ * @param {number} datos.claseId - ID de la clase.
+ * @param {string} datos.fecha - Fecha de la asistencia (ISO).
+ * @param {Array&lt;number>} datos.alumnoIds - IDs de los alumnos presentes.
+ * @returns {Promise&lt;object>} Resultado del registro masivo.
+ */
+export const registrarAsistenciasMasivas = async (datos) => {
+  const response = await api.post('/asistencias/masivas', datos);
+  return response.data;
+};
+
+/**
+ * Cuenta las faltas de un alumno en un rango de fechas.
+ *
+ * @param {number} alumnoId - ID del alumno.
+ * @param {Date} fechaInicio - Fecha de inicio del rango.
+ * @param {Date} fechaFin - Fecha de fin del rango.
+ * @returns {Promise&lt;object>} Número de faltas en el rango especificado.
+ */
+export const contarFaltas = async (alumnoId, fechaInicio, fechaFin) => {
+  const params = new URLSearchParams({
+    alumnoId,
+    fechaInicio: fechaInicio.toISOString().split('T')[0],
+    fechaFin: fechaFin.toISOString().split('T')[0]
+  });
+
+  const response = await api.get(`/asistencias/faltas?${params.toString()}`);
+  return response.data;
+};
+
+/**
+ * Elimina todas las asistencias registradas de una clase en una fecha específica.
+ *
+ * @param {number} claseId - ID de la clase.
+ * @param {string} fecha - Fecha en formato ISO o YYYY-MM-DD.
+ * @returns {Promise&lt;object>} Resultado de la operación.
+ */
+export const eliminarAsistenciasPorClaseYFecha = async (claseId, fecha) => {
+  // Asegurar que la fecha está en formato ISO completo
+  const fechaISO = fecha.includes('T') ? fecha : `${fecha}T00:00:00`;
+
+  const url = `/asistencias/clase/${claseId}/fecha/${encodeURIComponent(fechaISO)}`;
+  console.log('DELETE URL:', url);
+  console.log('Params:', { claseId, fecha: fechaISO });
+
+  const response = await api.delete(url);
+  return response.data;
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

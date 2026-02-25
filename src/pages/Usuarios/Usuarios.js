@@ -24,6 +24,12 @@ import ModalCrearUsuario from "../../Components/modals/ModalCrearUsuario";
 import ModalEditarUsuario from "../../Components/modals/ModalEditarUsuario";
 import "./Usuarios.css";
 
+/**
+ * Página de Gestión de Usuarios del sistema. Permite crear, editar y deshabilitar
+ * cuentas de acceso con búsqueda y paginación.
+ * @component
+ * @returns {JSX.Element} Tabla de usuarios con operaciones de administración.
+ */
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [filtro, setFiltro] = useState("");

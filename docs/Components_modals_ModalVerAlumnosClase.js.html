@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/modals/ModalVerAlumnosClase.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/modals/ModalVerAlumnosClase.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  CircularProgress,
+  Alert,
+  Box,
+  Typography,
+} from "@mui/material";
+import { Group } from "@mui/icons-material";
+import { useState, useEffect } from "react";
+import api from "../../services/api";
+import CintaChip from "../CintaChip";
+import ModernModal from "./ModernModal";
+
+/**
+ * Modal que muestra la lista de alumnos inscritos en una clase específica.
+ * Incluye información de horario, tipo de clase y tabla con datos de cada alumno.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {object} props.clase - Datos de la clase cuyos alumnos se van a visualizar.
+ */
+export default function ModalVerAlumnosClase({ abierto, cerrar, clase }) {
+  const [alumnos, setAlumnos] = useState([]);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (abierto &amp;&amp; clase) {
+      cargarAlumnos();
+    }
+  }, [abierto, clase]);
+
+  const cargarAlumnos = async () => {
+    setCargando(true);
+    setError(null);
+    try {
+      const res = await api.get(`/alumnos?claseId=${clase.id}&amp;activo=true`);
+      setAlumnos(res.data || []);
+    } catch (err) {
+      setError("No se pudieron cargar los alumnos de esta clase.");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const handleClose = () => {
+    cerrar();
+    // Limpiar estados después de que cierre el modal (delay para la animación)
+    setTimeout(() => {
+      setAlumnos([]);
+      setError(null);
+    }, 300);
+  };
+
+  return (
+    &lt;ModernModal
+      open={abierto}
+      onClose={handleClose}
+      title={`Alumnos de la clase: ${clase?.nombre || ''}`}
+      icon={&lt;Group />}
+      maxWidth="lg"
+      actions={
+        &lt;Button
+          onClick={handleClose}
+          className="modal-button-secondary"
+        >
+          Cerrar
+        &lt;/Button>
+      }
+    >
+      {clase &amp;&amp; (
+        &lt;Box
+          sx={{
+            mb: 3,
+            p: 3,
+            background: "linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%)",
+            borderRadius: "16px",
+            border: "2px solid rgba(220, 20, 60, 0.1)",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)"
+          }}
+        >
+          &lt;Typography variant="body2" sx={{ mb: 1, color: "#495057" }}>
+            &lt;strong>Horario:&lt;/strong> {clase.dias} de {clase.horaInicio} a {clase.horaFin}
+          &lt;/Typography>
+          &lt;Typography variant="body2" sx={{ mb: 1, color: "#495057" }}>
+            &lt;strong>Tipo:&lt;/strong> {clase.tipoClase}
+          &lt;/Typography>
+          &lt;Typography variant="body2" sx={{ color: "#495057" }}>
+            &lt;strong>Total de alumnos:&lt;/strong> {alumnos.length}
+          &lt;/Typography>
+        &lt;/Box>
+      )}
+
+      {cargando ? (
+        &lt;Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+          &lt;CircularProgress sx={{ color: "#DC143C" }} />
+        &lt;/Box>
+      ) : error ? (
+        &lt;Alert severity="error" sx={{ borderRadius: "12px" }}>
+          {error}
+        &lt;/Alert>
+      ) : alumnos.length === 0 ? (
+        &lt;Alert severity="info" sx={{ borderRadius: "12px" }}>
+          No hay alumnos inscritos en esta clase
+        &lt;/Alert>
+      ) : (
+        &lt;TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{
+            borderRadius: "16px",
+            border: "2px solid rgba(220, 20, 60, 0.1)",
+            overflow: "hidden"
+          }}
+        >
+          &lt;Table size="small">
+            &lt;TableHead>
+              &lt;TableRow
+                sx={{
+                  background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)"
+                }}
+              >
+                &lt;TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    letterSpacing: "0.5px"
+                  }}
+                >
+                  Nombre
+                &lt;/TableCell>
+                &lt;TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    letterSpacing: "0.5px"
+                  }}
+                >
+                  Edad
+                &lt;/TableCell>
+                &lt;TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    letterSpacing: "0.5px"
+                  }}
+                >
+                  Cinta
+                &lt;/TableCell>
+                &lt;TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    letterSpacing: "0.5px"
+                  }}
+                >
+                  Teléfono Tutor
+                &lt;/TableCell>
+              &lt;/TableRow>
+            &lt;/TableHead>
+            &lt;TableBody>
+              {alumnos.map((alumno, index) => (
+                &lt;TableRow
+                  key={alumno.id}
+                  hover
+                  sx={{
+                    backgroundColor: index % 2 === 0 ? "rgba(248, 249, 250, 0.5)" : "white",
+                    transition: "all 0.2s ease",
+                    "&amp;:hover": {
+                      backgroundColor: "rgba(220, 20, 60, 0.05)",
+                      transform: "scale(1.005)"
+                    }
+                  }}
+                >
+                  &lt;TableCell sx={{ fontWeight: 500, color: "#333" }}>
+                    {alumno.nombre} {alumno.apellidoPaterno} {alumno.apellidoMaterno}
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "#666" }}>
+                    {alumno.edad} años
+                  &lt;/TableCell>
+                  &lt;TableCell>
+                    &lt;CintaChip nombreCinta={alumno.cintaActualNombre} />
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "#666", fontFamily: "monospace" }}>
+                    {alumno.telefonoTutor}
+                  &lt;/TableCell>
+                &lt;/TableRow>
+              ))}
+            &lt;/TableBody>
+          &lt;/Table>
+        &lt;/TableContainer>
+      )}
+    &lt;/ModernModal>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

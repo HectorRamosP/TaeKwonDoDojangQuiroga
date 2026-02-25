@@ -33,6 +33,15 @@ import ModalEditarSocio from "../../Components/modals/ModalEditarSocio";
 import CintaChip from "../../Components/CintaChip";
 import "./Socios.css";
 
+/**
+ * Página de gestión de alumnos del dojo.
+ * Permite listar, filtrar, ordenar, crear, editar, activar/desactivar
+ * y eliminar alumnos. Incluye filtros avanzados por estado, cinta,
+ * clase, mensualidad y rango de edad, con paginación de 10 registros por página.
+ *
+ * @component
+ * @returns {JSX.Element} Página completa de gestión de alumnos.
+ */
 export default function Socios() {
   const [socios, setSocios] = useState([]);
   const [filtro, setFiltro] = useState("");

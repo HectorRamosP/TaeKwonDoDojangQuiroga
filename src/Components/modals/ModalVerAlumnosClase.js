@@ -18,6 +18,16 @@ import api from "../../services/api";
 import CintaChip from "../CintaChip";
 import ModernModal from "./ModernModal";
 
+/**
+ * Modal que muestra la lista de alumnos inscritos en una clase específica.
+ * Incluye información de horario, tipo de clase y tabla con datos de cada alumno.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {object} props.clase - Datos de la clase cuyos alumnos se van a visualizar.
+ */
 export default function ModalVerAlumnosClase({ abierto, cerrar, clase }) {
   const [alumnos, setAlumnos] = useState([]);
   const [cargando, setCargando] = useState(false);

@@ -27,6 +27,12 @@ import {
 import { generarReporteEstudiantes } from "../../services/reportesService";
 import Swal from "sweetalert2";
 
+/**
+ * Subcomponente del módulo de Reportes. Muestra estadísticas de estudiantes
+ * incluyendo distribución por cinta, clase y rango de edad. Permite exportar a CSV.
+ * @component
+ * @returns {JSX.Element} Reporte de estudiantes con tarjetas resumen, gráficos y tabla detallada.
+ */
 export default function ReporteEstudiantes() {
   const [reporte, setReporte] = useState(null);
   const [cargando, setCargando] = useState(false);

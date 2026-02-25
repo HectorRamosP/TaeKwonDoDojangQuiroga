@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Usuarios/Usuarios.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Usuarios/Usuarios.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Chip,
+  TextField,
+  Pagination,
+  CircularProgress,
+  Alert,
+  Box,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
+import { Search, Clear } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import api from "../../services/api";
+import ModalCrearUsuario from "../../Components/modals/ModalCrearUsuario";
+import ModalEditarUsuario from "../../Components/modals/ModalEditarUsuario";
+import "./Usuarios.css";
+
+/**
+ * Página de Gestión de Usuarios del sistema. Permite crear, editar y deshabilitar
+ * cuentas de acceso con búsqueda y paginación.
+ * @component
+ * @returns {JSX.Element} Tabla de usuarios con operaciones de administración.
+ */
+export default function Usuarios() {
+  const [usuarios, setUsuarios] = useState([]);
+  const [filtro, setFiltro] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [filtrados, setFiltrados] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [usuarioEditar, setUsuarioEditar] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  const itemsPorPagina = 5;
+
+  const cargarUsuarios = async () => {
+    setCargando(true);
+    setError(null);
+    
+    try {
+      const res = await api.get("/usuarios");
+      setUsuarios(res.data || []);
+    } catch (error) {
+      let mensajeError = "Ocurrió un error inesperado al cargar los usuarios.";
+      
+      if (error.response) {
+        mensajeError = "Error al cargar los usuarios del servidor.";
+      } else if (error.request) {
+        mensajeError = "No se pudo conectar con el servidor. Verifica tu conexión.";
+      }
+      
+      setError(mensajeError);
+      
+      Swal.fire({
+        icon: "error",
+        title: "Error al cargar usuarios",
+        text: mensajeError,
+        confirmButtonColor: "#d32f2f",
+      });
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarUsuarios();
+  }, []);
+
+  useEffect(() => {
+    const datosFiltrados = usuarios.filter((u) =>
+      [u.nombre, u.apellidoPaterno, u.apellidoMaterno, u.nombreUsuario]
+        .join(" ")
+        .toLowerCase()
+        .includes(filtro.toLowerCase())
+    );
+    setFiltrados(datosFiltrados);
+    setPagina(1);
+  }, [filtro, usuarios]);
+
+  const usuariosPaginados = filtrados.slice(
+    (pagina - 1) * itemsPorPagina,
+    pagina * itemsPorPagina
+  );
+
+  const abrirEditar = (usuario) => {
+    setUsuarioEditar(usuario);
+    setModalEditarAbierto(true);
+  };
+
+  const eliminarUsuario = async (usuario) => {
+    const resultado = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: `Se deshabilitará al usuario ${usuario.nombre} ${usuario.apellidoPaterno}`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d32f2f",
+      cancelButtonColor: "#757575",
+      confirmButtonText: "Sí, deshabilitar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true,
+    });
+
+    if (!resultado.isConfirmed) return;
+
+    try {
+      await api.patch(`/usuarios/${usuario.slug}`, {
+        slug: usuario.slug,
+        habilitado: false,
+      });
+
+      await Swal.fire({
+        icon: "success",
+        title: "Usuario deshabilitado",
+        text: "El usuario ha sido deshabilitado correctamente",
+        confirmButtonColor: "#d32f2f",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+
+      cargarUsuarios();
+    } catch (error) {
+      let mensajeError = "Ocurrió un error al deshabilitar el usuario";
+      
+      if (error.response) {
+        if (error.response.status === 404) {
+          mensajeError = "Usuario no encontrado";
+        } else {
+          mensajeError = "Error al deshabilitar el usuario en el servidor";
+        }
+      } else if (error.request) {
+        mensajeError = "No se pudo conectar con el servidor. Verifica tu conexión.";
+      }
+      
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: mensajeError,
+        confirmButtonColor: "#d32f2f",
+      });
+    }
+  };
+
+  const handleGuardadoExitoso = async () => {
+    await Swal.fire({
+      icon: "success",
+      title: "Usuario creado",
+      text: "El usuario ha sido creado correctamente",
+      confirmButtonColor: "#d32f2f",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    cargarUsuarios();
+  };
+
+  const handleActualizadoExitoso = async () => {
+    await Swal.fire({
+      icon: "success",
+      title: "Usuario actualizado",
+      text: "El usuario ha sido actualizado correctamente",
+      confirmButtonColor: "#d32f2f",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    cargarUsuarios();
+  };
+
+  const limpiarFiltro = () => {
+    setFiltro("");
+  };
+
+  const recargarDatos = async () => {
+    await cargarUsuarios();
+    
+    if (!error) {
+      Swal.fire({
+        icon: "success",
+        title: "Datos actualizados",
+        text: "Los datos se han recargado correctamente",
+        confirmButtonColor: "#d32f2f",
+        timer: 1500,
+        timerProgressBar: true,
+        showConfirmButton: false,
+      });
+    }
+  };
+
+  if (cargando) {
+    return (
+      &lt;Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+        flexDirection="column"
+        gap={2}
+      >
+        &lt;CircularProgress size={60} />
+        &lt;p>Cargando usuarios...&lt;/p>
+      &lt;/Box>
+    );
+  }
+
+  return (
+    &lt;div className="page-container">
+      &lt;div className="header">
+        &lt;h1>Usuarios&lt;/h1>
+        &lt;Box display="flex" gap={1}>
+          &lt;Button
+            variant="outlined"
+            color="primary"
+            onClick={recargarDatos}
+          >
+            Recargar
+          &lt;/Button>
+          &lt;Button
+            variant="contained"
+            onClick={() => setModalAbierto(true)}
+            sx={{
+              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+              boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+              fontWeight: 700,
+              padding: "10px 24px",
+              borderRadius: "12px",
+              transition: "all 0.3s ease",
+              "&amp;:hover": {
+                background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+                transform: "translateY(-2px)",
+              },
+            }}
+          >
+            Nuevo
+          &lt;/Button>
+        &lt;/Box>
+      &lt;/div>
+
+      {error &amp;&amp; (
+        &lt;Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        &lt;/Alert>
+      )}
+
+      &lt;div className="search-bar">
+        &lt;TextField
+          label="Buscar por nombre o usuario"
+          variant="outlined"
+          fullWidth
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              &lt;InputAdornment position="start">
+                &lt;Search />
+              &lt;/InputAdornment>
+            ),
+            endAdornment: filtro &amp;&amp; (
+              &lt;InputAdornment position="end">
+                &lt;IconButton onClick={limpiarFiltro} size="small">
+                  &lt;Clear />
+                &lt;/IconButton>
+              &lt;/InputAdornment>
+            ),
+          }}
+        />
+      &lt;/div>
+
+      &lt;TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{
+          borderRadius: "16px",
+          overflow: "hidden",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(220, 20, 60, 0.1)",
+        }}
+      >
+        &lt;Table>
+          &lt;TableHead>
+            &lt;TableRow
+              sx={{
+                background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                position: "relative",
+                "&amp;::after": {
+                  content: '""',
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: "3px",
+                  background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                }
+              }}
+            >
+              &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                Nombre
+              &lt;/TableCell>
+              &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                Apellido Paterno
+              &lt;/TableCell>
+              &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                Apellido Materno
+              &lt;/TableCell>
+              &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                Usuario
+              &lt;/TableCell>
+              &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                Estado
+              &lt;/TableCell>
+              &lt;TableCell align="center" sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                Acciones
+              &lt;/TableCell>
+            &lt;/TableRow>
+          &lt;/TableHead>
+          &lt;TableBody>
+            {usuariosPaginados.map((u) => (
+              &lt;TableRow
+                key={u.slug}
+                hover
+                sx={{
+                  transition: "all 0.2s ease",
+                  "&amp;:hover": {
+                    backgroundColor: "rgba(220, 20, 60, 0.04)",
+                    transform: "scale(1.001)",
+                  }
+                }}
+              >
+                &lt;TableCell>{u.nombre}&lt;/TableCell>
+                &lt;TableCell>{u.apellidoPaterno}&lt;/TableCell>
+                &lt;TableCell>{u.apellidoMaterno}&lt;/TableCell>
+                &lt;TableCell>{u.nombreUsuario}&lt;/TableCell>
+                &lt;TableCell>
+                  &lt;Chip
+                    label={u.habilitado ? "Habilitado" : "Deshabilitado"}
+                    color={u.habilitado ? "success" : "error"}
+                    size="small"
+                  />
+                &lt;/TableCell>
+                &lt;TableCell align="center" className="actions-cell">
+                  &lt;Button
+                    variant="outlined"
+                    color="primary"
+                    size="small"
+                    onClick={() => abrirEditar(u)}
+                  >
+                    Editar
+                  &lt;/Button>
+                  &lt;Button
+                    variant="outlined"
+                    size="small"
+                    color="error"
+                    onClick={() => eliminarUsuario(u)}
+                    disabled={!u.habilitado}
+                  >
+                    Deshabilitar
+                  &lt;/Button>
+                &lt;/TableCell>
+              &lt;/TableRow>
+            ))}
+            {usuariosPaginados.length === 0 &amp;&amp; (
+              &lt;TableRow>
+                &lt;TableCell colSpan={6} align="center">
+                  {filtro
+                    ? "No se encontraron usuarios con ese criterio de búsqueda"
+                    : "No hay usuarios registrados"}
+                &lt;/TableCell>
+              &lt;/TableRow>
+            )}
+          &lt;/TableBody>
+        &lt;/Table>
+      &lt;/TableContainer>
+
+      &lt;div className="pagination-container">
+        &lt;Pagination
+          count={Math.ceil(filtrados.length / itemsPorPagina)}
+          page={pagina}
+          onChange={(e, value) => setPagina(value)}
+          showFirstButton
+          showLastButton
+          sx={{
+            "&amp; .MuiPaginationItem-root": {
+              fontWeight: 600,
+              fontSize: "1rem",
+              borderRadius: "10px",
+              transition: "all 0.3s ease",
+            },
+            "&amp; .MuiPaginationItem-root.Mui-selected": {
+              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+              color: "white",
+              boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+              "&amp;:hover": {
+                background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              },
+            },
+            "&amp; .MuiPaginationItem-root:hover": {
+              backgroundColor: "rgba(220, 20, 60, 0.1)",
+            }
+          }}
+        />
+      &lt;/div>
+
+      &lt;ModalCrearUsuario
+        abierto={modalAbierto}
+        onClose={() => setModalAbierto(false)}
+        onGuardado={handleGuardadoExitoso}
+      />
+      &lt;ModalEditarUsuario
+        abierto={modalEditarAbierto}
+        onClose={() => setModalEditarAbierto(false)}
+        usuario={usuarioEditar}
+        onActualizado={handleActualizadoExitoso}
+      />
+    &lt;/div>
+  );
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

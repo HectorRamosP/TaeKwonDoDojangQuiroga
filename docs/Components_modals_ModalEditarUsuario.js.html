@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/modals/ModalEditarUsuario.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/modals/ModalEditarUsuario.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+    Button,
+    TextField,
+    FormControlLabel,
+    Switch,
+    CircularProgress,
+    InputAdornment,
+    IconButton,
+} from "@mui/material";
+import { Visibility, VisibilityOff, Edit } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import Swal from "sweetalert2";
+import api from "../../services/api";
+import ModernModal from "./ModernModal";
+
+const esquema = yup.object().shape({
+    nombre: yup
+        .string()
+        .required("El nombre es obligatorio")
+        .min(2, "El nombre debe tener al menos 2 caracteres")
+        .max(50, "El nombre no puede exceder 50 caracteres"),
+    apellidoPaterno: yup
+        .string()
+        .required("El apellido paterno es obligatorio")
+        .min(2, "El apellido debe tener al menos 2 caracteres")
+        .max(50, "El apellido no puede exceder 50 caracteres"),
+    apellidoMaterno: yup
+        .string()
+        .required("El apellido materno es obligatorio")
+        .min(2, "El apellido debe tener al menos 2 caracteres")
+        .max(50, "El apellido no puede exceder 50 caracteres"),
+    nombreUsuario: yup
+        .string()
+        .required("El usuario es obligatorio")
+        .min(4, "El usuario debe tener al menos 4 caracteres")
+        .max(20, "El usuario no puede exceder 20 caracteres")
+        .matches(/^[a-zA-Z0-9_]+$/, "Solo se permiten letras, números y guión bajo"),
+    contraseña: yup
+        .string()
+        .nullable()
+        .test("password-strength", "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número", function(value) {
+            if (!value || value === "") return true;
+            
+            if (value.length &lt; 8) return false;
+            if (!/[A-Z]/.test(value)) return false;
+            if (!/[a-z]/.test(value)) return false;
+            if (!/[0-9]/.test(value)) return false;
+            
+            return true;
+        }),
+    habilitado: yup.boolean().default(true),
+});
+
+/**
+ * Modal para editar los datos de un usuario existente del sistema.
+ * La contraseña es opcional: si se deja en blanco, no se modifica.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.onClose - Callback para cerrar el modal.
+ * @param {object} props.usuario - Datos actuales del usuario a editar.
+ * @param {Function} props.onActualizado - Callback ejecutado tras actualizar el usuario exitosamente.
+ */
+export default function ModalEditarUsuario({ abierto, onClose, usuario, onActualizado }) {
+    const [guardando, setGuardando] = useState(false);
+    const [mostrarPassword, setMostrarPassword] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        watch,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(esquema),
+        defaultValues: {
+            nombre: "",
+            apellidoPaterno: "",
+            apellidoMaterno: "",
+            nombreUsuario: "",
+            contraseña: "",
+            habilitado: true,
+        }
+    });
+
+    useEffect(() => {
+        if (usuario) {
+            reset({
+                nombre: usuario.nombre || "",
+                apellidoPaterno: usuario.apellidoPaterno || "",
+                apellidoMaterno: usuario.apellidoMaterno || "",
+                nombreUsuario: usuario.nombreUsuario || "",
+                contraseña: "",
+                habilitado: usuario.habilitado ?? true,
+            });
+        }
+    }, [usuario, reset]);
+
+    const handleClose = () => {
+        if (!guardando) {
+            reset();
+            setMostrarPassword(false);
+            onClose();
+        }
+    };
+
+    const onSubmit = async (data) => {
+        setGuardando(true);
+
+        try {
+            const dto = {
+                slug: usuario.slug,
+                nombre: data.nombre,
+                apellidoPaterno: data.apellidoPaterno,
+                apellidoMaterno: data.apellidoMaterno,
+                nombreUsuario: data.nombreUsuario,
+                contraseña: data.contraseña || "",
+                habilitado: data.habilitado,
+            };
+
+            await api.put(`/usuarios/${usuario.slug}`, dto);
+            handleClose();
+            onActualizado();
+        } catch (err) {
+            let mensajeError = "Error al actualizar";
+            let detalles = "Ocurrió un error inesperado al actualizar el usuario";
+            
+            if (err.response) {
+                if (err.response.status === 400) {
+                    mensajeError = "Datos inválidos";
+                    detalles = "Verifica que toda la información esté correcta";
+                } else if (err.response.status === 404) {
+                    mensajeError = "Usuario no encontrado";
+                    detalles = "El usuario que intentas actualizar no existe";
+                } else if (err.response.status === 409) {
+                    mensajeError = "Usuario duplicado";
+                    detalles = "El nombre de usuario ya existe. Por favor elige otro.";
+                } else {
+                    mensajeError = "Error del servidor";
+                    detalles = "No se pudo actualizar el usuario. Intenta nuevamente.";
+                }
+            } else if (err.request) {
+                mensajeError = "Sin conexión";
+                detalles = "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
+            }
+            
+            Swal.fire({
+                icon: "error",
+                title: mensajeError,
+                text: detalles,
+                confirmButtonColor: "#d32f2f",
+            });
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    return (
+        &lt;ModernModal
+            open={abierto}
+            onClose={handleClose}
+            title="Editar Usuario"
+            icon={&lt;Edit />}
+            maxWidth="sm"
+            actions={
+                &lt;>
+                    &lt;Button
+                        onClick={handleClose}
+                        className="modal-button-secondary"
+                        disabled={guardando}
+                    >
+                        Cancelar
+                    &lt;/Button>
+                    &lt;Button
+                        type="submit"
+                        form="form-editar-usuario"
+                        className="modal-button-primary"
+                        disabled={guardando}
+                        startIcon={guardando &amp;&amp; &lt;CircularProgress size={20} />}
+                    >
+                        {guardando ? "Guardando..." : "Guardar"}
+                    &lt;/Button>
+                &lt;/>
+            }
+        >
+            &lt;form id="form-editar-usuario" onSubmit={handleSubmit(onSubmit)}>
+                    &lt;TextField 
+                        label="Nombre" 
+                        fullWidth
+                        {...register("nombre")} 
+                        error={!!errors.nombre} 
+                        helperText={errors.nombre?.message}
+                        margin="normal"
+                        disabled={guardando}
+                        autoFocus
+                    />
+                    &lt;TextField 
+                        label="Apellido Paterno" 
+                        fullWidth
+                        {...register("apellidoPaterno")} 
+                        error={!!errors.apellidoPaterno} 
+                        helperText={errors.apellidoPaterno?.message}
+                        margin="normal"
+                        disabled={guardando}
+                    />
+                    &lt;TextField 
+                        label="Apellido Materno" 
+                        fullWidth
+                        {...register("apellidoMaterno")} 
+                        error={!!errors.apellidoMaterno} 
+                        helperText={errors.apellidoMaterno?.message}
+                        margin="normal"
+                        disabled={guardando}
+                    />
+                    &lt;TextField 
+                        label="Usuario" 
+                        fullWidth
+                        {...register("nombreUsuario")} 
+                        error={!!errors.nombreUsuario} 
+                        helperText={errors.nombreUsuario?.message}
+                        margin="normal"
+                        disabled={guardando}
+                    />
+                    &lt;TextField 
+                        label="Contraseña (dejar en blanco para no cambiar)" 
+                        fullWidth
+                        type={mostrarPassword ? "text" : "password"}
+                        {...register("contraseña")} 
+                        error={!!errors.contraseña} 
+                        helperText={errors.contraseña?.message}
+                        margin="normal"
+                        disabled={guardando}
+                        InputProps={{
+                            endAdornment: (
+                                &lt;InputAdornment position="end">
+                                    &lt;IconButton
+                                        onClick={() => setMostrarPassword(!mostrarPassword)}
+                                        edge="end"
+                                        disabled={guardando}
+                                    >
+                                        {mostrarPassword ? &lt;VisibilityOff /> : &lt;Visibility />}
+                                    &lt;/IconButton>
+                                &lt;/InputAdornment>
+                            ),
+                        }}
+                    />
+                    &lt;FormControlLabel
+                        control={&lt;Switch {...register("habilitado")} checked={watch("habilitado")} disabled={guardando} />}
+                        label="Habilitado"
+                        sx={{ mt: 1 }}
+                    />
+            &lt;/form>
+        &lt;/ModernModal>
+    );
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

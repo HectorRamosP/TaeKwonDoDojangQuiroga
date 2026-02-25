@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/modals/ModalEditarSocio.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/modals/ModalEditarSocio.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+    TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormControlLabel,
+    Switch,
+    Box,
+    Typography,
+} from "@mui/material";
+import { Edit } from "@mui/icons-material";
+import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import Swal from "sweetalert2";
+import api from "../../services/api";
+import ModernModal from "./ModernModal";
+import { manejarErrorApi } from "../../utils/manejarErrorApi";
+
+const esquema = yup.object().shape({
+    nombre: yup
+        .string()
+        .required("El nombre es obligatorio")
+        .min(2, "El nombre debe tener al menos 2 caracteres")
+        .max(100, "El nombre no puede exceder 100 caracteres"),
+    apellidoPaterno: yup
+        .string()
+        .required("El apellido paterno es obligatorio")
+        .min(2, "El apellido debe tener al menos 2 caracteres")
+        .max(100, "El apellido no puede exceder 100 caracteres"),
+    apellidoMaterno: yup
+        .string()
+        .required("El apellido materno es obligatorio")
+        .min(2, "El apellido debe tener al menos 2 caracteres")
+        .max(100, "El apellido no puede exceder 100 caracteres"),
+    curp: yup
+        .string()
+        .transform((value, originalValue) => {
+            if (!originalValue || originalValue === "" || originalValue.trim() === "") return null;
+            return originalValue;
+        })
+        .nullable()
+        .notRequired()
+        .test('curp-valido', 'Ingresa un CURP válido de 18 caracteres', function(value) {
+            if (!value) return true;
+            const valorLimpio = value.trim();
+            if (valorLimpio === "") return true;
+            return /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/.test(valorLimpio) &amp;&amp; valorLimpio.length === 18;
+        }),
+    enfermedades: yup
+        .string()
+        .nullable()
+        .max(500, "El campo de enfermedades no puede exceder 500 caracteres"),
+    fechaNacimiento: yup
+        .date()
+        .required("La fecha de nacimiento es obligatoria")
+        .max(new Date(), "La fecha no puede ser futura"),
+    direccion: yup.string().nullable(),
+    sexo: yup.string().nullable(),
+    nombreTutor: yup
+        .string()
+        .required("El nombre del tutor es obligatorio")
+        .min(2, "El nombre del tutor debe tener al menos 2 caracteres")
+        .max(200, "El nombre del tutor no puede exceder 200 caracteres"),
+    telefonoTutor: yup
+        .string()
+        .required("El teléfono del tutor es obligatorio")
+        .matches(/^[0-9]{10}$/, "Ingresa un teléfono válido de 10 dígitos"),
+    emailTutor: yup
+        .string()
+        .required("El email del tutor es obligatorio")
+        .email("Ingresa un email válido")
+        .max(150, "El email no puede exceder 150 caracteres"),
+    cintaActualId: yup
+        .number()
+        .nullable()
+        .transform((value, originalValue) => (originalValue === "" ? null : value)),
+    claseId: yup
+        .number()
+        .nullable()
+        .transform((value, originalValue) => (originalValue === "" ? null : value)),
+    conceptoMensualidadId: yup
+        .number()
+        .nullable()
+        .transform((value, originalValue) => (originalValue === "" ? null : value)),
+    activo: yup.boolean(),
+});
+
+/**
+ * Modal para editar los datos de un alumno existente en el sistema.
+ * Pre-carga los datos actuales del alumno en el formulario y permite
+ * modificar todos sus campos incluyendo el estado activo/inactivo.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista tras editar.
+ * @param {object} props.socio - Datos actuales del alumno a editar.
+ */
+export default function ModalEditarSocio({ abierto, cerrar, recargar, socio }) {
+    const [guardando, setGuardando] = useState(false);
+    const [cintas, setCintas] = useState([]);
+    const [clases, setClases] = useState([]);
+    const [conceptos, setConceptos] = useState([]);
+
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(esquema),
+    });
+
+    useEffect(() => {
+        if (abierto) {
+            cargarDatos();
+        }
+    }, [abierto]);
+
+    useEffect(() => {
+        if (socio &amp;&amp; cintas.length > 0 &amp;&amp; clases.length > 0 &amp;&amp; conceptos.length > 0) {
+            const fechaFormateada = socio.fechaNacimiento
+                ? new Date(socio.fechaNacimiento).toISOString().split("T")[0]
+                : "";
+
+            reset({
+                nombre: socio.nombre || "",
+                apellidoPaterno: socio.apellidoPaterno || "",
+                apellidoMaterno: socio.apellidoMaterno || "",
+                curp: socio.curp || "",
+                enfermedades: socio.enfermedades || "",
+                fechaNacimiento: fechaFormateada,
+                direccion: socio.direccion || "",
+                sexo: socio.sexo || "",
+                nombreTutor: socio.nombreTutor || "",
+                telefonoTutor: socio.telefonoTutor || "",
+                emailTutor: socio.emailTutor || "",
+                cintaActualId: socio.cintaActualId || "",
+                claseId: socio.claseId || "",
+                conceptoMensualidadId: socio.conceptoMensualidadId || "",
+                activo: socio.activo ?? true,
+            });
+        }
+    }, [socio, cintas, clases, conceptos, reset]);
+
+    const cargarDatos = async () => {
+        try {
+            const [resCintas, resClases, resConceptos] = await Promise.all([
+                api.get("/cintas?activo=true"),
+                api.get("/clases?activo=true"),
+                api.get("/conceptos?activo=true&amp;tipoConcepto=Mensualidad"),
+            ]);
+
+            const cintasOrdenadas = (resCintas.data || []).sort((a, b) => a.orden - b.orden);
+
+            setCintas(cintasOrdenadas);
+            setClases(resClases.data || []);
+            setConceptos(resConceptos.data || []);
+        } catch (error) {
+            manejarErrorApi(error, "cargar los datos necesarios");
+        }
+    };
+
+    const handleClose = () => {
+        if (!guardando) {
+            reset();
+            cerrar();
+        }
+    };
+
+    const onSubmit = async (data) => {
+        setGuardando(true);
+
+        try {
+            const payload = {
+                ...data,
+                slug: socio.slug,
+                curp: data.curp ? data.curp.toUpperCase() : null,
+                enfermedades: data.enfermedades?.trim() || "No",
+                cintaActualId: data.cintaActualId || null,
+                claseId: data.claseId || null,
+                conceptoMensualidadId: data.conceptoMensualidadId || null,
+                direccion: data.direccion || null,
+                sexo: data.sexo || null,
+            };
+
+            await api.put(`/alumnos/${socio.slug}`, payload);
+
+            Swal.fire({
+                icon: "success",
+                title: "Alumno actualizado",
+                text: "Los datos se actualizaron exitosamente",
+                confirmButtonColor: "#d32f2f",
+            });
+
+            reset();
+            cerrar();
+            recargar();
+        } catch (error) {
+            manejarErrorApi(error, "actualizar el alumno");
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    return (
+        &lt;ModernModal
+            open={abierto}
+            onClose={handleClose}
+            title="Editar Alumno"
+            icon={&lt;Edit />}
+            maxWidth="md"
+            formId="form-editar-socio"
+            loading={guardando}
+        >
+            &lt;form id="form-editar-socio" onSubmit={handleSubmit(onSubmit)}>
+                &lt;Typography variant="subtitle2" sx={{ mb: 2, color: "#666", fontWeight: "bold" }}>
+                    Datos del Alumno
+                &lt;/Typography>
+                    &lt;Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                        &lt;TextField
+                            label="Nombre"
+                            fullWidth
+                            {...register("nombre")}
+                            error={!!errors.nombre}
+                            helperText={errors.nombre?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;TextField
+                            label="Apellido Paterno"
+                            fullWidth
+                            {...register("apellidoPaterno")}
+                            error={!!errors.apellidoPaterno}
+                            helperText={errors.apellidoPaterno?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;TextField
+                            label="Apellido Materno"
+                            fullWidth
+                            {...register("apellidoMaterno")}
+                            error={!!errors.apellidoMaterno}
+                            helperText={errors.apellidoMaterno?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;TextField
+                            label="Fecha de Nacimiento"
+                            type="date"
+                            fullWidth
+                            {...register("fechaNacimiento")}
+                            error={!!errors.fechaNacimiento}
+                            helperText={errors.fechaNacimiento?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;FormControl fullWidth disabled={guardando}>
+                            &lt;InputLabel>Sexo&lt;/InputLabel>
+                            &lt;Controller
+                                name="sexo"
+                                control={control}
+                                render={({ field }) => (
+                                    &lt;Select {...field} label="Sexo">
+                                        &lt;MenuItem value="">
+                                            &lt;em>Seleccionar&lt;/em>
+                                        &lt;/MenuItem>
+                                        &lt;MenuItem value="Masculino">Masculino&lt;/MenuItem>
+                                        &lt;MenuItem value="Femenino">Femenino&lt;/MenuItem>
+                                    &lt;/Select>
+                                )}
+                            />
+                        &lt;/FormControl>
+                        &lt;TextField
+                            label="Dirección"
+                            fullWidth
+                            {...register("direccion")}
+                            error={!!errors.direccion}
+                            helperText={errors.direccion?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;TextField
+                            label="CURP (18 caracteres) - Opcional"
+                            fullWidth
+                            {...register("curp")}
+                            error={!!errors.curp}
+                            helperText={errors.curp?.message || "Deja en blanco si no tienes el CURP"}
+                            disabled={guardando}
+                            inputProps={{ maxLength: 18, style: { textTransform: 'uppercase' } }}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            placeholder="Opcional"
+                        />
+                        &lt;TextField
+                            label="Enfermedades (Opcional)"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            {...register("enfermedades")}
+                            error={!!errors.enfermedades}
+                            helperText={errors.enfermedades?.message || "Deja en blanco si no tiene enfermedades"}
+                            disabled={guardando}
+                            placeholder="Ej: Asma, Diabetes, etc."
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                    &lt;/Box>
+
+                    &lt;Typography variant="subtitle2" sx={{ mt: 3, mb: 2, color: "#666", fontWeight: "bold" }}>
+                        Datos del Tutor Responsable
+                    &lt;/Typography>
+                    &lt;Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                        &lt;TextField
+                            label="Nombre del Tutor"
+                            fullWidth
+                            {...register("nombreTutor")}
+                            error={!!errors.nombreTutor}
+                            helperText={errors.nombreTutor?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;TextField
+                            label="Teléfono del Tutor (10 dígitos)"
+                            fullWidth
+                            {...register("telefonoTutor")}
+                            error={!!errors.telefonoTutor}
+                            helperText={errors.telefonoTutor?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                        &lt;TextField
+                            label="Email del Tutor"
+                            type="email"
+                            fullWidth
+                            {...register("emailTutor")}
+                            error={!!errors.emailTutor}
+                            helperText={errors.emailTutor?.message}
+                            disabled={guardando}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            sx={{ gridColumn: "span 2" }}
+                        />
+                    &lt;/Box>
+
+                    &lt;Typography variant="subtitle2" sx={{ mt: 3, mb: 2, color: "#666", fontWeight: "bold" }}>
+                        Información de Entrenamiento
+                    &lt;/Typography>
+                    &lt;Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                        &lt;FormControl fullWidth disabled={guardando}>
+                            &lt;InputLabel>Cinta Actual&lt;/InputLabel>
+                            &lt;Controller
+                                name="cintaActualId"
+                                control={control}
+                                render={({ field }) => (
+                                    &lt;Select {...field} label="Cinta Actual" value={field.value || ""}>
+                                        &lt;MenuItem value="">
+                                            &lt;em>Sin cinta asignada&lt;/em>
+                                        &lt;/MenuItem>
+                                        {cintas.map((cinta) => (
+                                            &lt;MenuItem key={cinta.id} value={cinta.id}>
+                                                {cinta.nombre}
+                                            &lt;/MenuItem>
+                                        ))}
+                                    &lt;/Select>
+                                )}
+                            />
+                        &lt;/FormControl>
+                        &lt;FormControl fullWidth disabled={guardando}>
+                            &lt;InputLabel>Clase/Horario&lt;/InputLabel>
+                            &lt;Controller
+                                name="claseId"
+                                control={control}
+                                render={({ field }) => (
+                                    &lt;Select {...field} label="Clase/Horario" value={field.value || ""}>
+                                        &lt;MenuItem value="">
+                                            &lt;em>Sin clase asignada&lt;/em>
+                                        &lt;/MenuItem>
+                                        {clases.map((clase) => (
+                                            &lt;MenuItem key={clase.id} value={clase.id}>
+                                                {clase.nombre} - {clase.dias}
+                                            &lt;/MenuItem>
+                                        ))}
+                                    &lt;/Select>
+                                )}
+                            />
+                        &lt;/FormControl>
+                        &lt;FormControl fullWidth disabled={guardando} sx={{ gridColumn: "span 2" }}>
+                            &lt;InputLabel>Mensualidad Contratada&lt;/InputLabel>
+                            &lt;Controller
+                                name="conceptoMensualidadId"
+                                control={control}
+                                render={({ field }) => (
+                                    &lt;Select {...field} label="Mensualidad Contratada" value={field.value || ""}>
+                                        &lt;MenuItem value="">
+                                            &lt;em>Sin mensualidad&lt;/em>
+                                        &lt;/MenuItem>
+                                        {conceptos.map((concepto) => (
+                                            &lt;MenuItem key={concepto.id} value={concepto.id}>
+                                                {concepto.nombre} - ${concepto.precio}
+                                            &lt;/MenuItem>
+                                        ))}
+                                    &lt;/Select>
+                                )}
+                            />
+                        &lt;/FormControl>
+                    &lt;/Box>
+
+                    &lt;FormControlLabel
+                        control={
+                            &lt;Controller
+                                name="activo"
+                                control={control}
+                                render={({ field }) => (
+                                    &lt;Switch
+                                        checked={field.value}
+                                        onChange={(e) => field.onChange(e.target.checked)}
+                                        disabled={guardando}
+                                    />
+                                )}
+                            />
+                        }
+                        label="Activo"
+                        sx={{ mt: 2 }}
+                    />
+            &lt;/form>
+        &lt;/ModernModal>
+    );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

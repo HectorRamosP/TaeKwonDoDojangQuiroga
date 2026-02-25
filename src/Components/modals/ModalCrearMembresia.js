@@ -46,6 +46,16 @@ const tiposConcepto = [
     { valor: "Otro", etiqueta: "Otro" },
 ];
 
+/**
+ * Modal para crear un nuevo concepto de pago (membresía) en el sistema.
+ * Soporta tipos de concepto: Mensualidad, Inscripción, Examen, Uniforme y Otro.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de conceptos tras crear uno.
+ */
 export default function ModalCrearMembresia({ abierto, cerrar, recargar }) {
     const [guardando, setGuardando] = useState(false);
 

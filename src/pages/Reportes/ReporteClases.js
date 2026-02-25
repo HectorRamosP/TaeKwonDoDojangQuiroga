@@ -28,6 +28,13 @@ import {
 import { generarReporteClases } from "../../services/reportesService";
 import Swal from "sweetalert2";
 
+/**
+ * Subcomponente del módulo de Reportes. Muestra estadísticas de clases,
+ * incluyendo ocupación, alumnos inscritos y promedio de asistencia por clase.
+ * Permite exportar a CSV.
+ * @component
+ * @returns {JSX.Element} Reporte de clases con tarjetas resumen, gráficos de ocupación y tabla.
+ */
 export default function ReporteClases() {
   const [reporte, setReporte] = useState(null);
   const [cargando, setCargando] = useState(false);

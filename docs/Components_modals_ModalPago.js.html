@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Components/modals/ModalPago.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Components/modals/ModalPago.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
+  InputAdornment,
+  Chip,
+  Autocomplete,
+} from "@mui/material";
+import { Payment } from "@mui/icons-material";
+import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import Swal from "sweetalert2";
+import api from "../../services/api";
+import { registrarPago } from "../../services/pagosService";
+import ModernModal from "./ModernModal";
+import { manejarErrorApi } from "../../utils/manejarErrorApi";
+
+const esquema = yup.object().shape({
+  alumnoId: yup
+    .number()
+    .typeError("Selecciona un alumno válido")
+    .required("El alumno es obligatorio")
+    .positive("Selecciona un alumno"),
+  conceptoId: yup
+    .number()
+    .typeError("Selecciona un concepto válido")
+    .required("El concepto es obligatorio")
+    .positive("Selecciona un concepto"),
+  monto: yup
+    .number()
+    .typeError("El monto debe ser un número válido")
+    .required("El monto es obligatorio")
+    .positive("El monto debe ser positivo")
+    .min(1, "El monto debe ser mayor a 0"),
+  metodoPago: yup.string().required("El método de pago es obligatorio"),
+  referencia: yup.string().nullable(),
+  notas: yup.string().nullable(),
+});
+
+/**
+ * Modal para registrar un nuevo pago en el sistema.
+ * Permite buscar alumnos por nombre, seleccionar un concepto de pago
+ * y registrar el método de pago. El monto se actualiza automáticamente
+ * al seleccionar un concepto.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de pagos tras registrar uno.
+ */
+export default function ModalPago({ abierto, cerrar, recargar }) {
+  const [guardando, setGuardando] = useState(false);
+  const [alumnos, setAlumnos] = useState([]);
+  const [conceptos, setConceptos] = useState([]);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(esquema),
+    defaultValues: {
+      alumnoId: "",
+      conceptoId: "",
+      monto: "",
+      metodoPago: "",
+      referencia: "",
+      notas: "",
+    },
+  });
+
+  const conceptoIdWatch = watch("conceptoId");
+
+  useEffect(() => {
+    if (abierto) {
+      cargarAlumnos();
+      cargarConceptos();
+    }
+  }, [abierto]);
+
+  useEffect(() => {
+    if (conceptoIdWatch) {
+      actualizarMonto();
+    }
+  }, [conceptoIdWatch]);
+
+  const cargarAlumnos = async () => {
+    try {
+      const res = await api.get("/alumnos?activo=true");
+      setAlumnos(res.data || []);
+    } catch (error) {
+      manejarErrorApi(error, "cargar los alumnos");
+    }
+  };
+
+  const cargarConceptos = async () => {
+    try {
+      const res = await api.get("/conceptos?activo=true");
+      setConceptos(res.data || []);
+    } catch (error) {
+      manejarErrorApi(error, "cargar los conceptos");
+    }
+  };
+
+  const actualizarMonto = () => {
+    if (!conceptoIdWatch) return;
+
+    const concepto = conceptos.find((c) => c.id === conceptoIdWatch);
+    if (concepto) {
+      setValue("monto", concepto.precio);
+    }
+  };
+
+  const handleClose = () => {
+    if (!guardando) {
+      reset();
+      cerrar();
+    }
+  };
+
+  const onSubmit = async (data) => {
+    setGuardando(true);
+
+    try {
+      const pagoData = {
+        alumnoId: data.alumnoId,
+        conceptoId: data.conceptoId,
+        monto: parseFloat(data.monto),
+        metodoPago: data.metodoPago,
+        referencia: data.referencia || null,
+        notas: data.notas || null,
+        alumnoInscripcionId: null,
+      };
+
+      await registrarPago(pagoData);
+
+      Swal.fire({
+        icon: "success",
+        title: "Pago registrado",
+        text: "El pago se ha registrado exitosamente",
+        confirmButtonColor: "#d32f2f",
+      });
+
+      reset();
+      cerrar();
+      recargar();
+    } catch (error) {
+      manejarErrorApi(error, "registrar el pago");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    &lt;ModernModal
+      open={abierto}
+      onClose={handleClose}
+      title="Registrar Pago"
+      icon={&lt;Payment />}
+      maxWidth="sm"
+      formId="form-pago"
+      loading={guardando}
+      submitLabel="Registrar Pago"
+      loadingLabel="Registrando..."
+    >
+      &lt;form id="form-pago" onSubmit={handleSubmit(onSubmit)}>
+          &lt;Controller
+            name="alumnoId"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              &lt;Autocomplete
+                options={alumnos}
+                getOptionLabel={(option) =>
+                  `${option.nombre} ${option.apellidoPaterno} ${option.apellidoMaterno}`
+                }
+                value={alumnos.find((a) => a.id === value) || null}
+                onChange={(_, newValue) => {
+                  onChange(newValue ? newValue.id : "");
+                }}
+                disabled={guardando}
+                renderInput={(params) => (
+                  &lt;TextField
+                    {...params}
+                    label="Alumno"
+                    margin="normal"
+                    error={!!errors.alumnoId}
+                    helperText={errors.alumnoId?.message}
+                    placeholder="Buscar alumno..."
+                  />
+                )}
+                renderOption={(props, option) => (
+                  &lt;li {...props} key={option.id}>
+                    &lt;div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      &lt;span>
+                        {option.nombre} {option.apellidoPaterno}{" "}
+                        {option.apellidoMaterno}
+                      &lt;/span>
+                      {option.cintaActual &amp;&amp; (
+                        &lt;Chip label={option.cintaActual} size="small" />
+                      )}
+                    &lt;/div>
+                  &lt;/li>
+                )}
+                noOptionsText="No se encontraron alumnos"
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+              />
+            )}
+          />
+
+          &lt;FormControl
+            fullWidth
+            margin="normal"
+            error={!!errors.conceptoId}
+            disabled={guardando}
+          >
+            &lt;InputLabel>Concepto&lt;/InputLabel>
+            &lt;Controller
+              name="conceptoId"
+              control={control}
+              render={({ field }) => (
+                &lt;Select {...field} label="Concepto">
+                  &lt;MenuItem value="">
+                    &lt;em>Selecciona un concepto&lt;/em>
+                  &lt;/MenuItem>
+                  {conceptos.map((concepto) => (
+                    &lt;MenuItem key={concepto.id} value={concepto.id}>
+                      {concepto.nombre} - ${concepto.precio.toFixed(2)}
+                      &lt;Chip
+                        label={concepto.tipoConcepto}
+                        size="small"
+                        sx={{ ml: 1 }}
+                      />
+                    &lt;/MenuItem>
+                  ))}
+                &lt;/Select>
+              )}
+            />
+            {errors.conceptoId &amp;&amp; (
+              &lt;FormHelperText>{errors.conceptoId?.message}&lt;/FormHelperText>
+            )}
+          &lt;/FormControl>
+
+          &lt;TextField
+            label="Monto"
+            type="number"
+            fullWidth
+            {...register("monto")}
+            error={!!errors.monto}
+            helperText={errors.monto?.message}
+            margin="normal"
+            disabled={guardando}
+            InputProps={{
+              startAdornment: (
+                &lt;InputAdornment position="start">$&lt;/InputAdornment>
+              ),
+            }}
+            inputProps={{
+              step: "0.01",
+              min: "0",
+            }}
+          />
+
+          &lt;FormControl
+            fullWidth
+            margin="normal"
+            error={!!errors.metodoPago}
+            disabled={guardando}
+          >
+            &lt;InputLabel>Método de Pago&lt;/InputLabel>
+            &lt;Controller
+              name="metodoPago"
+              control={control}
+              render={({ field }) => (
+                &lt;Select {...field} label="Método de Pago">
+                  &lt;MenuItem value="">
+                    &lt;em>Selecciona un método&lt;/em>
+                  &lt;/MenuItem>
+                  &lt;MenuItem value="Efectivo">Efectivo&lt;/MenuItem>
+                  &lt;MenuItem value="Tarjeta">Tarjeta&lt;/MenuItem>
+                  &lt;MenuItem value="Transferencia">Transferencia&lt;/MenuItem>
+                &lt;/Select>
+              )}
+            />
+            {errors.metodoPago &amp;&amp; (
+              &lt;FormHelperText>{errors.metodoPago?.message}&lt;/FormHelperText>
+            )}
+          &lt;/FormControl>
+
+          &lt;TextField
+            label="Referencia (Opcional)"
+            fullWidth
+            {...register("referencia")}
+            error={!!errors.referencia}
+            helperText={
+              errors.referencia?.message || "Número de transacción, folio, etc."
+            }
+            margin="normal"
+            disabled={guardando}
+          />
+
+          &lt;TextField
+            label="Notas (Opcional)"
+            fullWidth
+            multiline
+            rows={3}
+            {...register("notas")}
+            error={!!errors.notas}
+            helperText={
+              errors.notas?.message ||
+              "Información adicional (ej: Aprobó examen Cinta Azul)"
+            }
+            margin="normal"
+            disabled={guardando}
+          />
+      &lt;/form>
+    &lt;/ModernModal>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

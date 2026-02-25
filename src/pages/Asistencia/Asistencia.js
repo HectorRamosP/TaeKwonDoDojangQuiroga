@@ -22,6 +22,12 @@ import { obtenerClases } from "../../services/clasesService";
 import ModalPasarLista from "../../Components/modals/ModalPasarLista";
 import "./Asistencia.css";
 
+/**
+ * Página de Asistencia. Muestra la lista de clases activas y permite
+ * pasar lista a través del modal ModalPasarLista.
+ * @component
+ * @returns {JSX.Element} Tabla de clases con botón de acción para pasar lista.
+ */
 export default function Asistencia() {
   const [clases, setClases] = useState([]);
   const [filtro, setFiltro] = useState("");

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: App.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: App.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Route, Routes, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import Layout from "./Components/layout/Layout";
+import Login from "./pages/Login/Login";
+import Usuarios from "./pages/Usuarios/Usuarios";
+import Socios from "./pages/Socios/Socios";
+import Membresias from "./pages/Membresias/Membresias";
+import Pagos from "./pages/Pagos/Pagos";
+import Clases from "./pages/Clases/Clases";
+import Asistencia from "./pages/Asistencia/Asistencia";
+import Reportes from "./pages/Reportes/Reportes";
+import RutaPrivada from "./Components/RutaPrivada";
+import ErrorBoundary from "./Components/ErrorBoundary";
+
+/**
+ * Componente que redirige al usuario según el estado de su token JWT.
+ * Si el token es válido y no ha expirado, redirige a /alumnos; de lo contrario a /login.
+ * @returns {JSX.Element} Componente Navigate de React Router.
+ */
+function RedirectToLoginOrAlumnos() {
+  const token = localStorage.getItem("token");
+
+  // Verificar si el token existe y tiene el formato correcto
+  if (token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        // El token tiene formato válido, verificar si no ha expirado
+        const payload = JSON.parse(atob(parts[1]));
+        const now = Math.floor(Date.now() / 1000);
+
+        // Si el token ha expirado, limpiarlo
+        if (payload.exp &amp;&amp; payload.exp &lt; now) {
+          localStorage.removeItem("token");
+          return &lt;Navigate to="/login" replace />;
+        }
+
+        return &lt;Navigate to="/alumnos" replace />;
+      } else {
+        // Token con formato inválido
+        localStorage.removeItem("token");
+        return &lt;Navigate to="/login" replace />;
+      }
+    } catch (error) {
+      // Error al decodificar el token
+      localStorage.removeItem("token");
+      return &lt;Navigate to="/login" replace />;
+    }
+  }
+
+  return &lt;Navigate to="/login" replace />;
+}
+
+/**
+ * Valida y limpia el token JWT almacenado en localStorage al iniciar la aplicación.
+ * Elimina el token si tiene formato inválido o si ya expiró.
+ * @returns {void}
+ */
+function validarTokenAlInicio() {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        const now = Math.floor(Date.now() / 1000);
+
+        // Si el token ha expirado, limpiarlo
+        if (payload.exp &amp;&amp; payload.exp &lt; now) {
+          localStorage.removeItem("token");
+          console.log("Token expirado, eliminado del localStorage");
+        }
+      } else {
+        localStorage.removeItem("token");
+        console.log("Token con formato inválido, eliminado del localStorage");
+      }
+    } catch (error) {
+      localStorage.removeItem("token");
+      console.log("Error al validar token, eliminado del localStorage");
+    }
+  }
+}
+
+/**
+ * Componente raíz de la aplicación. Define todas las rutas del sistema,
+ * envueltas en un ErrorBoundary y con protección de rutas privadas.
+ * @component
+ * @returns {JSX.Element} Árbol de rutas de la aplicación.
+ */
+export default function App() {
+  // Validar token al cargar la aplicación
+  useEffect(() => {
+    validarTokenAlInicio();
+  }, []);
+
+  return (
+    &lt;ErrorBoundary>
+      &lt;Routes>
+        &lt;Route path="/" element={&lt;RedirectToLoginOrAlumnos />} />
+        &lt;Route path="/login" element={&lt;Login />} />
+
+        &lt;Route
+          path="/"
+          element={
+            &lt;RutaPrivada>
+              &lt;Layout />
+            &lt;/RutaPrivada>
+          }
+        >
+          &lt;Route path="usuarios" element={&lt;Usuarios />} />
+          &lt;Route path="alumnos" element={&lt;Socios />} />
+          &lt;Route path="socios" element={&lt;Socios />} />
+          &lt;Route path="conceptos" element={&lt;Membresias />} />
+          &lt;Route path="membresias" element={&lt;Membresias />} />
+          &lt;Route path="pagos" element={&lt;Pagos />} />
+          &lt;Route path="clases" element={&lt;Clases />} />
+          &lt;Route path="asistencia" element={&lt;Asistencia />} />
+          &lt;Route path="reportes" element={&lt;Reportes />} />
+        &lt;/Route>
+      &lt;/Routes>
+    &lt;/ErrorBoundary>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

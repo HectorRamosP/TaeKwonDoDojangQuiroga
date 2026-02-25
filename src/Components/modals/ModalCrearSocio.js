@@ -1,12 +1,9 @@
 import {
-    Button,
     TextField,
     FormControl,
     InputLabel,
     Select,
     MenuItem,
-    FormHelperText,
-    CircularProgress,
     Box,
     Typography,
 } from "@mui/material";
@@ -18,6 +15,7 @@ import * as yup from "yup";
 import Swal from "sweetalert2";
 import api from "../../services/api";
 import ModernModal from "./ModernModal";
+import { manejarErrorApi } from "../../utils/manejarErrorApi";
 
 const esquema = yup.object().shape({
     nombre: yup
@@ -44,7 +42,7 @@ const esquema = yup.object().shape({
         .nullable()
         .notRequired()
         .test('curp-valido', 'Ingresa un CURP válido de 18 caracteres', function(value) {
-            if (!value) return true; // CURP es opcional
+            if (!value) return true;
             const valorLimpio = value.trim();
             if (valorLimpio === "") return true;
             return /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[0-9A-Z][0-9]$/.test(valorLimpio) && valorLimpio.length === 18;
@@ -87,6 +85,17 @@ const esquema = yup.object().shape({
         .transform((value, originalValue) => (originalValue === "" ? null : value)),
 });
 
+/**
+ * Modal para registrar un nuevo alumno en el sistema.
+ * Incluye validación de formulario con Yup y carga dinámica de cintas,
+ * clases y conceptos de mensualidad disponibles.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de alumnos tras crear uno.
+ */
 export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
     const [guardando, setGuardando] = useState(false);
     const [cintas, setCintas] = useState([]);
@@ -133,19 +142,13 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
                 api.get("/conceptos?activo=true&tipoConcepto=Mensualidad"),
             ]);
 
-            // Ordenar cintas por jerarquía (orden)
             const cintasOrdenadas = (resCintas.data || []).sort((a, b) => a.orden - b.orden);
 
             setCintas(cintasOrdenadas);
             setClases(resClases.data || []);
             setConceptos(resConceptos.data || []);
         } catch (error) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: "No se pudieron cargar los datos necesarios",
-                confirmButtonColor: "#d32f2f",
-            });
+            manejarErrorApi(error, "cargar los datos necesarios");
         }
     };
 
@@ -160,7 +163,6 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
         setGuardando(true);
 
         try {
-            // Convertir valores vacíos a null y asignar "No" por defecto a enfermedades
             const payload = {
                 ...data,
                 curp: data.curp ? data.curp.toUpperCase() : null,
@@ -185,32 +187,7 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
             cerrar();
             recargar();
         } catch (error) {
-            let mensajeError = "Ocurrió un error inesperado al guardar el alumno";
-            let detalles = "";
-
-            if (error.response) {
-                if (error.response.status === 400) {
-                    mensajeError = "Datos inválidos";
-                    detalles = error.response.data?.message || "Verifica que todos los datos sean correctos";
-                } else if (error.response.status === 409) {
-                    mensajeError = "Alumno duplicado";
-                    detalles = error.response.data?.message || "Ya existe un alumno con estos datos.";
-                } else {
-                    mensajeError = "Error del servidor";
-                    detalles = "No se pudo guardar el alumno. Intenta nuevamente.";
-                }
-            } else if (error.request) {
-                mensajeError = "Sin conexión";
-                detalles =
-                    "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-            }
-
-            Swal.fire({
-                icon: "error",
-                title: mensajeError,
-                text: detalles,
-                confirmButtonColor: "#d32f2f",
-            });
+            manejarErrorApi(error, "guardar el alumno");
         } finally {
             setGuardando(false);
         }
@@ -223,26 +200,8 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
             title="Nuevo Alumno"
             icon={<PersonAdd />}
             maxWidth="md"
-            actions={
-                <>
-                    <Button
-                        onClick={handleClose}
-                        className="modal-button-secondary"
-                        disabled={guardando}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        form="form-crear-socio"
-                        className="modal-button-primary"
-                        disabled={guardando}
-                        startIcon={guardando && <CircularProgress size={20} />}
-                    >
-                        {guardando ? "Guardando..." : "Guardar"}
-                    </Button>
-                </>
-            }
+            formId="form-crear-socio"
+            loading={guardando}
         >
             <form id="form-crear-socio" onSubmit={handleSubmit(onSubmit)}>
                 <Typography variant="subtitle2" sx={{ mb: 2, color: "#666", fontWeight: "bold" }}>

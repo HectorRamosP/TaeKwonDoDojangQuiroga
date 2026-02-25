@@ -4,6 +4,19 @@ import api from "../../services/api";
 import Taekwondo from '../../Components/img/Taekwondo.jpg'; 
 import './Login.css';
 
+/**
+ * Componente de la página de inicio de sesión.
+ * Permite al usuario autenticarse con nombre de usuario y contraseña.
+ * Al autenticarse exitosamente, almacena el token JWT en localStorage
+ * y redirige al módulo de usuarios.
+ *
+ * @component
+ * @returns {JSX.Element} Formulario de inicio de sesión.
+ *
+ * @example
+ * // Usado como ruta pública en App.js
+ * <Route path="/login" element={<Login />} />
+ */
 const Login = () => {
 
     const [usuarioNombre, setUsuarioNombre] = useState("");

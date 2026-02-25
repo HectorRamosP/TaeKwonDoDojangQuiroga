@@ -31,6 +31,12 @@ import ModalCrearMembresia from "../../Components/modals/ModalCrearMembresia";
 import ModalEditarMembresia from "../../Components/modals/ModalEditarMembresia";
 import "./Membresias.css";
 
+/**
+ * Página de Gestión de Conceptos (Membresías). Permite crear, editar, activar/desactivar
+ * y filtrar conceptos de pago por nombre, tipo y estado.
+ * @component
+ * @returns {JSX.Element} Tabla de conceptos con filtros avanzados y opciones de CRUD.
+ */
 export default function Membresias() {
   const [membresias, setMembresias] = useState([]);
   const [filtro, setFiltro] = useState("");

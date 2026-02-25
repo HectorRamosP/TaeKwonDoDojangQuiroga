@@ -54,6 +54,17 @@ const esquema = yup.object().shape({
 
 const diasSemana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 
+/**
+ * Modal para editar los datos de una clase existente.
+ * Pre-carga los datos de la clase seleccionada, incluyendo días mediante chips interactivos.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de clases tras editar.
+ * @param {object} props.clase - Datos actuales de la clase a editar.
+ */
 export default function ModalEditarClase({ abierto, cerrar, recargar, clase }) {
     const [guardando, setGuardando] = useState(false);
     const [diasSeleccionados, setDiasSeleccionados] = useState([]);

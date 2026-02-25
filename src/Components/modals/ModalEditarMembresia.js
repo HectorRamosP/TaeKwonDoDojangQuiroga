@@ -49,6 +49,17 @@ const tiposConcepto = [
     { valor: "Otro", etiqueta: "Otro" },
 ];
 
+/**
+ * Modal para editar los datos de un concepto de pago (membresía) existente.
+ * Pre-carga los datos actuales del concepto y permite modificar nombre, tipo, precio y estado.
+ *
+ * @component
+ * @param {object} props
+ * @param {boolean} props.abierto - Controla si el modal está visible.
+ * @param {Function} props.cerrar - Callback para cerrar el modal.
+ * @param {Function} props.recargar - Callback para recargar la lista de conceptos tras editar.
+ * @param {object} props.membresia - Datos actuales del concepto a editar.
+ */
 export default function ModalEditarMembresia({ abierto, cerrar, recargar, membresia }) {
     const [guardando, setGuardando] = useState(false);
 

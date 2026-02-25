@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: pages/Socios/Socios.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: pages/Socios/Socios.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Button,
+  Chip,
+  TextField,
+  Pagination,
+  CircularProgress,
+  Alert,
+  Box,
+  InputAdornment,
+  IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+} from "@mui/material";
+import { Search, Clear, PersonAdd, FilterList, ExpandMore, ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import api from "../../services/api";
+import ModalCrearSocio from "../../Components/modals/ModalCrearSocio";
+import ModalEditarSocio from "../../Components/modals/ModalEditarSocio";
+import CintaChip from "../../Components/CintaChip";
+import "./Socios.css";
+
+/**
+ * Página de gestión de alumnos del dojo.
+ * Permite listar, filtrar, ordenar, crear, editar, activar/desactivar
+ * y eliminar alumnos. Incluye filtros avanzados por estado, cinta,
+ * clase, mensualidad y rango de edad, con paginación de 10 registros por página.
+ *
+ * @component
+ * @returns {JSX.Element} Página completa de gestión de alumnos.
+ */
+export default function Socios() {
+  const [socios, setSocios] = useState([]);
+  const [filtro, setFiltro] = useState("");
+  const [pagina, setPagina] = useState(1);
+  const [filtrados, setFiltrados] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [socioEditar, setSocioEditar] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Filtros avanzados
+  const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroCinta, setFiltroCinta] = useState("");
+  const [filtroClase, setFiltroClase] = useState("");
+  const [filtroMensualidad, setFiltroMensualidad] = useState("");
+  const [filtroEdadMin, setFiltroEdadMin] = useState("");
+  const [filtroEdadMax, setFiltroEdadMax] = useState("");
+
+  // Datos para filtros
+  const [cintas, setCintas] = useState([]);
+  const [clases, setClases] = useState([]);
+  const [conceptos, setConceptos] = useState([]);
+
+  // Estados para ordenamiento
+  const [ordenarPor, setOrdenarPor] = useState(null); // 'nombre', 'edad', 'cinta'
+  const [ordenAscendente, setOrdenAscendente] = useState(true);
+
+  const itemsPorPagina = 10;
+
+  const cargarSocios = async () => {
+    setCargando(true);
+    setError(null);
+
+    try {
+      const res = await api.get("/alumnos");
+      setSocios(res.data || []);
+    } catch (error) {
+      let mensajeError = "Ocurrió un error inesperado al cargar los alumnos.";
+
+      if (error.response) {
+        mensajeError = "Error al cargar los alumnos del servidor.";
+      } else if (error.request) {
+        mensajeError = "No se pudo conectar con el servidor. Verifica tu conexión.";
+      }
+
+      setError(mensajeError);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error al cargar alumnos",
+        text: mensajeError,
+        confirmButtonColor: "#d32f2f",
+      });
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const cargarDatosFiltros = async () => {
+    try {
+      const [resCintas, resClases, resConceptos] = await Promise.all([
+        api.get("/cintas?activo=true"),
+        api.get("/clases?activo=true"),
+        api.get("/conceptos?activo=true&amp;tipoConcepto=Mensualidad"),
+      ]);
+
+      setCintas(resCintas.data || []);
+      setClases(resClases.data || []);
+      setConceptos(resConceptos.data || []);
+    } catch (error) {
+      // Error al cargar datos de filtros
+    }
+  };
+
+  useEffect(() => {
+    cargarSocios();
+    cargarDatosFiltros();
+  }, []);
+
+  useEffect(() => {
+    let datosFiltrados = socios;
+
+    // Filtro de texto
+    if (filtro) {
+      datosFiltrados = datosFiltrados.filter((s) =>
+        [s.nombre, s.apellidoPaterno, s.apellidoMaterno, s.nombreTutor, s.emailTutor]
+          .join(" ")
+          .toLowerCase()
+          .includes(filtro.toLowerCase())
+      );
+    }
+
+    // Filtro de estado
+    if (filtroEstado !== "") {
+      datosFiltrados = datosFiltrados.filter(
+        (s) => s.activo === (filtroEstado === "true")
+      );
+    }
+
+    // Filtro de cinta
+    if (filtroCinta) {
+      datosFiltrados = datosFiltrados.filter(
+        (s) => s.cintaActualId === parseInt(filtroCinta)
+      );
+    }
+
+    // Filtro de clase
+    if (filtroClase) {
+      datosFiltrados = datosFiltrados.filter(
+        (s) => s.claseId === parseInt(filtroClase)
+      );
+    }
+
+    // Filtro de mensualidad
+    if (filtroMensualidad) {
+      datosFiltrados = datosFiltrados.filter(
+        (s) => s.conceptoMensualidadId === parseInt(filtroMensualidad)
+      );
+    }
+
+    // Filtro de edad mínima
+    if (filtroEdadMin &amp;&amp; filtroEdadMin !== "") {
+      const edadMin = parseInt(filtroEdadMin);
+      if (!isNaN(edadMin)) {
+        datosFiltrados = datosFiltrados.filter(
+          (s) => s.edad >= edadMin
+        );
+      }
+    }
+
+    // Filtro de edad máxima
+    if (filtroEdadMax &amp;&amp; filtroEdadMax !== "") {
+      const edadMax = parseInt(filtroEdadMax);
+      if (!isNaN(edadMax)) {
+        datosFiltrados = datosFiltrados.filter(
+          (s) => s.edad &lt;= edadMax
+        );
+      }
+    }
+
+    setFiltrados(datosFiltrados);
+    setPagina(1);
+  }, [
+    filtro,
+    socios,
+    filtroEstado,
+    filtroCinta,
+    filtroClase,
+    filtroMensualidad,
+    filtroEdadMin,
+    filtroEdadMax,
+  ]);
+
+  // Función para manejar el ordenamiento
+  const manejarOrdenamiento = (campo) => {
+    if (ordenarPor === campo) {
+      // Si ya está ordenando por este campo, invertir el orden
+      setOrdenAscendente(!ordenAscendente);
+    } else {
+      // Si es un nuevo campo, establecerlo como ascendente
+      setOrdenarPor(campo);
+      setOrdenAscendente(true);
+    }
+  };
+
+  // Aplicar ordenamiento a los datos filtrados
+  const datosOrdenados = [...filtrados].sort((a, b) => {
+    if (!ordenarPor) return 0;
+
+    let comparacion = 0;
+
+    switch (ordenarPor) {
+      case 'nombre':
+        const nombreA = a.nombreCompleto || `${a.nombre} ${a.apellidoPaterno} ${a.apellidoMaterno}`;
+        const nombreB = b.nombreCompleto || `${b.nombre} ${b.apellidoPaterno} ${b.apellidoMaterno}`;
+        comparacion = nombreA.localeCompare(nombreB);
+        break;
+
+      case 'edad':
+        comparacion = a.edad - b.edad;
+        break;
+
+      default:
+        comparacion = 0;
+    }
+
+    return ordenAscendente ? comparacion : -comparacion;
+  });
+
+  const indiceInicio = (pagina - 1) * itemsPorPagina;
+  const indiceFin = indiceInicio + itemsPorPagina;
+  const datosPaginados = datosOrdenados.slice(indiceInicio, indiceFin);
+
+  const cambiarEstado = async (slug, nuevoEstado) => {
+    try {
+      await api.patch(`/alumnos/${slug}/estado`, {
+        slug: slug,
+        activo: nuevoEstado
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Estado actualizado",
+        text: `Alumno ${nuevoEstado ? "activado" : "desactivado"} exitosamente`,
+        confirmButtonColor: "#d32f2f",
+      });
+
+      cargarSocios();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo cambiar el estado del alumno",
+        confirmButtonColor: "#d32f2f",
+      });
+    }
+  };
+
+  const eliminarPermanente = (socio) => {
+    Swal.fire({
+      title: "¿Eliminar alumno permanentemente?",
+      html: `
+        &lt;p>¿Estás seguro de eliminar &lt;strong>${socio.nombreCompleto}&lt;/strong> de forma permanente?&lt;/p>
+        &lt;p style="color: #d32f2f; font-weight: bold;">Esta acción NO se puede deshacer.&lt;/p>
+      `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d32f2f",
+      cancelButtonColor: "#666",
+      confirmButtonText: "Sí, eliminar permanentemente",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/alumnos/${socio.slug}/permanente`);
+
+          Swal.fire({
+            icon: "success",
+            title: "Alumno eliminado",
+            text: "El alumno ha sido eliminado permanentemente del sistema",
+            confirmButtonColor: "#d32f2f",
+          });
+
+          cargarSocios();
+        } catch (error) {
+          let mensajeError = "No se pudo eliminar el alumno";
+
+          if (error.response?.status === 400) {
+            mensajeError = error.response.data?.mensaje || "No se puede eliminar el alumno";
+          }
+
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: mensajeError,
+            confirmButtonColor: "#d32f2f",
+          });
+        }
+      }
+    });
+  };
+
+  const abrirModalEditar = (socio) => {
+    setSocioEditar(socio);
+    setModalEditarAbierto(true);
+  };
+
+  const limpiarTodosFiltros = () => {
+    setFiltro("");
+    setFiltroEstado("");
+    setFiltroCinta("");
+    setFiltroClase("");
+    setFiltroMensualidad("");
+    setFiltroEdadMin("");
+    setFiltroEdadMax("");
+  };
+
+  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
+
+  // Componente para el botón de ordenamiento
+  const BotonOrdenamiento = ({ campo, children }) => (
+    &lt;Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      {children}
+      &lt;IconButton
+        size="small"
+        onClick={() => manejarOrdenamiento(campo)}
+        sx={{
+          color: ordenarPor === campo ? '#DC143C' : 'rgba(255, 255, 255, 0.7)',
+          padding: '4px',
+          transition: 'all 0.2s ease',
+          '&amp;:hover': {
+            color: '#DC143C',
+            backgroundColor: 'rgba(220, 20, 60, 0.1)',
+          }
+        }}
+      >
+        {ordenarPor === campo ? (
+          ordenAscendente ? &lt;ArrowUpward fontSize="small" /> : &lt;ArrowDownward fontSize="small" />
+        ) : (
+          &lt;ArrowUpward fontSize="small" sx={{ opacity: 0.5 }} />
+        )}
+      &lt;/IconButton>
+    &lt;/Box>
+  );
+
+  return (
+    &lt;div className="socios-container">
+      &lt;Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        &lt;h1 className="page-title">Gestión de Alumnos&lt;/h1>
+        &lt;Button
+          variant="contained"
+          startIcon={&lt;PersonAdd />}
+          onClick={() => setModalAbierto(true)}
+          sx={{
+            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+            fontWeight: 700,
+            padding: "10px 24px",
+            borderRadius: "12px",
+            transition: "all 0.3s ease",
+            "&amp;:hover": {
+              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+              transform: "translateY(-2px)",
+            },
+          }}
+        >
+          Agregar Alumno
+        &lt;/Button>
+      &lt;/Box>
+
+      &lt;Box sx={{ mb: 2 }}>
+        &lt;TextField
+          placeholder="Buscar por nombre, apellido o tutor..."
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              &lt;InputAdornment position="start">
+                &lt;Search />
+              &lt;/InputAdornment>
+            ),
+            endAdornment: filtro &amp;&amp; (
+              &lt;InputAdornment position="end">
+                &lt;IconButton onClick={() => setFiltro("")} edge="end">
+                  &lt;Clear />
+                &lt;/IconButton>
+              &lt;/InputAdornment>
+            ),
+          }}
+        />
+      &lt;/Box>
+
+      &lt;Accordion sx={{ mb: 2 }}>
+        &lt;AccordionSummary
+          expandIcon={&lt;ExpandMore />}
+          aria-controls="filtros-content"
+          id="filtros-header"
+        >
+          &lt;Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            &lt;FilterList />
+            &lt;Typography>Filtros Avanzados&lt;/Typography>
+          &lt;/Box>
+        &lt;/AccordionSummary>
+        &lt;AccordionDetails>
+          &lt;Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+              gap: 2,
+            }}
+          >
+            &lt;FormControl size="small" fullWidth>
+              &lt;InputLabel>Estado&lt;/InputLabel>
+              &lt;Select
+                value={filtroEstado}
+                label="Estado"
+                onChange={(e) => setFiltroEstado(e.target.value)}
+              >
+                &lt;MenuItem value="">Todos&lt;/MenuItem>
+                &lt;MenuItem value="true">Activos&lt;/MenuItem>
+                &lt;MenuItem value="false">Inactivos&lt;/MenuItem>
+              &lt;/Select>
+            &lt;/FormControl>
+
+            &lt;FormControl size="small" fullWidth>
+              &lt;InputLabel>Cinta&lt;/InputLabel>
+              &lt;Select
+                value={filtroCinta}
+                label="Cinta"
+                onChange={(e) => setFiltroCinta(e.target.value)}
+              >
+                &lt;MenuItem value="">Todas&lt;/MenuItem>
+                {cintas.map((cinta) => (
+                  &lt;MenuItem key={cinta.id} value={cinta.id}>
+                    {cinta.nombre}
+                  &lt;/MenuItem>
+                ))}
+              &lt;/Select>
+            &lt;/FormControl>
+
+            &lt;FormControl size="small" fullWidth>
+              &lt;InputLabel>Clase/Horario&lt;/InputLabel>
+              &lt;Select
+                value={filtroClase}
+                label="Clase/Horario"
+                onChange={(e) => setFiltroClase(e.target.value)}
+              >
+                &lt;MenuItem value="">Todas&lt;/MenuItem>
+                {clases.map((clase) => (
+                  &lt;MenuItem key={clase.id} value={clase.id}>
+                    {clase.nombre} - {clase.dias}
+                  &lt;/MenuItem>
+                ))}
+              &lt;/Select>
+            &lt;/FormControl>
+
+            &lt;FormControl size="small" fullWidth>
+              &lt;InputLabel>Mensualidad&lt;/InputLabel>
+              &lt;Select
+                value={filtroMensualidad}
+                label="Mensualidad"
+                onChange={(e) => setFiltroMensualidad(e.target.value)}
+              >
+                &lt;MenuItem value="">Todas&lt;/MenuItem>
+                {conceptos.map((concepto) => (
+                  &lt;MenuItem key={concepto.id} value={concepto.id}>
+                    {concepto.nombre}
+                  &lt;/MenuItem>
+                ))}
+              &lt;/Select>
+            &lt;/FormControl>
+
+            &lt;TextField
+              label="Edad Mínima"
+              type="number"
+              size="small"
+              fullWidth
+              value={filtroEdadMin}
+              onChange={(e) => setFiltroEdadMin(e.target.value)}
+              inputProps={{ min: 0, max: 100 }}
+            />
+
+            &lt;TextField
+              label="Edad Máxima"
+              type="number"
+              size="small"
+              fullWidth
+              value={filtroEdadMax}
+              onChange={(e) => setFiltroEdadMax(e.target.value)}
+              inputProps={{ min: 0, max: 100 }}
+            />
+          &lt;/Box>
+
+          {(filtroEstado ||
+            filtroCinta ||
+            filtroClase ||
+            filtroMensualidad ||
+            filtroEdadMin ||
+            filtroEdadMax) &amp;&amp; (
+            &lt;Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+              &lt;Button
+                variant="outlined"
+                size="small"
+                startIcon={&lt;Clear />}
+                onClick={limpiarTodosFiltros}
+              >
+                Limpiar Filtros
+              &lt;/Button>
+            &lt;/Box>
+          )}
+        &lt;/AccordionDetails>
+      &lt;/Accordion>
+
+      {error &amp;&amp; (
+        &lt;Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        &lt;/Alert>
+      )}
+
+      {cargando ? (
+        &lt;Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          &lt;CircularProgress />
+        &lt;/Box>
+      ) : (
+        &lt;>
+          &lt;TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+              border: "1px solid rgba(220, 20, 60, 0.1)",
+            }}
+          >
+            &lt;Table>
+              &lt;TableHead>
+                &lt;TableRow sx={{
+                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                  position: "relative",
+                  "&amp;::after": {
+                    content: '""',
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                  }
+                }}>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    &lt;BotonOrdenamiento campo="nombre">
+                      Nombre Completo
+                    &lt;/BotonOrdenamiento>
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    &lt;BotonOrdenamiento campo="edad">
+                      Edad
+                    &lt;/BotonOrdenamiento>
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Cinta
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Clase
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Horario
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Tutor
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Teléfono Tutor
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    CURP
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Enfermedades
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Mensualidad
+                  &lt;/TableCell>
+                  &lt;TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
+                    Estado
+                  &lt;/TableCell>
+                  &lt;TableCell
+                    sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}
+                    align="center"
+                  >
+                    Acciones
+                  &lt;/TableCell>
+                &lt;/TableRow>
+              &lt;/TableHead>
+              &lt;TableBody>
+                {datosPaginados.length === 0 ? (
+                  &lt;TableRow>
+                    &lt;TableCell colSpan={12} align="center">
+                      No se encontraron alumnos
+                    &lt;/TableCell>
+                  &lt;/TableRow>
+                ) : (
+                  datosPaginados.map((alumno) => (
+                    &lt;TableRow
+                      key={alumno.slug}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&amp;:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                          transform: "scale(1.001)",
+                        }
+                      }}
+                    >
+                      &lt;TableCell>
+                        {alumno.nombreCompleto || `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`}
+                      &lt;/TableCell>
+                      &lt;TableCell>{alumno.edad} años&lt;/TableCell>
+                      &lt;TableCell>
+                        &lt;CintaChip nombreCinta={alumno.cintaActualNombre} />
+                      &lt;/TableCell>
+                      &lt;TableCell>
+                        {alumno.claseNombre || "Sin clase"}
+                      &lt;/TableCell>
+                      &lt;TableCell>
+                        {alumno.claseHorario || "-"}
+                      &lt;/TableCell>
+                      &lt;TableCell>{alumno.nombreTutor}&lt;/TableCell>
+                      &lt;TableCell>{alumno.telefonoTutor || "N/A"}&lt;/TableCell>
+                      &lt;TableCell>{alumno.curp || "-"}&lt;/TableCell>
+                      &lt;TableCell>{alumno.enfermedades || "No"}&lt;/TableCell>
+                      &lt;TableCell>
+                        {alumno.conceptoMensualidadNombre ? (
+                          &lt;Chip
+                            label={alumno.conceptoMensualidadNombre}
+                            color="success"
+                            size="small"
+                          />
+                        ) : (
+                          &lt;Chip label="Sin mensualidad" color="default" size="small" />
+                        )}
+                      &lt;/TableCell>
+                      &lt;TableCell>
+                        &lt;Chip
+                          label={alumno.activo ? "Activo" : "Inactivo"}
+                          color={alumno.activo ? "success" : "error"}
+                          size="small"
+                        />
+                      &lt;/TableCell>
+                      &lt;TableCell align="center">
+                        &lt;Box sx={{ display: "flex", gap: 1, justifyContent: "center", flexWrap: "wrap" }}>
+                          &lt;Button
+                            variant="outlined"
+                            color="primary"
+                            size="small"
+                            onClick={() => abrirModalEditar(alumno)}
+                          >
+                            Editar
+                          &lt;/Button>
+                          &lt;Button
+                            variant="outlined"
+                            color={alumno.activo ? "error" : "success"}
+                            size="small"
+                            onClick={() =>
+                              cambiarEstado(alumno.slug, !alumno.activo)
+                            }
+                          >
+                            {alumno.activo ? "Desactivar" : "Activar"}
+                          &lt;/Button>
+                          {!alumno.activo &amp;&amp; (
+                            &lt;Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              onClick={() => eliminarPermanente(alumno)}
+                              sx={{
+                                background: "linear-gradient(135deg, #8B0000 0%, #5A0000 100%)",
+                                "&amp;:hover": {
+                                  background: "linear-gradient(135deg, #B22222 0%, #8B0000 100%)",
+                                },
+                              }}
+                            >
+                              Eliminar
+                            &lt;/Button>
+                          )}
+                        &lt;/Box>
+                      &lt;/TableCell>
+                    &lt;/TableRow>
+                  ))
+                )}
+              &lt;/TableBody>
+            &lt;/Table>
+          &lt;/TableContainer>
+
+          {totalPaginas > 1 &amp;&amp; (
+            &lt;Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              &lt;Pagination
+                count={totalPaginas}
+                page={pagina}
+                onChange={(e, val) => setPagina(val)}
+                sx={{
+                  "&amp; .MuiPaginationItem-root": {
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    borderRadius: "10px",
+                    transition: "all 0.3s ease",
+                  },
+                  "&amp; .MuiPaginationItem-root.Mui-selected": {
+                    background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                    color: "white",
+                    boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                    "&amp;:hover": {
+                      background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                    },
+                  },
+                  "&amp; .MuiPaginationItem-root:hover": {
+                    backgroundColor: "rgba(220, 20, 60, 0.1)",
+                  }
+                }}
+              />
+            &lt;/Box>
+          )}
+        &lt;/>
+      )}
+
+      &lt;ModalCrearSocio
+        abierto={modalAbierto}
+        cerrar={() => setModalAbierto(false)}
+        recargar={cargarSocios}
+      />
+
+      &lt;ModalEditarSocio
+        abierto={modalEditarAbierto}
+        cerrar={() => setModalEditarAbierto(false)}
+        recargar={cargarSocios}
+        socio={socioEditar}
+      />
+    &lt;/div>
+  );
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-api.html">api</a></li><li><a href="module-index.html">index</a></li></ul><h3>Classes</h3><ul><li><a href="ErrorBoundary.html">ErrorBoundary</a></li></ul><h3>Global</h3><ul><li><a href="global.html#Login">Login</a></li><li><a href="global.html#RedirectToLoginOrAlumnos">RedirectToLoginOrAlumnos</a></li><li><a href="global.html#TabPanel">TabPanel</a></li><li><a href="global.html#actualizarAlumno">actualizarAlumno</a></li><li><a href="global.html#actualizarClase">actualizarClase</a></li><li><a href="global.html#actualizarConcepto">actualizarConcepto</a></li><li><a href="global.html#cambiarEstadoAlumno">cambiarEstadoAlumno</a></li><li><a href="global.html#contarFaltas">contarFaltas</a></li><li><a href="global.html#crearAlumno">crearAlumno</a></li><li><a href="global.html#crearClase">crearClase</a></li><li><a href="global.html#crearConcepto">crearConcepto</a></li><li><a href="global.html#eliminarAsistenciasPorClaseYFecha">eliminarAsistenciasPorClaseYFecha</a></li><li><a href="global.html#eliminarClase">eliminarClase</a></li><li><a href="global.html#eliminarConcepto">eliminarConcepto</a></li><li><a href="global.html#eliminarPago">eliminarPago</a></li><li><a href="global.html#generarReporteAsistencias">generarReporteAsistencias</a></li><li><a href="global.html#generarReporteClases">generarReporteClases</a></li><li><a href="global.html#generarReporteConceptos">generarReporteConceptos</a></li><li><a href="global.html#generarReporteEstudiantes">generarReporteEstudiantes</a></li><li><a href="global.html#generarReportePagos">generarReportePagos</a></li><li><a href="global.html#manejarErrorApi">manejarErrorApi</a></li><li><a href="global.html#modificarPago">modificarPago</a></li><li><a href="global.html#obtenerAlumnoPorSlug">obtenerAlumnoPorSlug</a></li><li><a href="global.html#obtenerAlumnos">obtenerAlumnos</a></li><li><a href="global.html#obtenerAsistenciaPorId">obtenerAsistenciaPorId</a></li><li><a href="global.html#obtenerAsistencias">obtenerAsistencias</a></li><li><a href="global.html#obtenerCintaPorId">obtenerCintaPorId</a></li><li><a href="global.html#obtenerCintas">obtenerCintas</a></li><li><a href="global.html#obtenerClasePorSlug">obtenerClasePorSlug</a></li><li><a href="global.html#obtenerClases">obtenerClases</a></li><li><a href="global.html#obtenerConceptoPorSlug">obtenerConceptoPorSlug</a></li><li><a href="global.html#obtenerConceptos">obtenerConceptos</a></li><li><a href="global.html#obtenerEstadisticasPagos">obtenerEstadisticasPagos</a></li><li><a href="global.html#obtenerPago">obtenerPago</a></li><li><a href="global.html#obtenerPagos">obtenerPagos</a></li><li><a href="global.html#registrarAsistencia">registrarAsistencia</a></li><li><a href="global.html#registrarAsistenciasMasivas">registrarAsistenciasMasivas</a></li><li><a href="global.html#registrarPago">registrarPago</a></li><li><a href="global.html#validarTokenAlInicio">validarTokenAlInicio</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Tue Feb 24 2026 19:30:49 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
