@@ -88,6 +88,7 @@ export default function ModalPago({ abierto, cerrar, recargar }) {
     }
   }, [abierto]);
 
+  // Al cambiar el concepto seleccionado, rellena automáticamente el campo monto con su precio
   useEffect(() => {
     if (conceptoIdWatch) {
       actualizarMonto();
@@ -135,10 +136,12 @@ export default function ModalPago({ abierto, cerrar, recargar }) {
       const pagoData = {
         alumnoId: data.alumnoId,
         conceptoId: data.conceptoId,
+        // El input type="number" devuelve string; parseFloat asegura que sea número
         monto: parseFloat(data.monto),
         metodoPago: data.metodoPago,
         referencia: data.referencia || null,
         notas: data.notas || null,
+        // Campo requerido por el backend pero no usado en este flujo; siempre null
         alumnoInscripcionId: null,
       };
 

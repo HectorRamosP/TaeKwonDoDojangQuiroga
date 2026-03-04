@@ -90,6 +90,11 @@ public class AlumnoRepositorio : RepositorioGenerico<Alumno>, IAlumnoRepositorio
 
         if (edadMinima.HasValue || edadMaxima.HasValue)
         {
+            // La BD almacena FechaNacimiento, no Edad, por lo que el rango de edad
+            // se convierte a un rango de fechas de nacimiento (relación inversa):
+            // - edadMinima=10 → nacidos ANTES de hace 10 años (FechaNacimiento <= hoy-10)
+            // - edadMaxima=15 → nacidos DESPUÉS de hace 16 años (FechaNacimiento > hoy-16)
+            //   Se resta 1 extra en edadMaxima para incluir todo el año de cumpleaños
             var hoy = DateTime.Now;
 
             if (edadMinima.HasValue)

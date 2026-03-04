@@ -22,6 +22,9 @@ public class RepositorioGenerico<T> : IRepositorioGenerico<T> where T : class
 
     public virtual async Task<T?> ObtenerPorSlugAsync(string slug)
     {
+        // EF.Property<T>() accede a la propiedad "Slug" por nombre en lugar de e.Slug,
+        // permitiendo que este método genérico funcione para cualquier entidad sin requerir
+        // una restricción de tipo en la clase genérica T.
         var entidad = await _dbSet.FirstOrDefaultAsync(e => EF.Property<string>(e, "Slug") == slug);
         return entidad;
     }

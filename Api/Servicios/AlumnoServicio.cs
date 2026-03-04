@@ -31,6 +31,9 @@ public class AlumnoServicio : IAlumnoServicio
     {
         IEnumerable<Alumno> alumnos;
 
+        // Optimización: si hay filtros de BD (cinta, clase, edad, etc.) se delegan al repositorio
+        // para que el WHERE se ejecute en SQL. El filtro por nombre se aplica en memoria después
+        // porque LINQ-to-SQL no maneja bien Contains con normalización de acentos en español.
         if (cintaId.HasValue || claseId.HasValue || conceptoId.HasValue || edadMinima.HasValue || edadMaxima.HasValue || activo.HasValue)
         {
             alumnos = await _repositorio.BuscarConFiltrosAsync(cintaId, claseId, conceptoId, activo, edadMinima, edadMaxima);

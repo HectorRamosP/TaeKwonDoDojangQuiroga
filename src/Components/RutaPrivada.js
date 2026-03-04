@@ -33,7 +33,9 @@ export default function RutaPrivada({ children }) {
     }
 
     // Verificar si el token ha expirado
+    // parts[1] es el segmento de payload del JWT; atob lo decodifica de Base64 a JSON
     const payload = JSON.parse(atob(parts[1]));
+    // Date.now() está en ms; el campo 'exp' del JWT está en segundos Unix
     const now = Math.floor(Date.now() / 1000);
 
     if (payload.exp && payload.exp < now) {

@@ -97,6 +97,7 @@ export default function Pagos() {
     cargarPagos();
   }, [estadoFiltro]);
 
+  // Recalcula estadísticas cada vez que la lista de pagos cambia (tras cargar o eliminar)
   useEffect(() => {
     cargarEstadisticas();
   }, [pagos]);
@@ -112,6 +113,7 @@ export default function Pagos() {
     // Filtrar por rango de fechas
     if (fechaInicio) {
       const inicio = new Date(fechaInicio);
+      // 00:00:00.000 para incluir todos los pagos del día de inicio desde el primer momento
       inicio.setHours(0, 0, 0, 0);
       datosFiltrados = datosFiltrados.filter((p) => {
         const fechaPago = new Date(p.fecha);
@@ -121,6 +123,7 @@ export default function Pagos() {
 
     if (fechaFin) {
       const fin = new Date(fechaFin);
+      // 23:59:59.999 para incluir todos los pagos del día de fin hasta el último instante
       fin.setHours(23, 59, 59, 999);
       datosFiltrados = datosFiltrados.filter((p) => {
         const fechaPago = new Date(p.fecha);

@@ -28,6 +28,8 @@ public class AplicacionBdContexto : DbContext, IAplicacionBdContexto
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancelacionToken = default)
     {
+        // Generación automática de Slug para todas las entidades que implementan ISlug.
+        // Solo se genera si el Slug está vacío, para no romper URLs existentes al editar.
         foreach (var entrada in ChangeTracker.Entries<ISlug>())
         {
             if (entrada.State == EntityState.Added || entrada.State == EntityState.Modified)
@@ -46,11 +48,13 @@ public class AplicacionBdContexto : DbContext, IAplicacionBdContexto
 
     public async Task EmpezarTransaccionAsync()
     {
+        // Previene transacciones anidadas: si ya hay una activa, no se inicia otra
         if (_actualTransaccion != null)
         {
             return;
         }
 
+        // ReadCommitted: evita dirty reads (leer datos no confirmados) con impacto mínimo en concurrencia
         _actualTransaccion = await base.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted)
             .ConfigureAwait(false);
     }

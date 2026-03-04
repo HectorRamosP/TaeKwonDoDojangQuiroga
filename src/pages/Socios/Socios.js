@@ -135,7 +135,7 @@ export default function Socios() {
       );
     }
 
-    // Filtro de estado
+    // Filtro de estado: el Select devuelve "true"/"false" como string, se convierte a booleano
     if (filtroEstado !== "") {
       datosFiltrados = datosFiltrados.filter(
         (s) => s.activo === (filtroEstado === "true")
@@ -184,6 +184,7 @@ export default function Socios() {
     }
 
     setFiltrados(datosFiltrados);
+    // Vuelve a la primera página al cambiar cualquier filtro para no mostrar una página vacía
     setPagina(1);
   }, [
     filtro,
@@ -218,6 +219,7 @@ export default function Socios() {
       case 'nombre':
         const nombreA = a.nombreCompleto || `${a.nombre} ${a.apellidoPaterno} ${a.apellidoMaterno}`;
         const nombreB = b.nombreCompleto || `${b.nombre} ${b.apellidoPaterno} ${b.apellidoMaterno}`;
+        // localeCompare maneja correctamente acentos y caracteres del español (ñ, á, etc.)
         comparacion = nombreA.localeCompare(nombreB);
         break;
 
@@ -238,6 +240,7 @@ export default function Socios() {
 
   const cambiarEstado = async (slug, nuevoEstado) => {
     try {
+      // El slug va tanto en la URL como en el body porque el backend lo requiere en ambos lugares
       await api.patch(`/alumnos/${slug}/estado`, {
         slug: slug,
         activo: nuevoEstado

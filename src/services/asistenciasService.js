@@ -17,7 +17,8 @@ export const obtenerAsistencias = async (filtros = {}) => {
   if (filtros.fecha) params.append('fecha', filtros.fecha);
 
   const response = await api.get(`/asistencias?${params.toString()}`);
-  // El backend devuelve { success, data, message }, necesitamos acceder a .data
+  // El backend puede devolver { success, data, message } o directamente el array.
+  // response.data?.data cubre el formato envuelto; response.data cubre el array directo.
   return response.data?.data || response.data || [];
 };
 
@@ -71,6 +72,7 @@ export const registrarAsistenciasMasivas = async (datos) => {
 export const contarFaltas = async (alumnoId, fechaInicio, fechaFin) => {
   const params = new URLSearchParams({
     alumnoId,
+    // toISOString() devuelve "YYYY-MM-DDTHH:mm:ss.sssZ"; con split('T')[0] se envía solo la fecha
     fechaInicio: fechaInicio.toISOString().split('T')[0],
     fechaFin: fechaFin.toISOString().split('T')[0]
   });
@@ -90,6 +92,7 @@ export const eliminarAsistenciasPorClaseYFecha = async (claseId, fecha) => {
   // Asegurar que la fecha está en formato ISO completo
   const fechaISO = fecha.includes('T') ? fecha : `${fecha}T00:00:00`;
 
+  // encodeURIComponent codifica los ':' del timestamp para que no rompan la URL
   const url = `/asistencias/clase/${claseId}/fecha/${encodeURIComponent(fechaISO)}`;
   console.log('DELETE URL:', url);
   console.log('Params:', { claseId, fecha: fechaISO });

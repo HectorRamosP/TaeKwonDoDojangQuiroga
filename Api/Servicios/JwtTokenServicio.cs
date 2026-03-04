@@ -25,6 +25,7 @@ public class JwtTokenServicio : ITokenIdentidadServicio
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
+            // Token persistente (opción "recordarme"): 30 días. Sesión normal: 1 día.
             Expires = reclamos.EsPersistente
                 ? DateTime.UtcNow.AddDays(30)
                 : DateTime.UtcNow.AddDays(1),
@@ -49,17 +50,21 @@ public class JwtTokenServicio : ITokenIdentidadServicio
     {
         try
         {
+            // empresaId se extrae pero no se usa actualmente; el _ descarta el resultado de TryParse
             _ = int.TryParse(reclamos.SingleOrDefault(c => c.Type == ClaimTypes.GroupSid)?.Value, out int empresaId);
 
             return new ReclamosTokenIdentidad
             {
                 EsPersistente = reclamos.Any(c => c.Type == ClaimTypes.IsPersistent && c.Value == true.ToString()),
+                // Single() lanza excepción si el claim no existe; es intencional porque
+                // un JWT válido siempre debe contener SerialNumber y FechaTicks
                 EstampaSeguridad = reclamos.Single(c => c.Type == ClaimTypes.SerialNumber).Value,
                 FechaTicks = long.Parse(reclamos.Single(c => c.Type == nameof(ReclamosTokenIdentidad.FechaTicks)).Value)
             };
         }
         catch
         {
+            // Si el token está malformado o le falta algún claim obligatorio, retorna null
             return null;
         }
     }
@@ -73,6 +78,9 @@ public class JwtTokenServicio : ITokenIdentidadServicio
 
         var fechaLimite = DateTime.Now.AddMinutes(-_identidadAjustes.Expiracion);
 
+        // Validación de dos condiciones:
+        // 1. EstampaSeguridad debe coincidir (permite invalidar todos los tokens cambiando el valor en config)
+        // 2. Si no es persistente, la fecha del token debe ser más reciente que el límite de expiración
         var correcto = reclamos.EstampaSeguridad == _identidadAjustes.EstampaSeguridad &&
                        (reclamos.EsPersistente || reclamos.Fecha > fechaLimite);
 

@@ -35,12 +35,14 @@ const esquema = yup.object().shape({
         .max(100, "El apellido no puede exceder 100 caracteres"),
     curp: yup
         .string()
+        // Convierte cadenas vacías a null para que .nullable() las acepte sin error
         .transform((value, originalValue) => {
             if (!originalValue || originalValue === "" || originalValue.trim() === "") return null;
             return originalValue;
         })
         .nullable()
         .notRequired()
+        // Se usa .test() en vez de .matches() para poder omitir la validación cuando el valor es null/vacío
         .test('curp-valido', 'Ingresa un CURP válido de 18 caracteres', function(value) {
             if (!value) return true;
             const valorLimpio = value.trim();
@@ -136,12 +138,14 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
 
     const cargarDatos = async () => {
         try {
+            // Las 3 peticiones se hacen en paralelo para reducir el tiempo de carga del modal
             const [resCintas, resClases, resConceptos] = await Promise.all([
                 api.get("/cintas?activo=true"),
                 api.get("/clases?activo=true"),
                 api.get("/conceptos?activo=true&tipoConcepto=Mensualidad"),
             ]);
 
+            // Las cintas se ordenan por su campo 'orden' para mostrarlas de menor a mayor grado
             const cintasOrdenadas = (resCintas.data || []).sort((a, b) => a.orden - b.orden);
 
             setCintas(cintasOrdenadas);
@@ -153,6 +157,7 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
     };
 
     const handleClose = () => {
+        // Bloquea el cierre mientras se está guardando para evitar cancelar la petición a la mitad
         if (!guardando) {
             reset();
             cerrar();
@@ -165,7 +170,9 @@ export default function ModalCrearSocio({ abierto, cerrar, recargar }) {
         try {
             const payload = {
                 ...data,
+                // El CURP siempre se guarda en mayúsculas; si viene vacío se envía null
                 curp: data.curp ? data.curp.toUpperCase() : null,
+                // Si no se especifican enfermedades se guarda "No" en lugar de cadena vacía
                 enfermedades: data.enfermedades?.trim() || "No",
                 cintaActualId: data.cintaActualId || null,
                 claseId: data.claseId || null,

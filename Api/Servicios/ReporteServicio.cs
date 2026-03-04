@@ -73,6 +73,7 @@ public class ReporteServicio : IReporteServicio
                 MetodoPago = g.Key,
                 Cantidad = g.Count(),
                 MontoTotal = g.Sum(p => p.Monto),
+                // montoTotal > 0 previene división por cero cuando no hay pagos confirmados
                 Porcentaje = montoTotal > 0 ? (g.Sum(p => p.Monto) / montoTotal) * 100 : 0
             }).ToList();
 
@@ -176,7 +177,9 @@ public class ReporteServicio : IReporteServicio
             .OrderByDescending(e => e.Cantidad)
             .ToList();
 
-        // Definir orden de rangos
+        // Dictionary que define el orden lógico de los rangos de edad en el reporte.
+        // GroupBy no garantiza orden, por eso se usa en el OrderBy posterior.
+        // El valor 999 como fallback asegura que cualquier rango inesperado aparezca al final.
         var ordenRangos = new Dictionary<string, int>
         {
             { "0-5 años", 1 },
@@ -256,6 +259,8 @@ public class ReporteServicio : IReporteServicio
             TotalPresentes = totalPresentes,
             TotalAusentes = asistencias.Count - totalPresentes,
             PorcentajeAsistencia = asistencias.Count > 0 ? ((decimal)totalPresentes / asistencias.Count) * 100 : 0,
+            // GroupBy(Fecha.Date) agrupa por día; Average(g.Count()) calcula cuántos
+            // registros de asistencia hay en promedio por sesión. Ej: 100 registros en 10 días = 10/día
             PromedioAsistenciasPorDia = asistencias.Count > 0
                 ? (int)asistencias.GroupBy(a => a.Fecha.Date).Average(g => g.Count())
                 : 0
@@ -287,6 +292,9 @@ public class ReporteServicio : IReporteServicio
             .OrderBy(a => a.Fecha)
             .ToList();
 
+        // Se agrupa por AlumnoId + nombre completo para poder mostrar el nombre en el resultado
+        // sin necesitar un Join adicional. Se ordena por Presentes (no por TotalAsistencias)
+        // para rankear a quien más asiste, y Take(10) limita al top 10.
         var topAlumnos = asistencias
             .GroupBy(a => new { a.AlumnoId, NombreCompleto = $"{a.Alumno.Nombre} {a.Alumno.ApellidoPaterno} {a.Alumno.ApellidoMaterno}" })
             .Select(g => new AsistenciaPorAlumno

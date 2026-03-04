@@ -98,7 +98,9 @@ public class AsistenciaServicio : IAsistenciaServicio
                 throw new ArgumentException($"El alumno con ID {asistenciaDto.AlumnoId} no existe");
         }
 
-        // Verificar si ya existen registros para esta fecha y clase
+        // Patrón upsert: se carga la lista existente una sola vez y luego por cada alumno
+        // se decide si actualizar (ya tiene registro ese día) o insertar (primera vez).
+        // Esto permite corregir asistencias ya guardadas sin crear duplicados.
         var asistenciasExistentes = await _asistenciaRepo.ObtenerPorClaseYFecha(dto.ClaseId, dto.Fecha);
 
         foreach (var asistenciaDto in dto.Asistencias)

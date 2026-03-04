@@ -150,6 +150,8 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
     setGuardando(true);
 
     try {
+      // Convierte el map { [alumnoId]: boolean } al array que espera la API;
+      // alumnos sin marcar (undefined) se envían como false (ausente)
       const asistenciasArray = alumnos.map(alumno => ({
         alumnoId: alumno.id,
         presente: asistencias[alumno.id] || false
@@ -157,7 +159,7 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
 
       const payload = {
         claseId: clase.id,
-        fecha: fecha + "T00:00:00", // Formato ISO completo
+        fecha: fecha + "T00:00:00", // Formato ISO completo requerido por el backend
         asistencias: asistenciasArray
       };
 
@@ -203,6 +205,8 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
   const handleClose = () => {
     if (!guardando) {
       cerrar();
+      // Espera 300ms (duración de la animación de cierre del modal) antes de limpiar
+      // el estado, para evitar que se vean los datos desaparecer durante la animación
       setTimeout(() => {
         setAlumnos([]);
         setAsistencias({});
