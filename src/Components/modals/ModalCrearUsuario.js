@@ -1,3 +1,4 @@
+/** @module components/modals/ModalCrearUsuario */
 import {
     Button,
     TextField,

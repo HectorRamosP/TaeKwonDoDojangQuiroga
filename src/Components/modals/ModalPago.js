@@ -1,3 +1,4 @@
+/** @module components/modals/ModalPago */
 import {
   TextField,
   FormControl,

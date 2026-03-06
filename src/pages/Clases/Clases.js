@@ -1,3 +1,4 @@
+/** @module pages/Clases */
 import {
   Table,
   TableBody,

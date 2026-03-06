@@ -1,3 +1,4 @@
+/** @module services/conceptos */
 import api from './api';
 
 /**

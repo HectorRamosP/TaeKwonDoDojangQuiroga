@@ -1,3 +1,4 @@
+/** @module services/pagos */
 import api from './api';
 
 /**

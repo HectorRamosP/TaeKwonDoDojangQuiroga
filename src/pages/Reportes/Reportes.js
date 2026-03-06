@@ -1,3 +1,4 @@
+/** @module pages/Reportes */
 import { useState } from "react";
 import {
   Box,

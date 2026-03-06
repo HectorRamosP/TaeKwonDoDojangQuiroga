@@ -1,3 +1,4 @@
+/** @module services/clases */
 import api from './api';
 
 /**

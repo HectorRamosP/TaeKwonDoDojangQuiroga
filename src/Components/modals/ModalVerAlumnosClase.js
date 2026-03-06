@@ -1,3 +1,4 @@
+/** @module components/modals/ModalVerAlumnosClase */
 import {
   Button,
   Table,

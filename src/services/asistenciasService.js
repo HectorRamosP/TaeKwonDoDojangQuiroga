@@ -1,3 +1,4 @@
+/** @module services/asistencias */
 import api from './api';
 
 /**

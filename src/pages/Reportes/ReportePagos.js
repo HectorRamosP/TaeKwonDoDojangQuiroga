@@ -1,3 +1,4 @@
+/** @module pages/Reportes/ReportePagos */
 import { useState, useEffect } from "react";
 import {
   Box,

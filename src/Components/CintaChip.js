@@ -1,3 +1,4 @@
+/** @module components/CintaChip */
 import PropTypes from "prop-types";
 import "./CintaChip.css";
 

@@ -1,3 +1,4 @@
+/** @module components/modals/ModalPasarLista */
 import {
   Button,
   Table,

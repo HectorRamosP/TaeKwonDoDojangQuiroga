@@ -1,3 +1,4 @@
+/** @module services/alumnos */
 import api from './api';
 
 /**

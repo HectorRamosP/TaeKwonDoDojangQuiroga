@@ -1,10 +1,11 @@
+/** @module utils/manejarErrorApi */
 import Swal from "sweetalert2";
 
 /**
  * Maneja errores de peticiones a la API mostrando alertas con SweetAlert2.
  * Interpreta el código HTTP de la respuesta y muestra un mensaje descriptivo al usuario.
  *
- * @param {import('axios').AxiosError} error - El error capturado del bloque catch.
+ * @param {Error} error - El error capturado del bloque catch.
  * @param {string} [contexto="la operación"] - Descripción de la acción que falló (ej. "crear alumno").
  * @returns {void}
  *

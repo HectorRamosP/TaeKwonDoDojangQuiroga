@@ -1,3 +1,4 @@
+/** @module pages/Reportes/ReporteEstudiantes */
 import { useState, useEffect } from "react";
 import {
   Box,

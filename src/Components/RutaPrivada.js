@@ -1,3 +1,4 @@
+/** @module components/RutaPrivada */
 import { Navigate } from "react-router-dom";
 
 /**

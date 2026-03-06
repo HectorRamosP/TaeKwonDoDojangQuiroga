@@ -1,3 +1,4 @@
+/** @module components/modals/ModernModal */
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Box, Button, CircularProgress } from "@mui/material";
 import { Close } from "@mui/icons-material";
 import PropTypes from "prop-types";

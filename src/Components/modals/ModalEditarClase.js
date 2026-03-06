@@ -1,3 +1,4 @@
+/** @module components/modals/ModalEditarClase */
 import {
     Button,
     TextField,

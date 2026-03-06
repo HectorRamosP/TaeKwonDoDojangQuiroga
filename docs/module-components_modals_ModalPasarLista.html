@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Module: components/modals/ModalPasarLista</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Module: components/modals/ModalPasarLista</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id="module:components/modals/ModalPasarLista"><span class="type-signature"></span>(require("components/modals/ModalPasarLista"))<span class="signature">(props)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Modal para registrar asistencias de una clase de forma masiva.
+Muestra la lista de alumnos inscritos en la clase con checkboxes de asistencia,
+un selector de fecha, historial de las últimas 10 fechas registradas
+y contadores de presentes/ausentes en tiempo real.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>props</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>abierto</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Controla si el modal está visible.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>cerrar</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Callback para cerrar el modal.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>clase</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Datos de la clase para la cual se pasa lista.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>ID de la clase.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>nombre</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Nombre de la clase.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>dias</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Días de la semana de la clase.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Components_modals_ModalPasarLista.js.html">Components/modals/ModalPasarLista.js</a>, <a href="Components_modals_ModalPasarLista.js.html#line46">line 46</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-App.html">App</a></li><li><a href="module-api.html">api</a></li><li><a href="module-components_CintaChip.html">components/CintaChip</a></li><li><a href="module-components_ErrorBoundary.html">components/ErrorBoundary</a></li><li><a href="module-components_RutaPrivada.html">components/RutaPrivada</a></li><li><a href="module-components_layout_Layout.html">components/layout/Layout</a></li><li><a href="module-components_layout_Sidebar.html">components/layout/Sidebar</a></li><li><a href="module-components_modals_ModalCrearClase.html">components/modals/ModalCrearClase</a></li><li><a href="module-components_modals_ModalCrearMembresia.html">components/modals/ModalCrearMembresia</a></li><li><a href="module-components_modals_ModalCrearSocio.html">components/modals/ModalCrearSocio</a></li><li><a href="module-components_modals_ModalCrearUsuario.html">components/modals/ModalCrearUsuario</a></li><li><a href="module-components_modals_ModalEditarClase.html">components/modals/ModalEditarClase</a></li><li><a href="module-components_modals_ModalEditarMembresia.html">components/modals/ModalEditarMembresia</a></li><li><a href="module-components_modals_ModalEditarSocio.html">components/modals/ModalEditarSocio</a></li><li><a href="module-components_modals_ModalEditarUsuario.html">components/modals/ModalEditarUsuario</a></li><li><a href="module-components_modals_ModalPago.html">components/modals/ModalPago</a></li><li><a href="module-components_modals_ModalPasarLista.html">components/modals/ModalPasarLista</a></li><li><a href="module-components_modals_ModalVerAlumnosClase.html">components/modals/ModalVerAlumnosClase</a></li><li><a href="module-components_modals_ModernModal.html">components/modals/ModernModal</a></li><li><a href="module-index.html">index</a></li><li><a href="module-pages_Asistencia.html">pages/Asistencia</a></li><li><a href="module-pages_Clases.html">pages/Clases</a></li><li><a href="module-pages_Login.html">pages/Login</a></li><li><a href="module-pages_Membresias.html">pages/Membresias</a></li><li><a href="module-pages_Pagos.html">pages/Pagos</a></li><li><a href="module-pages_Reportes.html">pages/Reportes</a></li><li><a href="module-pages_Reportes_ReporteAsistencias.html">pages/Reportes/ReporteAsistencias</a></li><li><a href="module-pages_Reportes_ReporteClases.html">pages/Reportes/ReporteClases</a></li><li><a href="module-pages_Reportes_ReporteConceptos.html">pages/Reportes/ReporteConceptos</a></li><li><a href="module-pages_Reportes_ReporteEstudiantes.html">pages/Reportes/ReporteEstudiantes</a></li><li><a href="module-pages_Reportes_ReportePagos.html">pages/Reportes/ReportePagos</a></li><li><a href="module-pages_Socios.html">pages/Socios</a></li><li><a href="module-pages_Usuarios.html">pages/Usuarios</a></li><li><a href="module-services_alumnos.html">services/alumnos</a></li><li><a href="module-services_asistencias.html">services/asistencias</a></li><li><a href="module-services_cintas.html">services/cintas</a></li><li><a href="module-services_clases.html">services/clases</a></li><li><a href="module-services_conceptos.html">services/conceptos</a></li><li><a href="module-services_pagos.html">services/pagos</a></li><li><a href="module-services_reportes.html">services/reportes</a></li><li><a href="module-utils_manejarErrorApi.html">utils/manejarErrorApi</a></li></ul><h3>Classes</h3><ul><li><a href="module-components_ErrorBoundary-ErrorBoundary.html">ErrorBoundary</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Fri Mar 06 2026 11:58:22 GMT-0700 (hora estándar del Pacífico de México)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

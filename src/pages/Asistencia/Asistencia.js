@@ -1,3 +1,4 @@
+/** @module pages/Asistencia */
 import {
   Table,
   TableBody,

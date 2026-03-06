@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install --save-dev better-docs)",
+      "Bash(npm install --save-dev better-docs --legacy-peer-deps)",
+      "Bash(npx jsdoc -c jsdoc.json)",
+      "Bash(npm uninstall better-docs --legacy-peer-deps)",
+      "Bash(node -e \":*)"
+    ]
+  }
+}

@@ -1,3 +1,4 @@
+/** @module components/modals/ModalEditarMembresia */
 import {
     Button,
     TextField,

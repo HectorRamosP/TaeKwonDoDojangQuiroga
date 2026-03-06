@@ -1,3 +1,4 @@
+/** @module components/modals/ModalCrearSocio */
 import {
     TextField,
     FormControl,

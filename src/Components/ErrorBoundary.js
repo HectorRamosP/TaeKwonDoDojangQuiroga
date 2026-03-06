@@ -1,3 +1,4 @@
+/** @module components/ErrorBoundary */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Box, Typography, Button, Paper } from '@mui/material';

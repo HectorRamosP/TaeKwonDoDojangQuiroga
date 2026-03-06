@@ -1,3 +1,4 @@
+/** @module pages/Usuarios */
 import {
   Table,
   TableBody,

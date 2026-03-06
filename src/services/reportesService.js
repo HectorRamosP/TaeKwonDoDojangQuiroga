@@ -1,3 +1,4 @@
+/** @module services/reportes */
 import api from './api';
 
 /**

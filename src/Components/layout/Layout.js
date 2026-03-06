@@ -1,3 +1,4 @@
+/** @module components/layout/Layout */
 import { useState } from "react";
 import Sidebar from './Sidebar';
 import { Outlet } from "react-router-dom";

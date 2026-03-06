@@ -1,3 +1,4 @@
+/** @module services/cintas */
 import api from './api';
 
 /**

@@ -1,3 +1,4 @@
+/** @module components/modals/ModalCrearClase */
 import {
     TextField,
     FormControl,

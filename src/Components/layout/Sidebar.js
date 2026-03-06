@@ -1,3 +1,4 @@
+/** @module components/layout/Sidebar */
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { User, Users, CreditCard, LogOut, Banknote, Calendar, BarChart3, ClipboardCheck } from "lucide-react";

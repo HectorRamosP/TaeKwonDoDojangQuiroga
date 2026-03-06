@@ -1,3 +1,4 @@
+/** @module pages/Socios */
 import {
   Table,
   TableBody,

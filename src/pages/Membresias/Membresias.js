@@ -1,3 +1,4 @@
+/** @module pages/Membresias */
 import {
   Table,
   TableBody,
