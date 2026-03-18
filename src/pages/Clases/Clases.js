@@ -21,8 +21,7 @@ import { Search, Clear, Add, Visibility } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { obtenerClases, eliminarClase } from "../../services/clasesService";
-import ModalCrearClase from "../../Components/modals/ModalCrearClase";
-import ModalEditarClase from "../../Components/modals/ModalEditarClase";
+import ModalClase from "../../Components/modals/ModalClase";
 import ModalVerAlumnosClase from "../../Components/modals/ModalVerAlumnosClase";
 import "./Clases.css";
 
@@ -391,19 +390,20 @@ export default function Clases() {
         </>
       )}
 
-      <ModalCrearClase
+      <ModalClase
         abierto={modalAbierto}
         cerrar={() => setModalAbierto(false)}
         recargar={cargarClases}
       />
 
-      <ModalEditarClase
+      <ModalClase
         abierto={modalEditarAbierto}
         cerrar={() => {
           setModalEditarAbierto(false);
           setClaseEditar(null);
         }}
         recargar={cargarClases}
+        modo="editar"
         clase={claseEditar}
       />
 

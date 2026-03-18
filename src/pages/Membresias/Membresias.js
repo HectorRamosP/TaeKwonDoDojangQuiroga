@@ -28,8 +28,7 @@ import { Search, Clear, Add } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import api from "../../services/api";
-import ModalCrearMembresia from "../../Components/modals/ModalCrearMembresia";
-import ModalEditarMembresia from "../../Components/modals/ModalEditarMembresia";
+import ModalMembresia from "../../Components/modals/ModalMembresia";
 import "./Membresias.css";
 
 /**
@@ -472,16 +471,17 @@ export default function Membresias() {
         </>
       )}
 
-      <ModalCrearMembresia
+      <ModalMembresia
         abierto={modalAbierto}
         cerrar={() => setModalAbierto(false)}
         recargar={cargarMembresias}
       />
 
-      <ModalEditarMembresia
+      <ModalMembresia
         abierto={modalEditarAbierto}
         cerrar={() => setModalEditarAbierto(false)}
         recargar={cargarMembresias}
+        modo="editar"
         membresia={membresiaEditar}
       />
     </div>

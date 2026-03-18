@@ -21,8 +21,7 @@ import { Search, Clear } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import api from "../../services/api";
-import ModalCrearUsuario from "../../Components/modals/ModalCrearUsuario";
-import ModalEditarUsuario from "../../Components/modals/ModalEditarUsuario";
+import ModalUsuario from "../../Components/modals/ModalUsuario";
 import "./Usuarios.css";
 
 /**
@@ -149,30 +148,6 @@ export default function Usuarios() {
         confirmButtonColor: "#d32f2f",
       });
     }
-  };
-
-  const handleGuardadoExitoso = async () => {
-    await Swal.fire({
-      icon: "success",
-      title: "Usuario creado",
-      text: "El usuario ha sido creado correctamente",
-      confirmButtonColor: "#d32f2f",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    cargarUsuarios();
-  };
-
-  const handleActualizadoExitoso = async () => {
-    await Swal.fire({
-      icon: "success",
-      title: "Usuario actualizado",
-      text: "El usuario ha sido actualizado correctamente",
-      confirmButtonColor: "#d32f2f",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    cargarUsuarios();
   };
 
   const limpiarFiltro = () => {
@@ -409,16 +384,17 @@ export default function Usuarios() {
         />
       </div>
 
-      <ModalCrearUsuario
+      <ModalUsuario
         abierto={modalAbierto}
-        onClose={() => setModalAbierto(false)}
-        onGuardado={handleGuardadoExitoso}
+        cerrar={() => setModalAbierto(false)}
+        recargar={cargarUsuarios}
       />
-      <ModalEditarUsuario
+      <ModalUsuario
         abierto={modalEditarAbierto}
-        onClose={() => setModalEditarAbierto(false)}
+        cerrar={() => setModalEditarAbierto(false)}
+        recargar={cargarUsuarios}
+        modo="editar"
         usuario={usuarioEditar}
-        onActualizado={handleActualizadoExitoso}
       />
     </div>
   );

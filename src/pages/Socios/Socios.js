@@ -29,8 +29,7 @@ import { Search, Clear, PersonAdd, FilterList, ExpandMore, ArrowUpward, ArrowDow
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import api from "../../services/api";
-import ModalCrearSocio from "../../Components/modals/ModalCrearSocio";
-import ModalEditarSocio from "../../Components/modals/ModalEditarSocio";
+import ModalSocio from "../../Components/modals/ModalSocio";
 import CintaChip from "../../Components/CintaChip";
 import "./Socios.css";
 
@@ -744,16 +743,17 @@ export default function Socios() {
         </>
       )}
 
-      <ModalCrearSocio
+      <ModalSocio
         abierto={modalAbierto}
         cerrar={() => setModalAbierto(false)}
         recargar={cargarSocios}
       />
 
-      <ModalEditarSocio
+      <ModalSocio
         abierto={modalEditarAbierto}
         cerrar={() => setModalEditarAbierto(false)}
         recargar={cargarSocios}
+        modo="editar"
         socio={socioEditar}
       />
     </div>
