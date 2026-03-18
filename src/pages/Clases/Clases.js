@@ -18,9 +18,10 @@ import {
   IconButton,
 } from "@mui/material";
 import { Search, Clear, Add, Visibility } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Swal from "sweetalert2";
 import { obtenerClases, eliminarClase } from "../../services/clasesService";
+import { useLista } from "../../hooks/useLista";
 import ModalClase from "../../Components/modals/ModalClase";
 import ModalVerAlumnosClase from "../../Components/modals/ModalVerAlumnosClase";
 import "./Clases.css";
@@ -32,66 +33,19 @@ import "./Clases.css";
  * @returns {JSX.Element} Tabla de clases con opciones de CRUD y visualización de alumnos.
  */
 export default function Clases() {
-  const [clases, setClases] = useState([]);
-  const [filtro, setFiltro] = useState("");
-  const [pagina, setPagina] = useState(1);
-  const [filtrados, setFiltrados] = useState([]);
+  const {
+    filtro, setFiltro,
+    pagina, setPagina,
+    cargando, error,
+    datosPaginados, totalPaginas,
+    recargar: cargarClases,
+  } = useLista(obtenerClases, (c) => [c.nombre, c.dias, c.tipoClase]);
+
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalVerAlumnosAbierto, setModalVerAlumnosAbierto] = useState(false);
   const [claseEditar, setClaseEditar] = useState(null);
   const [claseVerAlumnos, setClaseVerAlumnos] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-
-  const itemsPorPagina = 10;
-
-  const cargarClases = async () => {
-    setCargando(true);
-    setError(null);
-
-    try {
-      const data = await obtenerClases();
-      setClases(data || []);
-    } catch (error) {
-      let mensajeError = "Ocurrió un error inesperado al cargar las clases.";
-
-      if (error.response) {
-        if (error.response.status === 401) {
-          mensajeError = "Sesión expirada. Por favor, inicia sesión nuevamente.";
-        } else if (error.response.status === 500) {
-          mensajeError = "Error del servidor. Intenta nuevamente más tarde.";
-        }
-      } else if (error.request) {
-        mensajeError =
-          "No se pudo conectar con el servidor. Verifica tu conexión a internet.";
-      }
-
-      setError(mensajeError);
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarClases();
-  }, []);
-
-  useEffect(() => {
-    const datosFiltrados = clases.filter((c) =>
-      [c.nombre, c.dias, c.tipoClase]
-        .join(" ")
-        .toLowerCase()
-        .includes(filtro.toLowerCase())
-    );
-    setFiltrados(datosFiltrados);
-    setPagina(1);
-  }, [filtro, clases]);
-
-  const indiceInicio = (pagina - 1) * itemsPorPagina;
-  const indiceFin = indiceInicio + itemsPorPagina;
-  const datosPaginados = filtrados.slice(indiceInicio, indiceFin);
-  const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
 
   const abrirModalEditar = (clase) => {
     setClaseEditar(clase);

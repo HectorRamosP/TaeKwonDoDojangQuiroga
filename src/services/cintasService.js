@@ -1,5 +1,6 @@
 /** @module services/cintas */
 import api from './api';
+import { buildQueryString } from '../utils/buildQueryString';
 
 /**
  * Obtiene la lista de cintas de Taekwondo con filtros opcionales.
@@ -9,11 +10,8 @@ import api from './api';
  * @returns {Promise<Array>} Lista de cintas.
  */
 export const obtenerCintas = async (filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.activo !== undefined) params.append('activo', filtros.activo);
-
-    const queryString = params.toString();
-    const response = await api.get(`/cintas${queryString ? '?' + queryString : ''}`);
+    const qs = buildQueryString(filtros);
+    const response = await api.get(`/cintas${qs ? '?' + qs : ''}`);
     return response.data;
 };
 

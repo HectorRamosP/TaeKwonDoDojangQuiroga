@@ -1,5 +1,6 @@
 /** @module services/pagos */
 import api from './api';
+import { buildQueryString } from '../utils/buildQueryString';
 
 /**
  * Obtiene la lista de pagos con filtros opcionales.
@@ -13,15 +14,8 @@ import api from './api';
  * @returns {Promise<Array>} Lista de pagos.
  */
 export const obtenerPagos = async (filtros = {}) => {
-  const params = new URLSearchParams();
-
-  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
-  if (filtros.conceptoId) params.append('conceptoId', filtros.conceptoId);
-  if (filtros.estado) params.append('estado', filtros.estado);
-  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
-  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-
-  const response = await api.get(`/pagos?${params.toString()}`);
+  const qs = buildQueryString(filtros);
+  const response = await api.get(`/pagos${qs ? '?' + qs : ''}`);
   return response.data;
 };
 
@@ -85,11 +79,7 @@ export const eliminarPago = async (id) => {
  * @returns {Promise<object>} Estadísticas de pagos.
  */
 export const obtenerEstadisticasPagos = async (filtros = {}) => {
-  const params = new URLSearchParams();
-
-  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
-  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-
-  const response = await api.get(`/pagos/estadisticas?${params.toString()}`);
+  const qs = buildQueryString(filtros);
+  const response = await api.get(`/pagos/estadisticas${qs ? '?' + qs : ''}`);
   return response.data;
 };

@@ -1,5 +1,6 @@
 /** @module services/conceptos */
 import api from './api';
+import { buildQueryString } from '../utils/buildQueryString';
 
 /**
  * Obtiene la lista de conceptos de pago con filtros opcionales.
@@ -10,11 +11,8 @@ import api from './api';
  * @returns {Promise<Array>} Lista de conceptos.
  */
 export const obtenerConceptos = async (filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.activo !== undefined) params.append('activo', filtros.activo);
-    if (filtros.tipoConcepto) params.append('tipoConcepto', filtros.tipoConcepto);
-
-    const response = await api.get(`/conceptos?${params.toString()}`);
+    const qs = buildQueryString(filtros);
+    const response = await api.get(`/conceptos${qs ? '?' + qs : ''}`);
     return response.data;
 };
 

@@ -18,9 +18,10 @@ import {
   IconButton,
 } from "@mui/material";
 import { Search, Clear } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Swal from "sweetalert2";
 import api from "../../services/api";
+import { useLista } from "../../hooks/useLista";
 import ModalUsuario from "../../Components/modals/ModalUsuario";
 import "./Usuarios.css";
 
@@ -31,66 +32,22 @@ import "./Usuarios.css";
  * @returns {JSX.Element} Tabla de usuarios con operaciones de administración.
  */
 export default function Usuarios() {
-  const [usuarios, setUsuarios] = useState([]);
-  const [filtro, setFiltro] = useState("");
-  const [pagina, setPagina] = useState(1);
-  const [filtrados, setFiltrados] = useState([]);
+  const {
+    filtro, setFiltro,
+    pagina, setPagina,
+    cargando, error,
+    datosPaginados: usuariosPaginados,
+    filtrados,
+    recargar: cargarUsuarios,
+  } = useLista(
+    () => api.get("/usuarios").then((r) => r.data),
+    (u) => [u.nombre, u.apellidoPaterno, u.apellidoMaterno, u.nombreUsuario],
+    5
+  );
+
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [usuarioEditar, setUsuarioEditar] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState(null);
-
-  const itemsPorPagina = 5;
-
-  const cargarUsuarios = async () => {
-    setCargando(true);
-    setError(null);
-    
-    try {
-      const res = await api.get("/usuarios");
-      setUsuarios(res.data || []);
-    } catch (error) {
-      let mensajeError = "Ocurrió un error inesperado al cargar los usuarios.";
-      
-      if (error.response) {
-        mensajeError = "Error al cargar los usuarios del servidor.";
-      } else if (error.request) {
-        mensajeError = "No se pudo conectar con el servidor. Verifica tu conexión.";
-      }
-      
-      setError(mensajeError);
-      
-      Swal.fire({
-        icon: "error",
-        title: "Error al cargar usuarios",
-        text: mensajeError,
-        confirmButtonColor: "#d32f2f",
-      });
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  useEffect(() => {
-    cargarUsuarios();
-  }, []);
-
-  useEffect(() => {
-    const datosFiltrados = usuarios.filter((u) =>
-      [u.nombre, u.apellidoPaterno, u.apellidoMaterno, u.nombreUsuario]
-        .join(" ")
-        .toLowerCase()
-        .includes(filtro.toLowerCase())
-    );
-    setFiltrados(datosFiltrados);
-    setPagina(1);
-  }, [filtro, usuarios]);
-
-  const usuariosPaginados = filtrados.slice(
-    (pagina - 1) * itemsPorPagina,
-    pagina * itemsPorPagina
-  );
 
   const abrirEditar = (usuario) => {
     setUsuarioEditar(usuario);
@@ -156,18 +113,15 @@ export default function Usuarios() {
 
   const recargarDatos = async () => {
     await cargarUsuarios();
-    
-    if (!error) {
-      Swal.fire({
-        icon: "success",
-        title: "Datos actualizados",
-        text: "Los datos se han recargado correctamente",
-        confirmButtonColor: "#d32f2f",
-        timer: 1500,
-        timerProgressBar: true,
-        showConfirmButton: false,
-      });
-    }
+    Swal.fire({
+      icon: "success",
+      title: "Datos actualizados",
+      text: "Los datos se han recargado correctamente",
+      confirmButtonColor: "#d32f2f",
+      timer: 1500,
+      timerProgressBar: true,
+      showConfirmButton: false,
+    });
   };
 
   if (cargando) {

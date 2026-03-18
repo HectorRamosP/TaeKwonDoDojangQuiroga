@@ -1,5 +1,6 @@
 /** @module services/asistencias */
 import api from './api';
+import { buildQueryString } from '../utils/buildQueryString';
 
 /**
  * Obtiene la lista de asistencias con filtros opcionales.
@@ -11,15 +12,8 @@ import api from './api';
  * @returns {Promise<Array>} Lista de asistencias.
  */
 export const obtenerAsistencias = async (filtros = {}) => {
-  const params = new URLSearchParams();
-
-  if (filtros.claseId) params.append('claseId', filtros.claseId);
-  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
-  if (filtros.fecha) params.append('fecha', filtros.fecha);
-
-  const response = await api.get(`/asistencias?${params.toString()}`);
-  // El backend puede devolver { success, data, message } o directamente el array.
-  // response.data?.data cubre el formato envuelto; response.data cubre el array directo.
+  const qs = buildQueryString(filtros);
+  const response = await api.get(`/asistencias${qs ? '?' + qs : ''}`);
   return response.data?.data || response.data || [];
 };
 

@@ -1,5 +1,6 @@
 /** @module services/clases */
 import api from './api';
+import { buildQueryString } from '../utils/buildQueryString';
 
 /**
  * Obtiene la lista de clases con filtros opcionales.
@@ -10,11 +11,8 @@ import api from './api';
  * @returns {Promise<Array>} Lista de clases.
  */
 export const obtenerClases = async (filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.activo !== undefined) params.append('activo', filtros.activo);
-    if (filtros.tipoClase) params.append('tipoClase', filtros.tipoClase);
-
-    const response = await api.get(`/clases?${params.toString()}`);
+    const qs = buildQueryString(filtros);
+    const response = await api.get(`/clases${qs ? '?' + qs : ''}`);
     return response.data;
 };
 

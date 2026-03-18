@@ -1,5 +1,6 @@
 /** @module services/alumnos */
 import api from './api';
+import { buildQueryString } from '../utils/buildQueryString';
 
 /**
  * Obtiene la lista de alumnos con filtros opcionales.
@@ -12,13 +13,8 @@ import api from './api';
  * @returns {Promise<Array>} Lista de alumnos.
  */
 export const obtenerAlumnos = async (filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.nombre) params.append('nombre', filtros.nombre);
-    if (filtros.activo !== undefined) params.append('activo', filtros.activo);
-    if (filtros.cintaId) params.append('cintaId', filtros.cintaId);
-    if (filtros.claseId) params.append('claseId', filtros.claseId);
-
-    const response = await api.get(`/alumnos?${params.toString()}`);
+    const qs = buildQueryString(filtros);
+    const response = await api.get(`/alumnos${qs ? '?' + qs : ''}`);
     return response.data;
 };
 

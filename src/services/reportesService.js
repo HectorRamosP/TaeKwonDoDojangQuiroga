@@ -1,5 +1,6 @@
 /** @module services/reportes */
 import api from './api';
+import { buildQueryString } from '../utils/buildQueryString';
 
 /**
  * Genera un reporte de pagos con filtros opcionales.
@@ -14,16 +15,8 @@ import api from './api';
  * @returns {Promise<object>} Datos del reporte de pagos.
  */
 export const generarReportePagos = async (filtros = {}) => {
-  const params = new URLSearchParams();
-
-  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
-  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
-  if (filtros.conceptoId) params.append('conceptoId', filtros.conceptoId);
-  if (filtros.estado) params.append('estado', filtros.estado);
-  if (filtros.metodoPago) params.append('metodoPago', filtros.metodoPago);
-
-  const response = await api.get(`/reportes/pagos?${params.toString()}`);
+  const qs = buildQueryString(filtros);
+  const response = await api.get(`/reportes/pagos${qs ? '?' + qs : ''}`);
   return response.data;
 };
 
@@ -36,12 +29,8 @@ export const generarReportePagos = async (filtros = {}) => {
  * @returns {Promise<object>} Datos del reporte de estudiantes.
  */
 export const generarReporteEstudiantes = async (filtros = {}) => {
-  const params = new URLSearchParams();
-
-  if (filtros.cintaId) params.append('cintaId', filtros.cintaId);
-  if (filtros.claseId) params.append('claseId', filtros.claseId);
-
-  const response = await api.get(`/reportes/estudiantes?${params.toString()}`);
+  const qs = buildQueryString(filtros);
+  const response = await api.get(`/reportes/estudiantes${qs ? '?' + qs : ''}`);
   return response.data;
 };
 
@@ -56,14 +45,8 @@ export const generarReporteEstudiantes = async (filtros = {}) => {
  * @returns {Promise<object>} Datos del reporte de asistencias.
  */
 export const generarReporteAsistencias = async (filtros = {}) => {
-  const params = new URLSearchParams();
-
-  if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
-  if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-  if (filtros.alumnoId) params.append('alumnoId', filtros.alumnoId);
-  if (filtros.claseId) params.append('claseId', filtros.claseId);
-
-  const response = await api.get(`/reportes/asistencias?${params.toString()}`);
+  const qs = buildQueryString(filtros);
+  const response = await api.get(`/reportes/asistencias${qs ? '?' + qs : ''}`);
   return response.data;
 };
 
