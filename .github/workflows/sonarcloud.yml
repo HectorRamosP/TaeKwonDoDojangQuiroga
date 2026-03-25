@@ -32,6 +32,17 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Run tests and collect coverage
+        run: dotnet test Api.Tests/Api.Tests.csproj --collect:"XPlat Code Coverage" --results-directory ./coverage /p:CoverletOutputFormat=opencover
+
+      - name: Move coverage report to expected path
+        run: |
+          mkdir -p Api
+          find coverage -name "*.xml" | head -1 | xargs -I{} cp {} Api/coverage.opencover.xml
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:

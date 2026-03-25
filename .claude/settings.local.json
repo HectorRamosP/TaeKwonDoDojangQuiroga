@@ -38,9 +38,20 @@
       "Bash(cmd /c \"dir /s /b C:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api\\Comun\\Modelos\\Reportes\")",
       "Bash(cmd /c \"dir /s /b C:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api | findstr Controller.cs\")",
       "Bash(cmd /c \"dir /s /b C:\\\\Users\\\\Hector\\\\Documents\\\\GitHub\\\\ControlFitnessGym\\\\Api\\\\Comun\\\\Modelos\")",
-      "Bash(xargs wc:*)"
+      "Bash(xargs wc:*)",
+      "Read(//c/Users/Hector/Documents/GitHub/ControlFitnessGym/**)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(dotnet tool:*)",
+      "Bash(start \"c:\\\\Users\\\\Hector\\\\Documents\\\\GitHub\\\\ControlFitnessGym\\\\coverage\\\\report\\\\index.html\")"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "c:\\Users\\Hector\\Documents\\GitHub\\ControlFitnessGym\\Api.Tests"
+    ]
   }
 }
