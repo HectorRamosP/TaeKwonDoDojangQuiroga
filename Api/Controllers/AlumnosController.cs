@@ -94,4 +94,20 @@ public class AlumnosController : ControllerBase
         await _alumnoServicio.EliminarPermanenteAsync(slug);
         return Ok(new { mensaje = "Alumno eliminado permanentemente" });
     }
+
+    [HttpGet("{slug}/perfil")]
+    public async Task<ActionResult<PerfilAlumnoDto>> ObtenerPerfilAlumno(
+        string slug,
+        [FromQuery] DateTime? fechaInicio = null,
+        [FromQuery] DateTime? fechaFin = null)
+    {
+        var perfil = await _alumnoServicio.ObtenerPerfilAsync(slug, fechaInicio, fechaFin);
+
+        if (perfil == null)
+        {
+            return NotFound(new { mensaje = "Alumno no encontrado" });
+        }
+
+        return Ok(perfil);
+    }
 }

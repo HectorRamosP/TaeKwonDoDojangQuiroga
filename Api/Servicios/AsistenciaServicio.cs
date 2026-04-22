@@ -150,4 +150,17 @@ public class AsistenciaServicio : IAsistenciaServicio
             await _asistenciaRepo.EliminarAsync(asistencia);
         }
     }
+
+    public async Task JustificarFaltaAsync(int asistenciaId, bool justificada)
+    {
+        var asistencia = await _asistenciaRepo.ObtenerPorIdAsync(asistenciaId);
+        if (asistencia == null)
+            throw new KeyNotFoundException("Asistencia no encontrada");
+
+        if (asistencia.Presente)
+            throw new InvalidOperationException("Solo se pueden justificar las faltas, no las presencias");
+
+        asistencia.Justificada = justificada;
+        await _asistenciaRepo.ActualizarAsync(asistencia);
+    }
 }

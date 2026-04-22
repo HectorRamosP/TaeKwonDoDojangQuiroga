@@ -10,6 +10,7 @@ import Pagos from "./pages/Pagos/Pagos";
 import Clases from "./pages/Clases/Clases";
 import Asistencia from "./pages/Asistencia/Asistencia";
 import Reportes from "./pages/Reportes/Reportes";
+import PerfilAlumno from "./pages/PerfilAlumno/PerfilAlumno";
 import RutaPrivada from "./Components/RutaPrivada";
 import ErrorBoundary from "./Components/ErrorBoundary";
 
@@ -118,6 +119,7 @@ export default function App() {
           <Route path="clases" element={<Clases />} />
           <Route path="asistencia" element={<Asistencia />} />
           <Route path="reportes" element={<Reportes />} />
+          <Route path="alumnos/:slug/perfil" element={<PerfilAlumno />} />
         </Route>
       </Routes>
     </ErrorBoundary>

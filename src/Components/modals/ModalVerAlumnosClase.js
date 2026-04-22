@@ -13,8 +13,9 @@ import {
   Box,
   Typography,
 } from "@mui/material";
-import { Group } from "@mui/icons-material";
+import { Group, Visibility } from "@mui/icons-material";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 import CintaChip from "../CintaChip";
 import ModernModal from "./ModernModal";
@@ -30,6 +31,7 @@ import ModernModal from "./ModernModal";
  * @param {object} props.clase - Datos de la clase cuyos alumnos se van a visualizar.
  */
 export default function ModalVerAlumnosClase({ abierto, cerrar, clase }) {
+  const navigate = useNavigate();
   const [alumnos, setAlumnos] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
@@ -170,6 +172,17 @@ export default function ModalVerAlumnosClase({ abierto, cerrar, clase }) {
                 >
                   Teléfono Tutor
                 </TableCell>
+                <TableCell
+                  sx={{
+                    color: "white",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    letterSpacing: "0.5px"
+                  }}
+                  align="center"
+                >
+                  Perfil
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -197,6 +210,31 @@ export default function ModalVerAlumnosClase({ abierto, cerrar, clase }) {
                   </TableCell>
                   <TableCell sx={{ color: "#666", fontFamily: "monospace" }}>
                     {alumno.telefonoTutor}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Visibility />}
+                      onClick={() => {
+                        cerrar();
+                        navigate(`/alumnos/${alumno.slug}/perfil`);
+                      }}
+                      sx={{
+                        borderColor: "rgba(220, 20, 60, 0.3)",
+                        color: "#DC143C",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
+                        textTransform: "none",
+                        borderRadius: "8px",
+                        "&:hover": {
+                          borderColor: "#DC143C",
+                          backgroundColor: "rgba(220, 20, 60, 0.05)",
+                        },
+                      }}
+                    >
+                      Ver
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

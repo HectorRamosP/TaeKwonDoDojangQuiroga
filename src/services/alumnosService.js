@@ -63,3 +63,21 @@ export const cambiarEstadoAlumno = async (slug, activo) => {
     const response = await api.patch(`/alumnos/${slug}/estado`, { slug, activo });
     return response.data;
 };
+
+/**
+ * Obtiene el perfil consolidado de un alumno, incluyendo datos personales,
+ * resumen de asistencias y progresión de cintas.
+ *
+ * @param {string} slug - Identificador único del alumno.
+ * @param {string} [fechaInicio] - Fecha de inicio para filtrar asistencias (ISO).
+ * @param {string} [fechaFin] - Fecha de fin para filtrar asistencias (ISO).
+ * @returns {Promise<object>} Perfil consolidado del alumno.
+ */
+export const obtenerPerfilAlumno = async (slug, fechaInicio, fechaFin) => {
+    const params = new URLSearchParams();
+    if (fechaInicio) params.append('fechaInicio', fechaInicio);
+    if (fechaFin) params.append('fechaFin', fechaFin);
+    const qs = params.toString();
+    const response = await api.get(`/alumnos/${slug}/perfil${qs ? '?' + qs : ''}`);
+    return response.data;
+};

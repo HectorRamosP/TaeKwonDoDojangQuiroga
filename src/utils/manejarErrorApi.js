@@ -21,22 +21,30 @@ export function manejarErrorApi(error, contexto = "la operación") {
     let detalle = `Ocurrió un error al ${contexto}`;
 
     if (error.response) {
+        const data = error.response.data;
+        // La API devuelve { mensaje, detalles } desde el ManejadorExcepcionesGlobal
+        const mensajeApi = data?.mensaje || data?.message;
+        const detallesApi = data?.detalles;
+
         switch (error.response.status) {
             case 400:
                 titulo = "Datos inválidos";
-                detalle = error.response.data?.message || "Verifica que todos los datos sean correctos";
+                detalle = mensajeApi || "Verifica que todos los datos sean correctos";
+                if (detallesApi && detallesApi.length > 0) {
+                    detalle += "\n" + detallesApi.join("\n");
+                }
                 break;
             case 404:
                 titulo = "No encontrado";
-                detalle = error.response.data?.message || "El recurso solicitado no existe";
+                detalle = mensajeApi || "El recurso solicitado no existe";
                 break;
             case 409:
                 titulo = "Dato duplicado";
-                detalle = error.response.data?.message || "Ya existe un registro con estos datos";
+                detalle = mensajeApi || "Ya existe un registro con estos datos";
                 break;
             default:
                 titulo = "Error del servidor";
-                detalle = `No se pudo ${contexto}. Intenta nuevamente.`;
+                detalle = mensajeApi || `No se pudo ${contexto}. Intenta nuevamente.`;
                 break;
         }
     } else if (error.request) {
@@ -49,5 +57,9 @@ export function manejarErrorApi(error, contexto = "la operación") {
         title: titulo,
         text: detalle,
         confirmButtonColor: "#d32f2f",
+        customClass: {
+            popup: 'swal-sobre-modal',
+            container: 'swal-sobre-modal-container',
+        },
     });
 }

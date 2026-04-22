@@ -21,6 +21,10 @@ public class AsistenciaConfiguracion : IEntityTypeConfiguration<Asistencia>
         builder.Property(a => a.Presente)
             .IsRequired();
 
+        builder.Property(a => a.Justificada)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.HasOne(a => a.Alumno)
             .WithMany(al => al.Asistencias)
             .HasForeignKey(a => a.AlumnoId)
