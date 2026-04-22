@@ -151,4 +151,20 @@ public class AlumnoServicio : IAlumnoServicio
     {
         return await _repositorio.ExistePorTelefonoAsync(telefono, slugExcluir);
     }
+
+    public async Task<IEnumerable<BuscarAlumnoDto>> ObtenerProximosAVencerAsync(int dias)
+    {
+        var fechaLimite = DateTime.Now.AddDays(dias);
+        var hoy = DateTime.Now;
+
+        var inscripcionesProximas = await _contexto.AlumnoInscripciones
+            .Include(i => i.Alumno)
+                .ThenInclude(a => a.AlumnoInscripciones) 
+            .Where(i => i.FechaFin <= fechaLimite && i.FechaFin >= hoy)
+            .ToListAsync();
+
+        var alumnosRiesgo = inscripcionesProximas.Select(i => i.Alumno).Distinct();
+
+        return _mapper.Map<IEnumerable<BuscarAlumnoDto>>(alumnosRiesgo);
+    }
 }

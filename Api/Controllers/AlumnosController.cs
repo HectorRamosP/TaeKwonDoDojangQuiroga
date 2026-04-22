@@ -94,4 +94,18 @@ public class AlumnosController : ControllerBase
         await _alumnoServicio.EliminarPermanenteAsync(slug);
         return Ok(new { mensaje = "Alumno eliminado permanentemente" });
     }
+
+    // Endpoint para obtener alertas de vencimiento de pagos
+    [HttpGet("alertas-vencimiento")]
+    public async Task<ActionResult<IEnumerable<BuscarAlumnoDto>>> ObtenerAlertasVencimiento()
+    {
+        var alumnos = await _alumnoServicio.ObtenerProximosAVencerAsync(dias: 5);
+        
+        if (alumnos == null || !alumnos.Any())
+        {
+            return Ok(new List<BuscarAlumnoDto>()); // Devuelve lista vacía si no hay alertas
+        }
+
+        return Ok(alumnos);
+    }
 }

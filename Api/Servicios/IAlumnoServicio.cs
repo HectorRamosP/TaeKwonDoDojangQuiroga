@@ -20,4 +20,6 @@ public interface IAlumnoServicio
     Task EliminarPermanenteAsync(string slug);
     Task<bool> ExisteEmailAsync(string email, string? slugExcluir = null);
     Task<bool> ExisteTelefonoAsync(string telefono, string? slugExcluir = null);
+    //Metodo para obtener alumnos con vencimiento de pago próximo
+    Task<IEnumerable<BuscarAlumnoDto>> ObtenerProximosAVencerAsync(int dias);
 }
