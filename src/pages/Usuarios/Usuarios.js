@@ -48,7 +48,7 @@ export default function Usuarios() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [usuarioEditar, setUsuarioEditar] = useState(null);
-
+ 
   const abrirEditar = (usuario) => {
     setUsuarioEditar(usuario);
     setModalEditarAbierto(true);
@@ -175,7 +175,7 @@ export default function Usuarios() {
       </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
@@ -311,7 +311,7 @@ export default function Usuarios() {
 
       <div className="pagination-container">
         <Pagination
-          count={Math.ceil(filtrados.length / itemsPorPagina)}
+          count={Math.ceil(filtrados.length / 5)}
           page={pagina}
           onChange={(e, value) => setPagina(value)}
           showFirstButton

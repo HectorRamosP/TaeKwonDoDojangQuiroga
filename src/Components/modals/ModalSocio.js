@@ -9,10 +9,12 @@ import {
     Switch,
     Box,
     Typography,
+    Chip, //Se agrego el import Chip MUI
+    Alert, //Se agrego el import Alert de MUI
 } from "@mui/material";
-import { PersonAdd, Edit } from "@mui/icons-material";
+import { PersonAdd, Edit, People } from "@mui/icons-material"; //Se agrego el import People de MUI Icons
 import { useState, useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form"; //Se agrego el import useWatch de react-hook-form
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Swal from "sweetalert2";
@@ -133,6 +135,24 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
             activo: true,
         },
     });
+
+    const claseIdSeleccionada = useWatch({ control, name: "claseId" }); //Aquí está mirando el campo "claseId"
+    const claseSeleccionada = clases.find((c) => c.id === claseIdSeleccionada || c.id === Number(claseIdSeleccionada)) || null;
+    //Toma el ID que encontró el useWatch y busca en el arreglo clases el objeto completo que corresponde a ese ID
+
+    const obtenerInfoCupo = (clase) => {
+        if (!clase) return null;
+        const inscritos = clase.alumnosInscritos ?? 0;
+        const cupoMax = clase.cupoMaximo;
+        if (cupoMax == null) return { texto: `${inscritos} inscrito(s) · Sin límite de cupo`, color: "info", llena: false };
+        const disponibles = cupoMax - inscritos;
+        if (disponibles <= 0) return { texto: `${inscritos}/${cupoMax} · Clase LLENA`, color: "error", llena: true };
+        if (disponibles <= 3) return { texto: `${inscritos}/${cupoMax} · Solo ${disponibles} lugar(es) disponible(s)`, color: "warning", llena: false };
+        return { texto: `${inscritos}/${cupoMax} · ${disponibles} lugares disponibles`, color: "success", llena: false };
+    };
+
+    //Le pasa el objeto completo de la clase a la función obtenerInfoCupo, que analiza alumnosInscritos vs cupoMaximo
+    const infoCupo = obtenerInfoCupo(claseSeleccionada);
 
     useEffect(() => {
         if (abierto) {
@@ -394,14 +414,43 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
                             render={({ field }) => (
                                 <Select {...field} label="Clase/Horario" value={field.value || ""}>
                                     <MenuItem value=""><em>Sin clase asignada</em></MenuItem>
-                                    {clases.map((clase) => (
-                                        <MenuItem key={clase.id} value={clase.id}>
-                                            {clase.nombre} - {clase.dias}
-                                        </MenuItem>
-                                    ))}
+                                    {clases.map((clase) => {
+                                        const ins = clase.alumnosInscritos ?? 0;
+                                        const max = clase.cupoMaximo;
+                                        const llena = max != null && ins >= max;
+                                        return (
+                                            <MenuItem key={clase.id} value={clase.id} disabled={llena}>
+                                                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: 1 }}>
+                                                    <span>{clase.nombre} — {clase.dias}</span>
+                                                    <Chip
+                                                        icon={<People sx={{ fontSize: 14 }} />}
+                                                        label={max != null ? `${ins}/${max}` : `${ins} inscritos`}
+                                                        size="small"
+                                                        color={llena ? "error" : max != null && (max - ins) <= 3 ? "warning" : "success"}
+                                                        variant="outlined"
+                                                        sx={{ ml: "auto", fontSize: 11 }}
+                                                    />
+                                                </Box>
+                                            </MenuItem>
+                                        );
+                                    })}
                                 </Select>
                             )}
                         />
+                        {infoCupo && (
+                            <Alert
+                                severity={infoCupo.color}
+                                icon={<People fontSize="small" />}
+                                sx={{ mt: 1, py: 0.5, fontSize: 13 }}
+                            >
+                                <strong>Cupo:</strong> {infoCupo.texto}
+                                {infoCupo.llena && (
+                                    <span style={{ display: "block", fontSize: 12, opacity: 0.85 }}>
+                                        Esta clase no tiene lugares disponibles.
+                                    </span>
+                                )}
+                            </Alert>
+                        )}
                     </FormControl>
                     <FormControl fullWidth disabled={guardando} sx={{ gridColumn: "span 2" }}>
                         <InputLabel>Mensualidad Contratada</InputLabel>
