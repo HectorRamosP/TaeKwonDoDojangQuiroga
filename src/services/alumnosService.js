@@ -63,3 +63,13 @@ export const cambiarEstadoAlumno = async (slug, activo) => {
     const response = await api.patch(`/alumnos/${slug}/estado`, { slug, activo });
     return response.data;
 };
+
+/**
+ * Obtiene las alertas de vencimiento de alumnos en los próximos días.
+ *
+ * @returns {Promise<Array>} Lista de alumnos próximos a vencer.
+ */
+export const obtenerAlertasVencimiento = async () => {
+    const response = await api.get('/alumnos/alertas-vencimiento');
+    return response.data;
+};

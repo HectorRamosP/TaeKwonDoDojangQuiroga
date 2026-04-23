@@ -74,6 +74,22 @@ public class AlumnoServicio : IAlumnoServicio
         }
 
         var alumno = _mapper.Map<Alumno>(dto);
+        
+        // Crear inscripción inicial si se asignó un concepto de mensualidad
+        if (dto.ConceptoMensualidadId.HasValue)
+        {
+            var concepto = await _contexto.Conceptos.FindAsync(dto.ConceptoMensualidadId.Value);
+            bool esClaseIndividual = concepto != null && concepto.Nombre.ToLower().Contains("individual");
+            
+            alumno.AlumnoInscripciones.Add(new AlumnoInscripcion
+            {
+                ConceptoId = dto.ConceptoMensualidadId.Value,
+                FechaInicio = DateTime.Now,
+                FechaFin = esClaseIndividual ? DateTime.Now.AddDays(1) : DateTime.Now.AddMonths(1),
+                Activa = true
+            });
+        }
+
         var alumnoCreado = await _repositorio.AgregarAsync(alumno);
 
         var alumnoCompleto = await _repositorio.ObtenerPorSlugConInscripcionesAsync(alumnoCreado.Slug);

@@ -40,4 +40,5 @@ public class BuscarAlumnoDto
     public bool Activo { get; set; }
     public DateTime FechaInscripcion { get; set; }
     public string Slug { get; set; } = string.Empty;
+    public int? DiasParaVencer { get; set; }
 }

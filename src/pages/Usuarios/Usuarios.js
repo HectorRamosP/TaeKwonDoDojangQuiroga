@@ -38,6 +38,7 @@ export default function Usuarios() {
     cargando, error,
     datosPaginados: usuariosPaginados,
     filtrados,
+    totalPaginas,
     recargar: cargarUsuarios,
   } = useLista(
     () => api.get("/usuarios").then((r) => r.data),
@@ -175,7 +176,7 @@ export default function Usuarios() {
       </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
@@ -311,7 +312,7 @@ export default function Usuarios() {
 
       <div className="pagination-container">
         <Pagination
-          count={Math.ceil(filtrados.length / itemsPorPagina)}
+          count={totalPaginas}
           page={pagina}
           onChange={(e, value) => setPagina(value)}
           showFirstButton
