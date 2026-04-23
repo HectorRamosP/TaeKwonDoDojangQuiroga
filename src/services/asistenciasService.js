@@ -88,6 +88,17 @@ export const contarFaltas = async (alumnoId, fechaInicio, fechaFin) => {
  * @param {string} fecha - Fecha en formato ISO o YYYY-MM-DD.
  * @returns {Promise<object>} Resultado de la operación.
  */
+/**
+ * Obtiene todas las asistencias de un alumno específico.
+ *
+ * @param {number} alumnoId - ID del alumno.
+ * @returns {Promise<Array>} Lista de asistencias del alumno.
+ */
+export const obtenerAsistenciasPorAlumno = async (alumnoId) => {
+  const response = await api.get(`/asistencias?alumnoId=${alumnoId}`);
+  return response.data?.data || response.data || [];
+};
+
 export const eliminarAsistenciasPorClaseYFecha = async (claseId, fecha) => {
   // Asegurar que la fecha está en formato ISO completo
   const fechaISO = fecha.includes('T') ? fecha : `${fecha}T00:00:00`;
