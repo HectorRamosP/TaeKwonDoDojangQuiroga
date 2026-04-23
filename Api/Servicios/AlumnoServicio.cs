@@ -1,5 +1,6 @@
 using Api.Comun.Modelos.Alumnos;
 using Api.Comun.Modelos.Asistencias;
+using Api.Comun.Modelos.Pagos;
 using Api.Entidades;
 using Api.Persistencia;
 using Api.Repositorios;
@@ -235,6 +236,25 @@ public class AlumnoServicio : IAlumnoServicio
             CintaOrden = h.Cinta.Orden
         }).ToList();
 
+        // Obtener historial de pagos
+        var pagos = await _contexto.Pagos
+            .Include(p => p.Concepto)
+            .Where(p => p.AlumnoId == alumno.Id)
+            .OrderByDescending(p => p.Fecha)
+            .ToListAsync();
+
+        var pagosDto = pagos.Select(p => new PagoPerfilDto
+        {
+            Id = p.Id,
+            Fecha = p.Fecha,
+            ConceptoNombre = p.Concepto.Nombre,
+            Monto = p.Monto,
+            MetodoPago = p.MetodoPago,
+            Estado = p.Estado,
+            Referencia = p.Referencia,
+            Notas = p.Notas
+        }).ToList();
+
         return new PerfilAlumnoDto
         {
             Alumno = alumnoDto,
@@ -243,7 +263,8 @@ public class AlumnoServicio : IAlumnoServicio
             PorcentajeAsistencia = porcentaje,
             TotalJustificadas = totalJustificadas,
             Asistencias = asistenciasDto,
-            HistorialCintas = historialDto
+            HistorialCintas = historialDto,
+            HistorialPagos = pagosDto
         };
     }
 }

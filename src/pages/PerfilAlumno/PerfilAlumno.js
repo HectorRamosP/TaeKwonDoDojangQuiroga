@@ -27,6 +27,7 @@ import {
   FilterAlt,
   Clear,
   HistoryEdu,
+  Payment,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -60,6 +61,10 @@ export default function PerfilAlumno() {
   // Paginación de asistencias
   const [paginaAsistencias, setPaginaAsistencias] = useState(1);
   const asistenciasPorPagina = 10;
+
+  // Paginación de pagos
+  const [paginaPagos, setPaginaPagos] = useState(1);
+  const pagosPorPagina = 10;
 
   const cargarPerfil = async (inicio, fin) => {
     setCargando(true);
@@ -185,6 +190,29 @@ export default function PerfilAlumno() {
     (paginaAsistencias - 1) * asistenciasPorPagina,
     paginaAsistencias * asistenciasPorPagina
   );
+
+  // Paginación de pagos
+  const totalPaginasPagos = Math.ceil((perfil.historialPagos?.length || 0) / pagosPorPagina);
+  const pagosPaginados = (perfil.historialPagos || []).slice(
+    (paginaPagos - 1) * pagosPorPagina,
+    paginaPagos * pagosPorPagina
+  );
+
+  const formatearMoneda = (monto) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN',
+    }).format(monto);
+  };
+
+  const obtenerColorEstado = (estado) => {
+    switch (estado?.toLowerCase()) {
+      case 'confirmado': return 'success';
+      case 'pendiente': return 'warning';
+      case 'rechazado': return 'error';
+      default: return 'default';
+    }
+  };
 
   return (
     <div className="perfil-container">
@@ -541,6 +569,128 @@ export default function PerfilAlumno() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+      {/* ===== SECCIÓN: HISTORIAL DE PAGOS ===== */}
+      <div className="perfil-seccion">
+        <div className="perfil-seccion-titulo">
+          <Payment /> Historial de Pagos
+        </div>
+
+        {(perfil.historialPagos || []).length === 0 ? (
+          <div className="perfil-empty-state">
+            <Payment />
+            <p>No hay pagos registrados para este alumno</p>
+          </div>
+        ) : (
+          <>
+            <TableContainer
+              component={Paper}
+              elevation={0}
+              sx={{
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+                border: "1px solid rgba(220, 20, 60, 0.1)",
+              }}
+            >
+              <Table size="small">
+                <TableHead>
+                  <TableRow
+                    sx={{
+                      background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                      position: "relative",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: "3px",
+                        background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                      },
+                    }}
+                  >
+                    <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.9rem" }}>
+                      Fecha
+                    </TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.9rem" }}>
+                      Concepto
+                    </TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.9rem" }}>
+                      Monto
+                    </TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.9rem" }}>
+                      Método
+                    </TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.9rem" }}>
+                      Estado
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {pagosPaginados.map((pago) => (
+                    <TableRow
+                      key={pago.id}
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          backgroundColor: "rgba(220, 20, 60, 0.04)",
+                        },
+                      }}
+                    >
+                      <TableCell sx={{ fontWeight: 500 }}>
+                        {formatearFecha(pago.fecha)}
+                      </TableCell>
+                      <TableCell>{pago.conceptoNombre}</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: "#1A1A1A" }}>
+                        {formatearMoneda(pago.monto)}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={pago.metodoPago}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={pago.estado}
+                          color={obtenerColorEstado(pago.estado)}
+                          size="small"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            {totalPaginasPagos > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                <Pagination
+                  count={totalPaginasPagos}
+                  page={paginaPagos}
+                  onChange={(_, val) => setPaginaPagos(val)}
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      fontWeight: 600,
+                      borderRadius: "10px",
+                      transition: "all 0.3s ease",
+                    },
+                    "& .MuiPaginationItem-root.Mui-selected": {
+                      background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+                      color: "white",
+                      boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+                    },
+                  }}
+                />
+              </Box>
+            )}
+          </>
         )}
       </div>
     </div>

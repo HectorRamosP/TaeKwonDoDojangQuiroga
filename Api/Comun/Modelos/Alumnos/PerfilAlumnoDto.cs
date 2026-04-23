@@ -1,4 +1,5 @@
 using Api.Comun.Modelos.Asistencias;
+using Api.Comun.Modelos.Pagos;
 
 namespace Api.Comun.Modelos.Alumnos;
 
@@ -18,6 +19,9 @@ public class PerfilAlumnoDto
 
     // Historial de cintas
     public List<HistorialCintaDto> HistorialCintas { get; set; } = new();
+
+    // Historial de pagos
+    public List<PagoPerfilDto> HistorialPagos { get; set; } = new();
 }
 
 public class HistorialCintaDto

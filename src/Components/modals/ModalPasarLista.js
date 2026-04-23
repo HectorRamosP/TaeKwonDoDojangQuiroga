@@ -21,8 +21,9 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { CheckCircle, CalendarToday, Delete } from "@mui/icons-material";
+import { CheckCircle, CalendarToday, Delete, Visibility } from "@mui/icons-material";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../../services/api";
 import { registrarAsistenciasMasivas, obtenerAsistencias, eliminarAsistenciasPorClaseYFecha } from "../../services/asistenciasService";
@@ -44,6 +45,7 @@ import ModernModal from "./ModernModal";
  * @param {string} props.clase.dias - Días de la semana de la clase.
  */
 export default function ModalPasarLista({ abierto, cerrar, clase }) {
+  const navigate = useNavigate();
   const [alumnos, setAlumnos] = useState([]);
   const [asistencias, setAsistencias] = useState({});
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -590,6 +592,17 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                       >
                         Edad
                       </TableCell>
+                      <TableCell
+                        sx={{
+                          color: "white",
+                          fontWeight: 700,
+                          fontSize: "0.9rem",
+                          letterSpacing: "0.5px"
+                        }}
+                        align="center"
+                      >
+                        Perfil
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -636,6 +649,32 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                           </TableCell>
                           <TableCell sx={{ color: "#666" }}>
                             {alumno.edad} años
+                          </TableCell>
+                          <TableCell align="center">
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={<Visibility />}
+                              onClick={() => {
+                                cerrar();
+                                navigate(`/alumnos/${alumno.slug}/perfil`);
+                              }}
+                              sx={{
+                                borderColor: "rgba(220, 20, 60, 0.3)",
+                                color: "#DC143C",
+                                fontWeight: 600,
+                                fontSize: "0.75rem",
+                                textTransform: "none",
+                                borderRadius: "8px",
+                                minWidth: "auto",
+                                "&:hover": {
+                                  borderColor: "#DC143C",
+                                  backgroundColor: "rgba(220, 20, 60, 0.05)",
+                                },
+                              }}
+                            >
+                              Ver
+                            </Button>
                           </TableCell>
                         </TableRow>
                       );
