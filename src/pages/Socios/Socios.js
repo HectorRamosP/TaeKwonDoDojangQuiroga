@@ -25,8 +25,9 @@ import {
   AccordionDetails,
   Typography,
 } from "@mui/material";
-import { Search, Clear, PersonAdd, FilterList, ExpandMore, ArrowUpward, ArrowDownward } from "@mui/icons-material";
+import { Search, Clear, PersonAdd, FilterList, ExpandMore, ArrowUpward, ArrowDownward, Visibility } from "@mui/icons-material";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../../services/api";
 import ModalSocio from "../../Components/modals/ModalSocio";
@@ -43,6 +44,7 @@ import "./Socios.css";
  * @returns {JSX.Element} Página completa de gestión de alumnos.
  */
 export default function Socios() {
+  const navigate = useNavigate();
   const [socios, setSocios] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [pagina, setPagina] = useState(1);
@@ -669,6 +671,15 @@ export default function Socios() {
                       </TableCell>
                       <TableCell align="center">
                         <Box sx={{ display: "flex", gap: 1, justifyContent: "center", flexWrap: "wrap" }}>
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            size="small"
+                            startIcon={<Visibility />}
+                            onClick={() => navigate(`/alumnos/${alumno.slug}/perfil`)}
+                          >
+                            Ver Perfil
+                          </Button>
                           <Button
                             variant="outlined"
                             color="primary"

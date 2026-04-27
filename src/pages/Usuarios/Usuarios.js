@@ -38,6 +38,7 @@ export default function Usuarios() {
     cargando, error,
     datosPaginados: usuariosPaginados,
     filtrados,
+    totalPaginas,
     recargar: cargarUsuarios,
   } = useLista(
     () => api.get("/usuarios").then((r) => r.data),
@@ -311,7 +312,7 @@ export default function Usuarios() {
 
       <div className="pagination-container">
         <Pagination
-          count={Math.ceil(filtrados.length / 5)}
+          count={totalPaginas}
           page={pagina}
           onChange={(e, value) => setPagina(value)}
           showFirstButton

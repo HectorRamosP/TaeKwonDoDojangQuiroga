@@ -99,13 +99,29 @@ public class ReporteServicio : IReporteServicio
             .OrderByDescending(p => p.MontoTotal)
             .ToList();
 
+        var cultura = new System.Globalization.CultureInfo("es-MX");
+        var ingresosPorMes = pagos
+            .GroupBy(p => new { p.Fecha.Year, p.Fecha.Month })
+            .Select(g => new IngresoMensual
+            {
+                Mes = cultura.DateTimeFormat.GetMonthName(g.Key.Month) + " " + g.Key.Year,
+                Anio = g.Key.Year,
+                NumMes = g.Key.Month,
+                MontoTotal = g.Sum(p => p.Monto),
+                MontoConfirmado = g.Where(p => p.Estado == "Confirmado").Sum(p => p.Monto),
+                Cantidad = g.Count()
+            })
+            .OrderBy(p => p.Anio).ThenBy(p => p.NumMes)
+            .ToList();
+
         return new ReportePagosDto
         {
             Pagos = pagoItems,
             Resumen = resumen,
             PagosPorMetodoPago = pagosPorMetodo,
             PagosPorEstado = pagosPorEstado,
-            PagosPorConcepto = pagosPorConcepto
+            PagosPorConcepto = pagosPorConcepto,
+            IngresosPorMes = ingresosPorMes
         };
     }
 

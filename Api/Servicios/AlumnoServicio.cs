@@ -1,4 +1,6 @@
 using Api.Comun.Modelos.Alumnos;
+using Api.Comun.Modelos.Asistencias;
+using Api.Comun.Modelos.Pagos;
 using Api.Entidades;
 using Api.Persistencia;
 using Api.Repositorios;
@@ -10,12 +12,14 @@ namespace Api.Servicios;
 public class AlumnoServicio : IAlumnoServicio
 {
     private readonly IAlumnoRepositorio _repositorio;
+    private readonly IAsistenciaRepositorio _asistenciaRepo;
     private readonly IMapper _mapper;
     private readonly AplicacionBdContexto _contexto;
 
-    public AlumnoServicio(IAlumnoRepositorio repositorio, IMapper mapper, AplicacionBdContexto contexto)
+    public AlumnoServicio(IAlumnoRepositorio repositorio, IAsistenciaRepositorio asistenciaRepo, IMapper mapper, AplicacionBdContexto contexto)
     {
         _repositorio = repositorio;
+        _asistenciaRepo = asistenciaRepo;
         _mapper = mapper;
         _contexto = contexto;
     }
@@ -76,6 +80,19 @@ public class AlumnoServicio : IAlumnoServicio
         var alumno = _mapper.Map<Alumno>(dto);
         var alumnoCreado = await _repositorio.AgregarAsync(alumno);
 
+        // Si se asignó una cinta al crear, registrar en el historial de progresión
+        if (alumnoCreado.CintaActualId.HasValue)
+        {
+            _contexto.HistorialCintas.Add(new HistorialCinta
+            {
+                AlumnoId = alumnoCreado.Id,
+                CintaId = alumnoCreado.CintaActualId.Value,
+                FechaObtencion = DateTime.UtcNow,
+                Observaciones = "Cinta inicial al registrar alumno"
+            });
+            await _contexto.SaveChangesAsync();
+        }
+
         var alumnoCompleto = await _repositorio.ObtenerPorSlugConInscripcionesAsync(alumnoCreado.Slug);
         return _mapper.Map<BuscarAlumnoDto>(alumnoCompleto!);
     }
@@ -98,8 +115,30 @@ public class AlumnoServicio : IAlumnoServicio
             throw new InvalidOperationException("Ya existe un alumno con este teléfono");
         }
 
+        // Capturar la cinta anterior antes de actualizar
+        var cintaAnteriorId = alumno.CintaActualId;
+
         _mapper.Map(dto, alumno);
         await _repositorio.ActualizarAsync(alumno);
+
+        // Si la cinta cambió, registrar en el historial de progresión
+        if (alumno.CintaActualId.HasValue && alumno.CintaActualId != cintaAnteriorId)
+        {
+            var yaExiste = await _contexto.HistorialCintas
+                .AnyAsync(h => h.AlumnoId == alumno.Id && h.CintaId == alumno.CintaActualId.Value);
+
+            if (!yaExiste)
+            {
+                _contexto.HistorialCintas.Add(new HistorialCinta
+                {
+                    AlumnoId = alumno.Id,
+                    CintaId = alumno.CintaActualId.Value,
+                    FechaObtencion = DateTime.UtcNow,
+                    Observaciones = null
+                });
+                await _contexto.SaveChangesAsync();
+            }
+        }
 
         var alumnoActualizado = await _repositorio.ObtenerPorSlugConInscripcionesAsync(slug);
         return _mapper.Map<BuscarAlumnoDto>(alumnoActualizado!);
@@ -150,5 +189,82 @@ public class AlumnoServicio : IAlumnoServicio
     public async Task<bool> ExisteTelefonoAsync(string telefono, string? slugExcluir = null)
     {
         return await _repositorio.ExistePorTelefonoAsync(telefono, slugExcluir);
+    }
+
+    public async Task<PerfilAlumnoDto?> ObtenerPerfilAsync(string slug, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+    {
+        var alumno = await _repositorio.ObtenerPorSlugConInscripcionesAsync(slug);
+        if (alumno == null) return null;
+
+        var alumnoDto = _mapper.Map<BuscarAlumnoDto>(alumno);
+
+        // Obtener asistencias (con o sin rango de fechas)
+        List<Asistencia> asistencias;
+        if (fechaInicio.HasValue && fechaFin.HasValue)
+        {
+            asistencias = await _asistenciaRepo.ObtenerPorAlumnoYRangoFechas(alumno.Id, fechaInicio.Value, fechaFin.Value);
+        }
+        else
+        {
+            asistencias = await _asistenciaRepo.ObtenerPorAlumno(alumno.Id);
+        }
+
+        var asistenciasDto = _mapper.Map<List<BuscarAsistenciaDto>>(asistencias);
+
+        // Calcular resumen
+        var totalPresencias = asistencias.Count(a => a.Presente);
+        var totalFaltas = asistencias.Count(a => !a.Presente);
+        var totalRegistros = asistencias.Count;
+        var porcentaje = totalRegistros > 0 ? Math.Round((decimal)totalPresencias / totalRegistros * 100, 1) : 0;
+        var totalJustificadas = asistencias.Count(a => !a.Presente && a.Justificada);
+
+        // Obtener historial de cintas
+        var historialCintas = await _contexto.HistorialCintas
+            .Include(h => h.Cinta)
+            .Where(h => h.AlumnoId == alumno.Id)
+            .OrderBy(h => h.FechaObtencion)
+            .ToListAsync();
+
+        var historialDto = historialCintas.Select(h => new HistorialCintaDto
+        {
+            Id = h.Id,
+            FechaObtencion = h.FechaObtencion,
+            Observaciones = h.Observaciones,
+            CintaId = h.CintaId,
+            CintaNombre = h.Cinta.Nombre,
+            CintaColorHex = h.Cinta.ColorHex,
+            CintaOrden = h.Cinta.Orden
+        }).ToList();
+
+        // Obtener historial de pagos
+        var pagos = await _contexto.Pagos
+            .Include(p => p.Concepto)
+            .Where(p => p.AlumnoId == alumno.Id)
+            .OrderByDescending(p => p.Fecha)
+            .ToListAsync();
+
+        var pagosDto = pagos.Select(p => new PagoPerfilDto
+        {
+            Id = p.Id,
+            Fecha = p.Fecha,
+            ConceptoNombre = p.Concepto.Nombre,
+            Monto = p.Monto,
+            MetodoPago = p.MetodoPago,
+            Estado = p.Estado,
+            Referencia = p.Referencia,
+            Notas = p.Notas
+        }).ToList();
+
+        return new PerfilAlumnoDto
+        {
+            Alumno = alumnoDto,
+            TotalPresencias = totalPresencias,
+            TotalFaltas = totalFaltas,
+            PorcentajeAsistencia = porcentaje,
+            TotalJustificadas = totalJustificadas,
+            Asistencias = asistenciasDto,
+            HistorialCintas = historialDto,
+            HistorialPagos = pagosDto
+        };
     }
 }

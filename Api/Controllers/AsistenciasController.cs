@@ -212,4 +212,22 @@ public class AsistenciasController : ControllerBase
             });
         }
     }
+
+    [HttpPatch("{id}/justificar")]
+    public async Task<ActionResult> JustificarFalta(int id, [FromBody] JustificarFaltaDto dto)
+    {
+        try
+        {
+            await _asistenciaServicio.JustificarFaltaAsync(id, dto.Justificada, dto.Observacion);
+            return Ok(new { mensaje = "Asistencia actualizada correctamente" });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { mensaje = "Asistencia no encontrada" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensaje = ex.Message });
+        }
+    }
 }

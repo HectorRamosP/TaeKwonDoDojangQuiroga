@@ -7,6 +7,17 @@ public class ReportePagosDto
     public List<PagosPorMetodo> PagosPorMetodoPago { get; set; } = new();
     public List<PagosPorEstado> PagosPorEstado { get; set; } = new();
     public List<PagosPorConcepto> PagosPorConcepto { get; set; } = new();
+    public List<IngresoMensual> IngresosPorMes { get; set; } = new();
+}
+
+public class IngresoMensual
+{
+    public string Mes { get; set; } = string.Empty;
+    public int Anio { get; set; }
+    public int NumMes { get; set; }
+    public decimal MontoTotal { get; set; }
+    public decimal MontoConfirmado { get; set; }
+    public int Cantidad { get; set; }
 }
 
 public class PagoReporteItem

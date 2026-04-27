@@ -20,4 +20,5 @@ public interface IAlumnoServicio
     Task EliminarPermanenteAsync(string slug);
     Task<bool> ExisteEmailAsync(string email, string? slugExcluir = null);
     Task<bool> ExisteTelefonoAsync(string telefono, string? slugExcluir = null);
+    Task<PerfilAlumnoDto?> ObtenerPerfilAsync(string slug, DateTime? fechaInicio = null, DateTime? fechaFin = null);
 }

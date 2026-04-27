@@ -41,6 +41,7 @@ public class Alumno : ISlug
     public virtual ICollection<AlumnoInscripcion> AlumnoInscripciones { get; set; } = new List<AlumnoInscripcion>();
     public virtual ICollection<Pago> Pagos { get; set; } = new List<Pago>();
     public virtual ICollection<Asistencia> Asistencias { get; set; } = new List<Asistencia>();
+    public virtual ICollection<HistorialCinta> HistorialCintas { get; set; } = new List<HistorialCinta>();
 
     // Propiedad calculada para obtener la edad
     public int ObtenerEdad()

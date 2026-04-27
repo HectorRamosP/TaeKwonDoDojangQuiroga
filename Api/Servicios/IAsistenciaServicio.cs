@@ -10,4 +10,5 @@ public interface IAsistenciaServicio
     Task RegistrarAsistenciasMasivas(RegistrarAsistenciasMasivasDto dto, int usuarioId);
     Task<int> ContarFaltasPorAlumnoYRango(int alumnoId, DateTime fechaInicio, DateTime fechaFin);
     Task EliminarAsistenciasPorClaseYFecha(int claseId, DateTime fecha);
+    Task JustificarFaltaAsync(int asistenciaId, bool justificada, string? observacion);
 }

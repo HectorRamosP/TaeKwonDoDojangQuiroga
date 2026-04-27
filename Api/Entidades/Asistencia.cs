@@ -7,6 +7,8 @@ public class Asistencia
     public int Id { get; set; }
     public DateTime Fecha { get; set; }
     public bool Presente { get; set; }
+    public bool Justificada { get; set; } = false;
+    public string? Observacion { get; set; }
 
     public int AlumnoId { get; set; }
     [JsonIgnore]

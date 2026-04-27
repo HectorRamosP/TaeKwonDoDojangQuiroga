@@ -102,3 +102,8 @@ code {
   box-shadow: var(--shadow-lg);
   transform: translateY(-2px);
 }
+
+/* SweetAlert2 sobre modales de MUI (z-index 1300) */
+.swal-sobre-modal-container {
+  z-index: 9999 !important;
+}

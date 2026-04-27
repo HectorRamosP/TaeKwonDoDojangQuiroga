@@ -64,18 +64,46 @@ const esquema = yup.object().shape({
     sexo: yup.string().nullable(),
     nombreTutor: yup
         .string()
-        .required("El nombre del tutor es obligatorio")
-        .min(2, "El nombre del tutor debe tener al menos 2 caracteres")
-        .max(200, "El nombre del tutor no puede exceder 200 caracteres"),
+        .when("fechaNacimiento", {
+            is: (fecha) => {
+                if (!fecha) return true;
+                const hoy = new Date();
+                const edad = hoy.getFullYear() - new Date(fecha).getFullYear();
+                const mes = hoy.getMonth() - new Date(fecha).getMonth();
+                const ajustado = mes < 0 || (mes === 0 && hoy.getDate() < new Date(fecha).getDate()) ? edad - 1 : edad;
+                return ajustado < 18;
+            },
+            then: (schema) => schema.required("El nombre del tutor es obligatorio").min(2, "El nombre del tutor debe tener al menos 2 caracteres").max(200, "El nombre del tutor no puede exceder 200 caracteres"),
+            otherwise: (schema) => schema.notRequired().nullable(),
+        }),
     telefonoTutor: yup
         .string()
-        .required("El teléfono del tutor es obligatorio")
-        .matches(/^[0-9]{10}$/, "Ingresa un teléfono válido de 10 dígitos"),
+        .when("fechaNacimiento", {
+            is: (fecha) => {
+                if (!fecha) return true;
+                const hoy = new Date();
+                const edad = hoy.getFullYear() - new Date(fecha).getFullYear();
+                const mes = hoy.getMonth() - new Date(fecha).getMonth();
+                const ajustado = mes < 0 || (mes === 0 && hoy.getDate() < new Date(fecha).getDate()) ? edad - 1 : edad;
+                return ajustado < 18;
+            },
+            then: (schema) => schema.required("El teléfono del tutor es obligatorio").matches(/^[0-9]{10}$/, "Ingresa un teléfono válido de 10 dígitos"),
+            otherwise: (schema) => schema.notRequired().nullable().transform((value) => value === "" ? null : value),
+        }),
     emailTutor: yup
         .string()
-        .required("El email del tutor es obligatorio")
-        .email("Ingresa un email válido")
-        .max(150, "El email no puede exceder 150 caracteres"),
+        .when("fechaNacimiento", {
+            is: (fecha) => {
+                if (!fecha) return true;
+                const hoy = new Date();
+                const edad = hoy.getFullYear() - new Date(fecha).getFullYear();
+                const mes = hoy.getMonth() - new Date(fecha).getMonth();
+                const ajustado = mes < 0 || (mes === 0 && hoy.getDate() < new Date(fecha).getDate()) ? edad - 1 : edad;
+                return ajustado < 18;
+            },
+            then: (schema) => schema.required("El email del tutor es obligatorio").email("Ingresa un email válido").max(150, "El email no puede exceder 150 caracteres"),
+            otherwise: (schema) => schema.notRequired().nullable().transform((value) => value === "" ? null : value),
+        }),
     cintaActualId: yup
         .number()
         .nullable()
@@ -114,6 +142,7 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
         handleSubmit,
         reset,
         control,
+        watch,
         formState: { errors },
     } = useForm({
         resolver: yupResolver(esquema),
@@ -136,9 +165,8 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
         },
     });
 
-    const claseIdSeleccionada = useWatch({ control, name: "claseId" }); //Aquí está mirando el campo "claseId"
+    const claseIdSeleccionada = useWatch({ control, name: "claseId" });
     const claseSeleccionada = clases.find((c) => c.id === claseIdSeleccionada || c.id === Number(claseIdSeleccionada)) || null;
-    //Toma el ID que encontró el useWatch y busca en el arreglo clases el objeto completo que corresponde a ese ID
 
     const obtenerInfoCupo = (clase) => {
         if (!clase) return null;
@@ -151,8 +179,18 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
         return { texto: `${inscritos}/${cupoMax} · ${disponibles} lugares disponibles`, color: "success", llena: false };
     };
 
-    //Le pasa el objeto completo de la clase a la función obtenerInfoCupo, que analiza alumnosInscritos vs cupoMaximo
     const infoCupo = obtenerInfoCupo(claseSeleccionada);
+
+    const fechaNacimientoWatch = watch("fechaNacimiento");
+    const esMenor = (() => {
+        if (!fechaNacimientoWatch) return true;
+        const hoy = new Date();
+        const nacimiento = new Date(fechaNacimientoWatch);
+        let edad = hoy.getFullYear() - nacimiento.getFullYear();
+        const mes = hoy.getMonth() - nacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+        return edad < 18;
+    })();
 
     useEffect(() => {
         if (abierto) {
@@ -220,6 +258,10 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
                 conceptoMensualidadId: data.conceptoMensualidadId || null,
                 direccion: data.direccion || null,
                 sexo: data.sexo || null,
+                // Para mayores de edad, si los campos de tutor están vacíos se envían valores por defecto
+                nombreTutor: data.nombreTutor?.trim() || "No aplica",
+                telefonoTutor: data.telefonoTutor?.trim() || "0000000000",
+                emailTutor: data.emailTutor?.trim() || "no-aplica@na.com",
                 ...(esEditar && { slug: socio.slug }),
             };
 
@@ -353,7 +395,7 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
                 </Box>
 
                 <Typography variant="subtitle2" sx={{ mt: 3, mb: 2, color: "#666", fontWeight: "bold" }}>
-                    Datos del Tutor Responsable
+                    {esMenor ? "Datos del Tutor Responsable" : "Datos de Contacto (Opcional para mayores de edad)"}
                 </Typography>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
                     <TextField

@@ -95,3 +95,15 @@ export const eliminarAsistenciasPorClaseYFecha = async (claseId, fecha) => {
   const response = await api.delete(url);
   return response.data;
 };
+
+/**
+ * Justifica o quita la justificación de una falta.
+ *
+ * @param {number} asistenciaId - ID del registro de asistencia.
+ * @param {boolean} justificada - true para justificar, false para quitar.
+ * @returns {Promise<object>}
+ */
+export const justificarFalta = async (asistenciaId, justificada) => {
+  const response = await api.patch(`/asistencias/${asistenciaId}/justificar`, { justificada });
+  return response.data;
+};

@@ -1,7 +1,7 @@
 /** @module components/layout/Sidebar */
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { User, Users, CreditCard, LogOut, Banknote, Calendar, BarChart3, ClipboardCheck } from "lucide-react";
+import { User, Users, CreditCard, LogOut, Banknote, Calendar, BarChart3, ClipboardCheck, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import "./Sidebar.css";
 
@@ -65,6 +65,10 @@ export default function Sidebar({ isOpen, toggleSidebar }) {
                     </div>
                 </div>
                 <nav className="flex flex-col space-y-4">
+                    <Link to="/dashboard" className="sidebar-link">
+                        <LayoutDashboard className="w-5 h-5" />
+                        {showContent && <span className="ml-2">Dashboard</span>}
+                    </Link>
                     <Link to="/usuarios" className="sidebar-link">
                         <User className="w-5 h-5" />
                         {showContent && <span className="ml-2">Usuarios</span>}

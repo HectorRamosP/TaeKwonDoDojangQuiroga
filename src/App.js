@@ -10,6 +10,8 @@ import Pagos from "./pages/Pagos/Pagos";
 import Clases from "./pages/Clases/Clases";
 import Asistencia from "./pages/Asistencia/Asistencia";
 import Reportes from "./pages/Reportes/Reportes";
+import PerfilAlumno from "./pages/PerfilAlumno/PerfilAlumno";
+import Dashboard from "./pages/Dashboard/Dashboard";
 import RutaPrivada from "./Components/RutaPrivada";
 import ErrorBoundary from "./Components/ErrorBoundary";
 
@@ -36,7 +38,7 @@ function RedirectToLoginOrAlumnos() {
           return <Navigate to="/login" replace />;
         }
 
-        return <Navigate to="/alumnos" replace />;
+        return <Navigate to="/dashboard" replace />;
       } else {
         // Token con formato inválido
         localStorage.removeItem("token");
@@ -109,6 +111,7 @@ export default function App() {
             </RutaPrivada>
           }
         >
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="alumnos" element={<Socios />} />
           <Route path="socios" element={<Socios />} />
@@ -118,6 +121,7 @@ export default function App() {
           <Route path="clases" element={<Clases />} />
           <Route path="asistencia" element={<Asistencia />} />
           <Route path="reportes" element={<Reportes />} />
+          <Route path="alumnos/:slug/perfil" element={<PerfilAlumno />} />
         </Route>
       </Routes>
     </ErrorBoundary>

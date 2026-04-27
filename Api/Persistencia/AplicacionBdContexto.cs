@@ -25,6 +25,7 @@ public class AplicacionBdContexto : DbContext, IAplicacionBdContexto
     public DbSet<AlumnoInscripcion> AlumnoInscripciones { get; set; }
     public DbSet<Pago> Pagos { get; set; }
     public DbSet<Asistencia> Asistencias { get; set; }
+    public DbSet<HistorialCinta> HistorialCintas { get; set; }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancelacionToken = default)
     {
