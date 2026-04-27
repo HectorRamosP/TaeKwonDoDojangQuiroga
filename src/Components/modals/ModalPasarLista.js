@@ -133,32 +133,63 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
 
       const asistenciasMap = {};
       asistencias.forEach(asist => {
-        asistenciasMap[asist.alumnoId] = asist.presente;
+        asistenciasMap[asist.alumnoId] = {
+          presente: asist.presente,
+          justificada: asist.justificada || false,
+          observacion: asist.observacion || ''
+        };
       });
       setAsistencias(asistenciasMap);
     } catch (error) {
-      // Si no hay asistencias para esta fecha, inicializar vacío
       setAsistencias({});
     }
   };
 
   const handleToggleAsistencia = (alumnoId) => {
-    setAsistencias(prev => ({
-      ...prev,
-      [alumnoId]: !prev[alumnoId]
-    }));
+    setAsistencias(prev => {
+      const actual = prev[alumnoId];
+      if (actual === undefined) {
+        return { ...prev, [alumnoId]: { presente: true, justificada: false, observacion: '' } };
+      }
+      const nuevoPresente = !actual.presente;
+      return {
+        ...prev,
+        [alumnoId]: {
+          ...actual,
+          presente: nuevoPresente,
+          justificada: nuevoPresente ? false : actual.justificada
+        }
+      };
+    });
+  };
+
+  const handleToggleJustificada = (alumnoId) => {
+    setAsistencias(prev => {
+      const actual = prev[alumnoId] || { presente: false, justificada: false, observacion: '' };
+      return { ...prev, [alumnoId]: { ...actual, justificada: !actual.justificada } };
+    });
+  };
+
+  const handleObservacionChange = (alumnoId, valor) => {
+    setAsistencias(prev => {
+      const actual = prev[alumnoId] || { presente: false, justificada: false, observacion: '' };
+      return { ...prev, [alumnoId]: { ...actual, observacion: valor } };
+    });
   };
 
   const handleGuardar = async () => {
     setGuardando(true);
 
     try {
-      // Convierte el map { [alumnoId]: boolean } al array que espera la API;
-      // alumnos sin marcar (undefined) se envían como false (ausente)
-      const asistenciasArray = alumnos.map(alumno => ({
-        alumnoId: alumno.id,
-        presente: asistencias[alumno.id] || false
-      }));
+      const asistenciasArray = alumnos.map(alumno => {
+        const a = asistencias[alumno.id] || { presente: false, justificada: false, observacion: '' };
+        return {
+          alumnoId: alumno.id,
+          presente: a.presente,
+          justificada: a.presente ? false : a.justificada,
+          observacion: a.observacion || null
+        };
+      });
 
       const payload = {
         claseId: clase.id,
@@ -225,7 +256,7 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
   };
 
   const contarPresentes = () => {
-    return Object.values(asistencias).filter(presente => presente).length;
+    return Object.values(asistencias).filter(a => a?.presente).length;
   };
 
   const contarAusentes = () => {
@@ -601,13 +632,37 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                         }}
                         align="center"
                       >
+                        Justificada
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          color: "white",
+                          fontWeight: 700,
+                          fontSize: "0.9rem",
+                          letterSpacing: "0.5px"
+                        }}
+                      >
+                        Observación
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          color: "white",
+                          fontWeight: 700,
+                          fontSize: "0.9rem",
+                          letterSpacing: "0.5px"
+                        }}
+                        align="center"
+                      >
                         Perfil
                       </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {alumnos.map((alumno) => {
-                      const presente = asistencias[alumno.id] || false;
+                      const asistenciaAlumno = asistencias[alumno.id];
+                      const presente = asistenciaAlumno?.presente || false;
+                      const justificada = asistenciaAlumno?.justificada || false;
+                      const observacion = asistenciaAlumno?.observacion || '';
                       return (
                         <TableRow
                           key={alumno.id}
@@ -615,14 +670,14 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                           sx={{
                             backgroundColor: presente
                               ? "rgba(56, 142, 60, 0.08)"
-                              : asistencias[alumno.id] === false
+                              : asistenciaAlumno !== undefined
                                 ? "rgba(211, 47, 47, 0.08)"
                                 : "inherit",
                             transition: "all 0.2s ease",
                             "&:hover": {
                               backgroundColor: presente
                                 ? "rgba(56, 142, 60, 0.15)"
-                                : asistencias[alumno.id] === false
+                                : asistenciaAlumno !== undefined
                                   ? "rgba(211, 47, 47, 0.15)"
                                   : "rgba(220, 20, 60, 0.05)"
                             }
@@ -649,6 +704,39 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                           </TableCell>
                           <TableCell sx={{ color: "#666" }}>
                             {alumno.edad} años
+                          </TableCell>
+                          <TableCell align="center">
+                            <Tooltip title={presente ? "Solo se puede justificar una falta" : "Marcar falta como justificada"} arrow>
+                              <span>
+                                <Checkbox
+                                  checked={justificada}
+                                  onChange={() => handleToggleJustificada(alumno.id)}
+                                  disabled={guardando || presente}
+                                  sx={{
+                                    color: "#F57C00",
+                                    "&.Mui-checked": { color: "#E65100" },
+                                    "&:hover": { backgroundColor: "rgba(245, 124, 0, 0.1)" }
+                                  }}
+                                />
+                              </span>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              value={observacion}
+                              onChange={(e) => handleObservacionChange(alumno.id, e.target.value)}
+                              placeholder="Observación..."
+                              size="small"
+                              disabled={guardando}
+                              inputProps={{ maxLength: 500 }}
+                              sx={{
+                                minWidth: 180,
+                                "& .MuiOutlinedInput-root": {
+                                  borderRadius: "8px",
+                                  fontSize: "0.8rem"
+                                }
+                              }}
+                            />
                           </TableCell>
                           <TableCell align="center">
                             <Button

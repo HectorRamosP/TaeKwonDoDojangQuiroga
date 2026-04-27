@@ -25,6 +25,10 @@ public class AsistenciaConfiguracion : IEntityTypeConfiguration<Asistencia>
             .IsRequired()
             .HasDefaultValue(false);
 
+        builder.Property(a => a.Observacion)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.HasOne(a => a.Alumno)
             .WithMany(al => al.Asistencias)
             .HasForeignKey(a => a.AlumnoId)

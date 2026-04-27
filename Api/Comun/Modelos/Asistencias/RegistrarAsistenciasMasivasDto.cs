@@ -21,4 +21,9 @@ public class AsistenciaAlumnoDto
 
     [Required]
     public bool Presente { get; set; }
+
+    public bool Justificada { get; set; } = false;
+
+    [MaxLength(500)]
+    public string? Observacion { get; set; }
 }

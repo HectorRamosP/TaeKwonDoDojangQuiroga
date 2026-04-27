@@ -31,6 +31,16 @@ import {
   CheckCircle,
   Download,
 } from "@mui/icons-material";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import { generarReportePagos } from "../../services/reportesService";
 import Swal from "sweetalert2";
 
@@ -320,6 +330,72 @@ export default function ReportePagos() {
               </Card>
             </Grid>
           </Grid>
+
+          {/* Gráfica de tendencia mensual */}
+          {reporte.ingresosPorMes && reporte.ingresosPorMes.length > 0 && (
+            <Card sx={{ mb: 3, borderRadius: "16px", border: "1px solid rgba(220, 20, 60, 0.1)" }} elevation={0}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+                  <TrendingUp sx={{ color: "#DC143C" }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    Tendencia de Ingresos por Mes
+                  </Typography>
+                </Box>
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart
+                    data={reporte.ingresosPorMes}
+                    margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis
+                      dataKey="mes"
+                      tick={{ fontSize: 11, fill: "#888" }}
+                      tickFormatter={(v) => v.split(" ")[0]}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#888" }}
+                      tickFormatter={(v) =>
+                        new Intl.NumberFormat("es-MX", {
+                          style: "currency",
+                          currency: "MXN",
+                          maximumFractionDigits: 0,
+                        }).format(v)
+                      }
+                    />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(value),
+                        name === "montoConfirmado" ? "Confirmado" : "Total",
+                      ]}
+                      contentStyle={{ borderRadius: 8, border: "1px solid #eee" }}
+                    />
+                    <Legend
+                      formatter={(value) =>
+                        value === "montoConfirmado" ? "Confirmado" : "Total cobrado"
+                      }
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="montoTotal"
+                      stroke="#B22222"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="montoConfirmado"
+                      stroke="#2E7D32"
+                      strokeWidth={2}
+                      strokeDasharray="5 3"
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Gráficos de Distribución */}
           <Grid container spacing={3} sx={{ mb: 3 }}>

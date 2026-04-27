@@ -46,7 +46,8 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet test:*)",
       "Bash(dotnet tool:*)",
-      "Bash(start \"c:\\\\Users\\\\Hector\\\\Documents\\\\GitHub\\\\ControlFitnessGym\\\\coverage\\\\report\\\\index.html\")"
+      "Bash(start \"c:\\\\Users\\\\Hector\\\\Documents\\\\GitHub\\\\ControlFitnessGym\\\\coverage\\\\report\\\\index.html\")",
+      "Bash(npm install *)"
     ],
     "deny": [],
     "ask": [],

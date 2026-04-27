@@ -218,7 +218,7 @@ public class AsistenciasController : ControllerBase
     {
         try
         {
-            await _asistenciaServicio.JustificarFaltaAsync(id, dto.Justificada);
+            await _asistenciaServicio.JustificarFaltaAsync(id, dto.Justificada, dto.Observacion);
             return Ok(new { mensaje = "Asistencia actualizada correctamente" });
         }
         catch (KeyNotFoundException)

@@ -73,6 +73,8 @@ public class AsistenciaServicio : IAsistenciaServicio
             ClaseId = dto.ClaseId,
             Fecha = dto.Fecha.Date,
             Presente = dto.Presente,
+            Justificada = !dto.Presente && dto.Justificada,
+            Observacion = dto.Observacion,
             UsuarioRegistroId = usuarioId
         };
 
@@ -109,19 +111,21 @@ public class AsistenciaServicio : IAsistenciaServicio
 
             if (existente != null)
             {
-                // Actualizar si ya existe
                 existente.Presente = asistenciaDto.Presente;
+                existente.Justificada = !asistenciaDto.Presente && asistenciaDto.Justificada;
+                existente.Observacion = asistenciaDto.Observacion;
                 await _asistenciaRepo.ActualizarAsync(existente);
             }
             else
             {
-                // Crear nuevo registro
                 var asistencia = new Asistencia
                 {
                     AlumnoId = asistenciaDto.AlumnoId,
                     ClaseId = dto.ClaseId,
                     Fecha = dto.Fecha.Date,
                     Presente = asistenciaDto.Presente,
+                    Justificada = !asistenciaDto.Presente && asistenciaDto.Justificada,
+                    Observacion = asistenciaDto.Observacion,
                     UsuarioRegistroId = usuarioId
                 };
                 await _asistenciaRepo.AgregarAsync(asistencia);
@@ -151,7 +155,7 @@ public class AsistenciaServicio : IAsistenciaServicio
         }
     }
 
-    public async Task JustificarFaltaAsync(int asistenciaId, bool justificada)
+    public async Task JustificarFaltaAsync(int asistenciaId, bool justificada, string? observacion)
     {
         var asistencia = await _asistenciaRepo.ObtenerPorIdAsync(asistenciaId);
         if (asistencia == null)
@@ -161,6 +165,7 @@ public class AsistenciaServicio : IAsistenciaServicio
             throw new InvalidOperationException("Solo se pueden justificar las faltas, no las presencias");
 
         asistencia.Justificada = justificada;
+        asistencia.Observacion = observacion;
         await _asistenciaRepo.ActualizarAsync(asistencia);
     }
 }
