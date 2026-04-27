@@ -66,3 +66,36 @@
   background: linear-gradient(90deg, #DC143C 0%, transparent 100%);
   border-radius: 2px;
 }
+
+/* ========== Sección Examen ========== */
+.examen-section {
+  animation: fadeIn 0.3s ease;
+}
+
+.examen-header {
+  margin-bottom: 8px;
+}
+
+.examen-stat-card {
+  transition: all 0.3s ease;
+}
+
+.examen-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.examen-section .MuiTableContainer-root {
+  animation: slideUp 0.4s ease;
+}
