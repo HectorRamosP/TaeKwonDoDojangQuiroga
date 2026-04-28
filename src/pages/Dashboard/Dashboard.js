@@ -30,6 +30,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { obtenerDashboard } from "../../services/dashboardService";
+import AlertasVencimiento from "../../Components/AlertasVencimiento";
 
 const ROJO = "#DC143C";
 const ROJO_OSCURO = "#B22222";
@@ -315,6 +316,9 @@ export default function Dashboard() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Alertas de vencimiento de membresías */}
+      <AlertasVencimiento />
 
       {/* Barra de progreso de asistencia — solo si hay clases hoy */}
       {datos.totalEsperadosDia > 0 && (

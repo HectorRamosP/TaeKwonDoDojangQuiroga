@@ -38,7 +38,6 @@ import { obtenerAsistenciasPorAlumno } from "../../services/asistenciasService";
 import ModalSocio from "../../Components/modals/ModalSocio";
 import CintaChip from "../../Components/CintaChip";
 import "./Socios.css";
-import AlertasVencimiento from '../../Components/AlertasVencimiento';
 /**
  * Página de gestión de alumnos del dojo.
  * Permite listar, filtrar, ordenar, crear, editar, activar/desactivar
@@ -406,6 +405,7 @@ export default function Socios() {
 
           resultados.push({
             id: alumno.id,
+            slug: alumno.slug,
             nombreCompleto: alumno.nombreCompleto || `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`,
             cintaActualNombre: alumno.cintaActualNombre,
             claseNombre: alumno.claseNombre,
@@ -417,6 +417,7 @@ export default function Socios() {
         } catch {
           resultados.push({
             id: alumno.id,
+            slug: alumno.slug,
             nombreCompleto: alumno.nombreCompleto || `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno}`,
             cintaActualNombre: alumno.cintaActualNombre,
             claseNombre: alumno.claseNombre,
@@ -428,10 +429,10 @@ export default function Socios() {
         }
       }
 
-      // Ordenar: no elegibles primero, luego por porcentaje ascendente
+      // Ordenar: elegibles primero, luego por porcentaje descendente
       resultados.sort((a, b) => {
-        if (a.elegible !== b.elegible) return a.elegible ? 1 : -1;
-        return a.porcentaje - b.porcentaje;
+        if (a.elegible !== b.elegible) return a.elegible ? -1 : 1;
+        return b.porcentaje - a.porcentaje;
       });
 
       setExamenResultados(resultados);
@@ -496,7 +497,6 @@ export default function Socios() {
 
   return (
     <div className="socios-container">
-      <AlertasVencimiento />
       <Box
         sx={{
           display: "flex",
@@ -1214,12 +1214,15 @@ export default function Socios() {
                       <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.5px' }} align="center">
                         Estatus
                       </TableCell>
+                      <TableCell sx={{ color: 'white', fontWeight: 800, fontSize: '0.95rem', letterSpacing: '0.5px' }} align="center">
+                        Perfil
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {examenDatosPaginados.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 4, color: '#999' }}>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4, color: '#999' }}>
                           No se encontraron resultados
                         </TableCell>
                       </TableRow>
@@ -1312,6 +1315,17 @@ export default function Socios() {
                                     }),
                               }}
                             />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Button
+                              variant="outlined"
+                              color="secondary"
+                              size="small"
+                              startIcon={<Visibility />}
+                              onClick={() => navigate(`/alumnos/${resultado.slug}/perfil`)}
+                            >
+                              Ver Perfil
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))
