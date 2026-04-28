@@ -17,7 +17,10 @@ public class AlumnoProfile : Profile
             .ForMember(dest => dest.ClaseNombre, opt => opt.MapFrom(src => src.Clase != null ? src.Clase.Nombre : null))
             .ForMember(dest => dest.ClaseHorario, opt => opt.MapFrom(src => src.Clase != null ? $"{src.Clase.HoraInicio:hh\\:mm} - {src.Clase.HoraFin:hh\\:mm}" : null))
             .ForMember(dest => dest.ConceptoMensualidadNombre, opt => opt.MapFrom(src => src.ConceptoMensualidad != null ? src.ConceptoMensualidad.Nombre : null))
-            .ForMember(dest => dest.ConceptoMensualidadMonto, opt => opt.MapFrom(src => src.ConceptoMensualidad != null ? (decimal?)src.ConceptoMensualidad.Precio : null));
+            .ForMember(dest => dest.ConceptoMensualidadMonto, opt => opt.MapFrom(src => src.ConceptoMensualidad != null ? (decimal?)src.ConceptoMensualidad.Precio : null))
+            .ForMember(dest => dest.DiasParaVencer, opt => opt.MapFrom(src => 
+                src.AlumnoInscripciones.Where(i => i.Activa && i.FechaFin >= DateTime.Today).OrderBy(i => i.FechaFin).Select(i => (int?)(i.FechaFin.Date - DateTime.Today).Days).FirstOrDefault()
+            ));
 
         CreateMap<CrearAlumnoDto, Alumno>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())

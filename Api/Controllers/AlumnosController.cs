@@ -110,4 +110,17 @@ public class AlumnosController : ControllerBase
 
         return Ok(perfil);
     }
+
+    [HttpGet("alertas-vencimiento")]
+    public async Task<ActionResult<IEnumerable<BuscarAlumnoDto>>> ObtenerAlertasVencimiento()
+    {
+        var alumnos = await _alumnoServicio.ObtenerProximosAVencerAsync(dias: 5);
+
+        if (alumnos == null || !alumnos.Any())
+        {
+            return Ok(new List<BuscarAlumnoDto>());
+        }
+
+        return Ok(alumnos);
+    }
 }

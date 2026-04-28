@@ -38,7 +38,7 @@ import { obtenerAsistenciasPorAlumno } from "../../services/asistenciasService";
 import ModalSocio from "../../Components/modals/ModalSocio";
 import CintaChip from "../../Components/CintaChip";
 import "./Socios.css";
-
+import AlertasVencimiento from '../../Components/AlertasVencimiento';
 /**
  * Página de gestión de alumnos del dojo.
  * Permite listar, filtrar, ordenar, crear, editar, activar/desactivar
@@ -496,6 +496,7 @@ export default function Socios() {
 
   return (
     <div className="socios-container">
+      <AlertasVencimiento />
       <Box
         sx={{
           display: "flex",
@@ -1352,5 +1353,6 @@ export default function Socios() {
         </Box>
       )}
     </div>
+    
   );
 }

@@ -78,6 +78,22 @@ public class AlumnoServicio : IAlumnoServicio
         }
 
         var alumno = _mapper.Map<Alumno>(dto);
+        
+        // Crear inscripción inicial si se asignó un concepto de mensualidad
+        if (dto.ConceptoMensualidadId.HasValue)
+        {
+            var concepto = await _contexto.Conceptos.FindAsync(dto.ConceptoMensualidadId.Value);
+            bool esClaseIndividual = concepto != null && concepto.Nombre.ToLower().Contains("individual");
+            
+            alumno.AlumnoInscripciones.Add(new AlumnoInscripcion
+            {
+                ConceptoId = dto.ConceptoMensualidadId.Value,
+                FechaInicio = DateTime.Now,
+                FechaFin = esClaseIndividual ? DateTime.Now.AddDays(1) : DateTime.Now.AddMonths(1),
+                Activa = true
+            });
+        }
+
         var alumnoCreado = await _repositorio.AgregarAsync(alumno);
 
         // Si se asignó una cinta al crear, registrar en el historial de progresión
@@ -198,7 +214,6 @@ public class AlumnoServicio : IAlumnoServicio
 
         var alumnoDto = _mapper.Map<BuscarAlumnoDto>(alumno);
 
-        // Obtener asistencias (con o sin rango de fechas)
         List<Asistencia> asistencias;
         if (fechaInicio.HasValue && fechaFin.HasValue)
         {
@@ -211,14 +226,12 @@ public class AlumnoServicio : IAlumnoServicio
 
         var asistenciasDto = _mapper.Map<List<BuscarAsistenciaDto>>(asistencias);
 
-        // Calcular resumen
         var totalPresencias = asistencias.Count(a => a.Presente);
         var totalFaltas = asistencias.Count(a => !a.Presente);
         var totalRegistros = asistencias.Count;
         var porcentaje = totalRegistros > 0 ? Math.Round((decimal)totalPresencias / totalRegistros * 100, 1) : 0;
         var totalJustificadas = asistencias.Count(a => !a.Presente && a.Justificada);
 
-        // Obtener historial de cintas
         var historialCintas = await _contexto.HistorialCintas
             .Include(h => h.Cinta)
             .Where(h => h.AlumnoId == alumno.Id)
@@ -236,7 +249,6 @@ public class AlumnoServicio : IAlumnoServicio
             CintaOrden = h.Cinta.Orden
         }).ToList();
 
-        // Obtener historial de pagos
         var pagos = await _contexto.Pagos
             .Include(p => p.Concepto)
             .Where(p => p.AlumnoId == alumno.Id)
@@ -266,5 +278,21 @@ public class AlumnoServicio : IAlumnoServicio
             HistorialCintas = historialDto,
             HistorialPagos = pagosDto
         };
+    }
+
+    public async Task<IEnumerable<BuscarAlumnoDto>> ObtenerProximosAVencerAsync(int dias)
+    {
+        var fechaLimite = DateTime.Now.AddDays(dias);
+        var hoy = DateTime.Now;
+
+        var inscripcionesProximas = await _contexto.AlumnoInscripciones
+            .Include(i => i.Alumno)
+                .ThenInclude(a => a.AlumnoInscripciones)
+            .Where(i => i.FechaFin <= fechaLimite && i.FechaFin >= hoy)
+            .ToListAsync();
+
+        var alumnosRiesgo = inscripcionesProximas.Select(i => i.Alumno).Distinct();
+
+        return _mapper.Map<IEnumerable<BuscarAlumnoDto>>(alumnosRiesgo);
     }
 }
