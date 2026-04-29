@@ -74,8 +74,14 @@ export default function PerfilAlumno() {
       setPerfil(data);
     } catch (err) {
       let mensaje = "Ocurrió un error al cargar el perfil del alumno.";
-      if (err.response?.status === 404) {
-        mensaje = "Alumno no encontrado.";
+      if (err.response) {
+        if (err.response.status === 404) {
+          mensaje = "Alumno no encontrado.";
+        } else if (err.response.data?.mensaje) {
+          mensaje = err.response.data.mensaje;
+        } else {
+          mensaje = `Error del servidor (${err.response.status}).`;
+        }
       } else if (err.request) {
         mensaje = "No se pudo conectar con el servidor.";
       }

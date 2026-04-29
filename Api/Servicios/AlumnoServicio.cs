@@ -244,9 +244,9 @@ public class AlumnoServicio : IAlumnoServicio
             FechaObtencion = h.FechaObtencion,
             Observaciones = h.Observaciones,
             CintaId = h.CintaId,
-            CintaNombre = h.Cinta.Nombre,
-            CintaColorHex = h.Cinta.ColorHex,
-            CintaOrden = h.Cinta.Orden
+            CintaNombre = h.Cinta?.Nombre ?? "Desconocida",
+            CintaColorHex = h.Cinta?.ColorHex ?? "#000000",
+            CintaOrden = h.Cinta?.Orden ?? 0
         }).ToList();
 
         var pagos = await _contexto.Pagos
@@ -259,7 +259,7 @@ public class AlumnoServicio : IAlumnoServicio
         {
             Id = p.Id,
             Fecha = p.Fecha,
-            ConceptoNombre = p.Concepto.Nombre,
+            ConceptoNombre = p.Concepto?.Nombre ?? "Desconocido",
             Monto = p.Monto,
             MetodoPago = p.MetodoPago,
             Estado = p.Estado,
