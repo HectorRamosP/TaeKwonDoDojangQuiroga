@@ -91,3 +91,15 @@ export const obtenerAlertasVencimiento = async () => {
     const response = await api.get('/alumnos/alertas-vencimiento');
     return response.data;
 };
+
+/**
+ * Obtiene los alumnos activos elegibles para examen de cinta,
+ * es decir, quienes superan el porcentaje mínimo de asistencia
+ * configurado en el backend (ExamenAjustes:PorcentajeMinAsistencia).
+ *
+ * @returns {Promise<Array>} Lista de alumnos elegibles ordenados por porcentaje descendente.
+ */
+export const obtenerElegiblesExamen = async () => {
+    const response = await api.get('/alumnos/elegibles-examen');
+    return response.data;
+};

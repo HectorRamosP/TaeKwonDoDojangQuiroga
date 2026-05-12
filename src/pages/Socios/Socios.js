@@ -93,7 +93,7 @@ export default function Socios() {
   const [examenFiltroEstatus, setExamenFiltroEstatus] = useState("");
   const [examenPagina, setExamenPagina] = useState(1);
   const examenItemsPorPagina = 10;
-  const PORCENTAJE_MINIMO = 70;
+  const [porcentajeMinimo, setPorcentajeMinimo] = useState(70);
 
   const itemsPorPagina = 10;
 
@@ -412,7 +412,7 @@ export default function Socios() {
             totalRegistros,
             totalPresente,
             porcentaje: Math.round(porcentaje * 10) / 10,
-            elegible: porcentaje >= PORCENTAJE_MINIMO,
+            elegible: porcentaje >= porcentajeMinimo,
           });
         } catch {
           resultados.push({
@@ -964,7 +964,7 @@ export default function Socios() {
               Evaluación para Examen de Cambio de Cinta
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', mb: 3 }}>
-              Selecciona el período a evaluar. Los alumnos con menos del {PORCENTAJE_MINIMO}% de asistencia
+              Selecciona el período a evaluar. Los alumnos con menos del {porcentajeMinimo}% de asistencia
               <strong style={{ color: '#d32f2f' }}> no tendrán derecho a examen</strong>.
             </Typography>
           </Box>
@@ -1004,6 +1004,22 @@ export default function Socios() {
                 onChange={(e) => setExamenFechaFin(e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 sx={{ minWidth: 180 }}
+              />
+              <TextField
+                label="% Mínimo de asistencia"
+                type="number"
+                size="small"
+                value={porcentajeMinimo}
+                onChange={(e) => {
+                  const val = Math.min(100, Math.max(0, Number(e.target.value)));
+                  setPorcentajeMinimo(val);
+                }}
+                inputProps={{ min: 0, max: 100, step: 1 }}
+                InputProps={{
+                  endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                }}
+                sx={{ minWidth: 180 }}
+                helperText="Ajusta el criterio de elegibilidad"
               />
               <Button
                 variant="contained"
@@ -1081,7 +1097,7 @@ export default function Socios() {
                     {totalElegibles}
                   </Typography>
                   <Typography variant="caption" sx={{ color: '#999' }}>
-                    ≥ {PORCENTAJE_MINIMO}% de asistencia
+                    ≥ {porcentajeMinimo}% de asistencia
                   </Typography>
                 </Paper>
 
@@ -1104,7 +1120,7 @@ export default function Socios() {
                     {totalNoElegibles}
                   </Typography>
                   <Typography variant="caption" sx={{ color: '#999' }}>
-                    &lt; {PORCENTAJE_MINIMO}% de asistencia
+                    &lt; {porcentajeMinimo}% de asistencia
                   </Typography>
                 </Paper>
 
@@ -1256,7 +1272,7 @@ export default function Socios() {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Tooltip title={`${resultado.porcentaje}% — Mínimo requerido: ${PORCENTAJE_MINIMO}%`} arrow>
+                            <Tooltip title={`${resultado.porcentaje}% — Mínimo requerido: ${porcentajeMinimo}%`} arrow>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Box sx={{ flex: 1 }}>
                                   <LinearProgress
@@ -1268,7 +1284,7 @@ export default function Socios() {
                                       backgroundColor: 'rgba(0,0,0,0.08)',
                                       '& .MuiLinearProgress-bar': {
                                         borderRadius: 5,
-                                        background: resultado.porcentaje >= PORCENTAJE_MINIMO
+                                        background: resultado.porcentaje >= porcentajeMinimo
                                           ? 'linear-gradient(90deg, #4CAF50 0%, #66BB6A 100%)'
                                           : resultado.porcentaje >= 50
                                             ? 'linear-gradient(90deg, #FF9800 0%, #FFB74D 100%)'
@@ -1284,7 +1300,7 @@ export default function Socios() {
                                     fontWeight: 700,
                                     minWidth: 48,
                                     textAlign: 'right',
-                                    color: resultado.porcentaje >= PORCENTAJE_MINIMO
+                                    color: resultado.porcentaje >= porcentajeMinimo
                                       ? '#4CAF50'
                                       : resultado.porcentaje >= 50
                                         ? '#FF9800'
