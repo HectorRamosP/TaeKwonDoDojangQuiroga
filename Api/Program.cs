@@ -63,6 +63,7 @@ builder.Services.AddScoped<IAsistenciaRepositorio, AsistenciaRepositorio>();
 builder.Services.AddScoped<ICintaRepositorio, CintaRepositorio>();
 builder.Services.AddScoped<IClaseRepositorio, ClaseRepositorio>();
 builder.Services.AddScoped<IConceptoRepositorio, ConceptoRepositorio>();
+builder.Services.AddScoped<ITipoConceptoRepositorio, TipoConceptoRepositorio>();
 builder.Services.AddScoped<IPagoRepositorio, PagoRepositorio>();
 builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 
@@ -71,6 +72,7 @@ builder.Services.AddScoped<IAsistenciaServicio, AsistenciaServicio>();
 builder.Services.AddScoped<ICintaServicio, CintaServicio>();
 builder.Services.AddScoped<IClaseServicio, ClaseServicio>();
 builder.Services.AddScoped<IConceptoServicio, ConceptoServicio>();
+builder.Services.AddScoped<ITipoConceptoServicio, TipoConceptoServicio>();
 builder.Services.AddScoped<IPagoServicio, PagoServicio>();
 builder.Services.AddScoped<IUsuarioServicio, UsuarioServicio>();
 builder.Services.AddScoped<IReporteServicio, ReporteServicio>();

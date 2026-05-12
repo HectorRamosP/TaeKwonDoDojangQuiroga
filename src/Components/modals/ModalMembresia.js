@@ -9,6 +9,7 @@ import {
     FormControlLabel,
     Switch,
     InputAdornment,
+    CircularProgress,
 } from "@mui/material";
 import { CardMembership, Edit } from "@mui/icons-material";
 import { useState, useEffect } from "react";
@@ -39,16 +40,9 @@ const esquema = yup.object().shape({
     activo: yup.boolean(),
 });
 
-const tiposConcepto = [
-    { valor: "Mensualidad", etiqueta: "Mensualidad" },
-    { valor: "Inscripcion", etiqueta: "Inscripción" },
-    { valor: "Examen", etiqueta: "Examen" },
-    { valor: "Uniforme", etiqueta: "Uniforme" },
-    { valor: "Otro", etiqueta: "Otro" },
-];
-
 /**
  * Modal para crear o editar un concepto de pago (membresía).
+ * Los tipos de concepto se cargan dinámicamente desde la API.
  *
  * @component
  * @param {object} props
@@ -61,6 +55,10 @@ const tiposConcepto = [
 export default function ModalMembresia({ abierto, cerrar, recargar, modo = "crear", membresia }) {
     const esEditar = modo === "editar";
     const [guardando, setGuardando] = useState(false);
+
+    // Tipos de concepto cargados dinámicamente desde la API
+    const [tiposConcepto, setTiposConcepto] = useState([]);
+    const [cargandoTipos, setCargandoTipos] = useState(false);
 
     const {
         register,
@@ -78,6 +76,26 @@ export default function ModalMembresia({ abierto, cerrar, recargar, modo = "crea
             activo: true,
         },
     });
+
+    // Carga los tipos activos desde la API cuando el modal se abre
+    useEffect(() => {
+        if (!abierto) return;
+
+        const cargarTipos = async () => {
+            setCargandoTipos(true);
+            try {
+                const res = await api.get("/tipos-concepto?activo=true");
+                setTiposConcepto(res.data || []);
+            } catch {
+                // Si falla, el dropdown queda vacío con un mensaje claro
+                setTiposConcepto([]);
+            } finally {
+                setCargandoTipos(false);
+            }
+        };
+
+        cargarTipos();
+    }, [abierto]);
 
     useEffect(() => {
         if (esEditar && membresia) {
@@ -164,20 +182,36 @@ export default function ModalMembresia({ abierto, cerrar, recargar, modo = "crea
                     fullWidth
                     margin="normal"
                     error={!!errors.tipoConcepto}
-                    disabled={guardando}
+                    disabled={guardando || cargandoTipos}
                 >
                     <InputLabel>Tipo de Concepto</InputLabel>
                     <Controller
                         name="tipoConcepto"
                         control={control}
                         render={({ field }) => (
-                            <Select {...field} label="Tipo de Concepto">
+                            <Select
+                                {...field}
+                                label="Tipo de Concepto"
+                                startAdornment={
+                                    cargandoTipos ? (
+                                        <InputAdornment position="start">
+                                            <CircularProgress size={16} />
+                                        </InputAdornment>
+                                    ) : null
+                                }
+                            >
                                 <MenuItem value="">
-                                    <em>Selecciona un tipo</em>
+                                    <em>
+                                        {cargandoTipos
+                                            ? "Cargando tipos..."
+                                            : tiposConcepto.length === 0
+                                            ? "No hay tipos disponibles"
+                                            : "Selecciona un tipo"}
+                                    </em>
                                 </MenuItem>
                                 {tiposConcepto.map((tipo) => (
-                                    <MenuItem key={tipo.valor} value={tipo.valor}>
-                                        {tipo.etiqueta}
+                                    <MenuItem key={tipo.id} value={tipo.nombre}>
+                                        {tipo.nombre}
                                     </MenuItem>
                                 ))}
                             </Select>
