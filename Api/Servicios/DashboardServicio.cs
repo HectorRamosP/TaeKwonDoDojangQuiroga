@@ -103,6 +103,40 @@ public class DashboardServicio : IDashboardServicio
             })
             .ToList();
 
+        // 6. Cumpleaños próximos (7 días)
+        var fechaLimite = hoy.AddDays(7);
+
+        var cumpleanios = await _contexto.Alumnos
+            .Where(a => a.Activo)
+            .ToListAsync();
+
+        var cumpleaniosProximos = cumpleanios
+            .Select(a =>
+            {
+                var proximoCumple = new DateTime(
+                    hoy.Year,
+                    a.FechaNacimiento.Month,
+                    a.FechaNacimiento.Day
+                );
+
+                if (proximoCumple < hoy)
+                    proximoCumple = proximoCumple.AddYears(1);
+
+                var diasRestantes = (proximoCumple - hoy).Days;
+
+                return new CumpleaniosDashboardItem
+                {
+                    Id = a.Id,
+                    NombreCompleto = $"{a.Nombre} {a.ApellidoPaterno} {a.ApellidoMaterno}",
+                    FechaNacimiento = a.FechaNacimiento,
+                    DiasRestantes = diasRestantes,
+                    EsHoy = diasRestantes == 0
+                };
+            })
+            .Where(c => c.DiasRestantes <= 7)
+            .OrderBy(c => c.DiasRestantes)
+            .ToList();
+
         return new DashboardDto
         {
             TotalAlumnosActivos = totalActivos,
@@ -111,7 +145,8 @@ public class DashboardServicio : IDashboardServicio
             TotalAsistenciaDia = totalPresentes,
             TotalEsperadosDia = totalEsperados,
             ClasesHoy = clasesHoy,
-            NuevosAlumnosPorMes = mesesCompletos
+            NuevosAlumnosPorMes = mesesCompletos,
+            Cumpleanios = cumpleaniosProximos
         };
     }
 }
