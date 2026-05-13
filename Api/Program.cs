@@ -185,9 +185,13 @@ builder.Services.AddAuthentication(auth =>
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AplicacionBdContexto>();
-
+builder.Services.AddCors(options => {
+    options.AddPolicy("AllowReact", policy => {
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
 var app = builder.Build();
-
+app.UseCors("AllowReact");
 app.UseResponseCompression();
 app.UseMiddleware<ManejadorExcepcionesGlobal>();
 
