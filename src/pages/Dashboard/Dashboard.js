@@ -11,6 +11,8 @@ import {
   Chip,
   LinearProgress,
   Tooltip,
+  IconButton,
+  Popover,
 } from "@mui/material";
 import {
   People,
@@ -19,6 +21,7 @@ import {
   TrendingUp,
   PersonAdd,
   ArrowForwardIos,
+  Settings,
 } from "@mui/icons-material";
 import {
   BarChart,
@@ -97,6 +100,11 @@ export default function Dashboard() {
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [anchorConfig, setAnchorConfig] = useState(null);
+
+  const handleAbrirConfig = (e) => setAnchorConfig(e.currentTarget);
+  const handleCerrarConfig = () => setAnchorConfig(null);
+  const configAbierto = Boolean(anchorConfig);
 
   useEffect(() => {
     cargarDashboard();
@@ -145,14 +153,74 @@ export default function Dashboard() {
 
   return (
     <Box sx={{ p: 2.5 }}>
-      {/* Encabezado compacto */}
-      <Box sx={{ mb: 2.5 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: "#1a1a1a", lineHeight: 1.2 }}>
-          Panel de Control
-        </Typography>
-        <Typography variant="caption" sx={{ color: "#888", textTransform: "capitalize" }}>
-          {hoy}
-        </Typography>
+      {/* Encabezado con tuerca de configuración */}
+      <Box sx={{ mb: 2.5, display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: "#1a1a1a", lineHeight: 1.2 }}>
+            Panel de Control
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#888", textTransform: "capitalize" }}>
+            {hoy}
+          </Typography>
+        </Box>
+
+        <Tooltip title="Configuración de alertas" arrow>
+          <IconButton
+            onClick={handleAbrirConfig}
+            aria-label="Configuración de alertas"
+            sx={{
+              background: configAbierto
+                ? `linear-gradient(135deg, ${ROJO} 0%, ${ROJO_OSCURO} 100%)`
+                : "rgba(220,20,60,0.08)",
+              color: configAbierto ? "white" : ROJO,
+              border: `1px solid rgba(220,20,60,0.2)`,
+              borderRadius: "12px",
+              width: 40,
+              height: 40,
+              transition: "all 0.25s ease",
+              "&:hover": {
+                background: `linear-gradient(135deg, ${ROJO} 0%, ${ROJO_OSCURO} 100%)`,
+                color: "white",
+                boxShadow: `0 4px 14px rgba(220,20,60,0.35)`,
+              },
+            }}
+          >
+            <Settings fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
+        <Popover
+          open={configAbierto}
+          anchorEl={anchorConfig}
+          onClose={handleCerrarConfig}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          PaperProps={{
+            elevation: 3,
+            sx: {
+              mt: 1,
+              borderRadius: "16px",
+              border: "1px solid rgba(220,20,60,0.12)",
+              overflow: "visible",
+              "&::before": {
+                content: '""',
+                display: "block",
+                position: "absolute",
+                top: -8,
+                right: 14,
+                width: 16,
+                height: 16,
+                background: "white",
+                border: "1px solid rgba(220,20,60,0.12)",
+                borderBottom: "none",
+                borderRight: "none",
+                transform: "rotate(45deg)",
+              },
+            },
+          }}
+        >
+          <ConfiguracionAlertas />
+        </Popover>
       </Box>
 
       {/* Tarjetas de métricas */}
@@ -265,11 +333,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </Grid>
-          
-          <Box sx={{ mb: 2.5 }}>
-            <ConfiguracionAlertas />
-          </Box>
-        <AlertasVencimiento />
+
 
         {/* Gráfica nuevos alumnos por mes */}
         <Grid item xs={12} md={7}>

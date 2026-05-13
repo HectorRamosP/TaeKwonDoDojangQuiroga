@@ -7,11 +7,15 @@ const ConfiguracionAlertas = () => {
     const [dias, setDias] = useState(obtenerDiasConfig());
     const [status, setStatus] = useState(false);
 
+    const diasNum = Number(dias);
+    const esInvalido = !dias || isNaN(diasNum) || diasNum <= 0;
+
     const handleSave = () => {
-        guardarDiasConfig(dias);
+        if (esInvalido) return; // Doble seguridad: no guardar si el valor es inválido
+        guardarDiasConfig(diasNum);
         setStatus(true);
-        setTimeout(() => setStatus(false), 3000); // Borra el mensaje tras 3s
-        window.dispatchEvent(new Event('storage')); // Avisa a otros componentes del cambio
+        setTimeout(() => setStatus(false), 3000);
+        window.dispatchEvent(new Event('storage'));
     };
 
     return (
@@ -20,17 +24,26 @@ const ConfiguracionAlertas = () => {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Días de anticipación para mostrar alertas:
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                 <TextField
                     type="number"
                     size="small"
                     value={dias}
                     onChange={(e) => setDias(e.target.value)}
                     inputProps={{ min: 1 }}
+                    error={esInvalido}
+                    helperText={esInvalido ? 'Debe ser al menos 1 día' : ''}
                 />
-                <Button variant="contained" onClick={handleSave}>Guardar</Button>
+                <Button
+                    variant="contained"
+                    onClick={handleSave}
+                    disabled={esInvalido}
+                    sx={{ mt: esInvalido ? 0 : 0 }} // mantiene alineación
+                >
+                    Guardar
+                </Button>
             </Box>
-            {status && <Alert severity="success" sx={{ mt: 2 }}>Configuración guardada localmente</Alert>}
+            {status && <Alert severity="success" sx={{ mt: 2 }}>Configuración guardada</Alert>}
         </Paper>
     );
 };
