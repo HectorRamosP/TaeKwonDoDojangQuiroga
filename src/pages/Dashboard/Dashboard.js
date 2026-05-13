@@ -31,6 +31,7 @@ import {
 } from "recharts";
 import { obtenerDashboard } from "../../services/dashboardService";
 import AlertasVencimiento from "../../Components/AlertasVencimiento";
+import ConfiguracionAlertas from "../../Components/ConfiguracionAlertas";
 
 const ROJO = "#DC143C";
 const ROJO_OSCURO = "#B22222";
@@ -264,6 +265,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </Grid>
+          
+          <Box sx={{ mb: 2.5 }}>
+            <ConfiguracionAlertas />
+          </Box>
+        <AlertasVencimiento />
 
         {/* Gráfica nuevos alumnos por mes */}
         <Grid item xs={12} md={7}>
