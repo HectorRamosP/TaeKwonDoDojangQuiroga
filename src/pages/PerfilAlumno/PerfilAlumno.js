@@ -15,6 +15,7 @@ import {
   Box,
   Typography,
   Pagination,
+  Tooltip,
 } from "@mui/material";
 import {
   ArrowBack,
@@ -129,7 +130,7 @@ export default function PerfilAlumno() {
       : nombre[0];
   };
 
-  const handleJustificar = async (asistenciaId, estadoActual) => {
+  const handleJustificar = async (asistenciaId, estadoActual, observacionActual) => {
     const nuevoEstado = !estadoActual;
     const accion = nuevoEstado ? "justificar" : "quitar la justificación de";
 
@@ -141,12 +142,23 @@ export default function PerfilAlumno() {
       cancelButtonColor: "#757575",
       confirmButtonText: nuevoEstado ? "Sí, justificar" : "Sí, quitar",
       cancelButtonText: "Cancelar",
+      ...(nuevoEstado && {
+        input: "textarea",
+        inputLabel: "Motivo u observación (opcional)",
+        inputPlaceholder: "Ej. Enfermedad, cita médica, viaje...",
+        inputValue: observacionActual || "",
+        inputAttributes: { maxlength: 300, style: "resize:vertical" },
+      }),
     });
 
     if (!resultado.isConfirmed) return;
 
+    const observacion = nuevoEstado
+      ? (resultado.value?.trim() || null)
+      : null;
+
     try {
-      await justificarFalta(asistenciaId, nuevoEstado);
+      await justificarFalta(asistenciaId, nuevoEstado, observacion);
       // Recargar perfil para actualizar los contadores
       if (filtroActivo) {
         cargarPerfil(fechaInicio, fechaFin);
@@ -477,22 +489,52 @@ export default function PerfilAlumno() {
                       </TableCell>
                       <TableCell>
                         {!asistencia.presente ? (
-                          <Chip
-                            label={asistencia.justificada ? "Justificada ✓" : "Sin justificar"}
-                            color={asistencia.justificada ? "warning" : "default"}
-                            size="small"
-                            variant={asistencia.justificada ? "filled" : "outlined"}
-                            onClick={() => handleJustificar(asistencia.id, asistencia.justificada)}
-                            sx={{
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              transition: "all 0.2s ease",
-                              "&:hover": {
-                                transform: "scale(1.05)",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                              },
-                            }}
-                          />
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                            <Tooltip
+                              title={
+                                asistencia.justificada
+                                  ? "Clic para quitar justificación"
+                                  : "Clic para justificar esta falta"
+                              }
+                              arrow
+                            >
+                              <Chip
+                                label={asistencia.justificada ? "Justificada ✓" : "Sin justificar"}
+                                color={asistencia.justificada ? "warning" : "default"}
+                                size="small"
+                                variant={asistencia.justificada ? "filled" : "outlined"}
+                                onClick={() =>
+                                  handleJustificar(
+                                    asistencia.id,
+                                    asistencia.justificada,
+                                    asistencia.observacion
+                                  )
+                                }
+                                sx={{
+                                  fontWeight: 600,
+                                  cursor: "pointer",
+                                  transition: "all 0.2s ease",
+                                  "&:hover": {
+                                    transform: "scale(1.05)",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                  },
+                                }}
+                              />
+                            </Tooltip>
+                            {asistencia.justificada && asistencia.observacion && (
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "text.secondary",
+                                  fontStyle: "italic",
+                                  maxWidth: 200,
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                📝 {asistencia.observacion}
+                              </Typography>
+                            )}
+                          </Box>
                         ) : (
                           <Typography variant="body2" color="text.secondary">—</Typography>
                         )}

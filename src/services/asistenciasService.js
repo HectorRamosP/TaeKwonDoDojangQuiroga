@@ -112,9 +112,12 @@ export const eliminarAsistenciasPorClaseYFecha = async (claseId, fecha) => {
  *
  * @param {number} asistenciaId - ID del registro de asistencia.
  * @param {boolean} justificada - true para justificar, false para quitar.
+ * @param {string} [observacion] - Nota o motivo de la justificación (opcional).
  * @returns {Promise<object>}
  */
-export const justificarFalta = async (asistenciaId, justificada) => {
-  const response = await api.patch(`/asistencias/${asistenciaId}/justificar`, { justificada });
+export const justificarFalta = async (asistenciaId, justificada, observacion) => {
+  const body = { justificada };
+  if (observacion !== undefined) body.observacion = observacion;
+  const response = await api.patch(`/asistencias/${asistenciaId}/justificar`, body);
   return response.data;
 };
