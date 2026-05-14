@@ -30,7 +30,7 @@ import {
   Payment,
 } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import { obtenerPerfilAlumno } from "../../services/alumnosService";
 import { justificarFalta } from "../../services/asistenciasService";
@@ -48,6 +48,15 @@ import "./PerfilAlumno.css";
 export default function PerfilAlumno() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleRegresar = () => {
+    if (location.state?.returnTo) {
+      navigate(location.state.returnTo, { state: location.state });
+    } else {
+      navigate(-1);
+    }
+  };
 
   const [perfil, setPerfil] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -176,7 +185,7 @@ export default function PerfilAlumno() {
   if (error) {
     return (
       <div className="perfil-container">
-        <button className="perfil-back-btn" onClick={() => navigate(-1)}>
+        <button className="perfil-back-btn" onClick={handleRegresar}>
           <ArrowBack fontSize="small" /> Regresar
         </button>
         <Alert severity="error" sx={{ borderRadius: "12px" }}>
@@ -223,7 +232,7 @@ export default function PerfilAlumno() {
   return (
     <div className="perfil-container">
       {/* Botón regresar */}
-      <button className="perfil-back-btn" onClick={() => navigate(-1)}>
+      <button className="perfil-back-btn" onClick={handleRegresar}>
         <ArrowBack fontSize="small" /> Regresar
       </button>
 

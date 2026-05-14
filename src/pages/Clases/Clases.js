@@ -18,7 +18,8 @@ import {
   IconButton,
 } from "@mui/material";
 import { Search, Clear, Add, Visibility } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { obtenerClases, eliminarClase } from "../../services/clasesService";
 import { useLista } from "../../hooks/useLista";
@@ -46,6 +47,18 @@ export default function Clases() {
   const [modalVerAlumnosAbierto, setModalVerAlumnosAbierto] = useState(false);
   const [claseEditar, setClaseEditar] = useState(null);
   const [claseVerAlumnos, setClaseVerAlumnos] = useState(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.modalToOpen === 'verAlumnos' && location.state?.clase) {
+      setClaseVerAlumnos(location.state.clase);
+      setModalVerAlumnosAbierto(true);
+      // Limpiar el estado para evitar reabrir al refrescar la página
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const abrirModalEditar = (clase) => {
     setClaseEditar(clase);

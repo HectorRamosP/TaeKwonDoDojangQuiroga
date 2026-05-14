@@ -218,7 +218,13 @@ export default function ModalVerAlumnosClase({ abierto, cerrar, clase }) {
                       startIcon={<Visibility />}
                       onClick={() => {
                         cerrar();
-                        navigate(`/alumnos/${alumno.slug}/perfil`);
+                        navigate(`/alumnos/${alumno.slug}/perfil`, {
+                          state: {
+                            returnTo: '/clases',
+                            modalToOpen: 'verAlumnos',
+                            clase: clase
+                          }
+                        });
                       }}
                       sx={{
                         borderColor: "rgba(220, 20, 60, 0.3)",
