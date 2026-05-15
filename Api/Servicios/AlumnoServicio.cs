@@ -120,7 +120,7 @@ public class AlumnoServicio : IAlumnoServicio
         if (!string.IsNullOrEmpty(dto.EmailTutor) && await _repositorio.ExistePorEmailAsync(dto.EmailTutor, slug))
         {
             throw new InvalidOperationException("Ya existe un alumno con este email");
-        }
+        }   
 
         // Capturar la cinta anterior antes de actualizar
         var cintaAnteriorId = alumno.CintaActualId;
