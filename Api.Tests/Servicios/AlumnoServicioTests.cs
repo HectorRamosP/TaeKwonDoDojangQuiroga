@@ -19,18 +19,19 @@ public class AlumnoServicioTests
     // Dependencias mockeadas (se crean una vez y se reutilizan en cada prueba)
     // --------------------------------------------------------------------------
     private readonly Mock<IAlumnoRepositorio> _repositorioMock;
+    private readonly Mock<IAsistenciaRepositorio> _asistenciaRepoMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly AlumnoServicio _servicio;
 
     public AlumnoServicioTests()
     {
-        _repositorioMock = new Mock<IAlumnoRepositorio>();
-        _mapperMock      = new Mock<IMapper>();
+        _repositorioMock    = new Mock<IAlumnoRepositorio>();
+        _asistenciaRepoMock = new Mock<IAsistenciaRepositorio>();
+        _mapperMock         = new Mock<IMapper>();
 
         // Se inyectan las dependencias mockeadas al servicio bajo prueba.
-        // El tercer parámetro (AplicacionBdContexto) se pasa como null porque
-        // solo es utilizado en EliminarPermanenteAsync, que tiene sus propias pruebas.
-        _servicio = new AlumnoServicio(_repositorioMock.Object, _mapperMock.Object, null!);
+        // AplicacionBdContexto se pasa como null porque solo lo usa EliminarPermanenteAsync.
+        _servicio = new AlumnoServicio(_repositorioMock.Object, _asistenciaRepoMock.Object, _mapperMock.Object, null!);
     }
 
     // ==========================================================================
@@ -323,6 +324,126 @@ public class AlumnoServicioTests
             .Invoking(s => s.CambiarEstadoAsync("no-existe", false))
             .Should().ThrowAsync<KeyNotFoundException>()
             .WithMessage("Alumno no encontrado");
+    }
+
+    // ==========================================================================
+    // PRUEBAS UNITARIAS — ModificarAsync (ActualizarAsync)
+    // ==========================================================================
+
+    [Fact]
+    public async Task ActualizarAsync_AlumnoInexistente_LanzaKeyNotFoundException()
+    {
+        // ARRANGE — STUB: el alumno no existe
+        _repositorioMock
+            .Setup(r => r.ObtenerPorSlugAsync("no-existe"))
+            .ReturnsAsync((Alumno?)null);
+
+        var dto = new ModificarAlumnoDto
+        {
+            Slug            = "no-existe",
+            Nombre          = "X",
+            ApellidoPaterno = "X",
+            ApellidoMaterno = "X",
+            FechaNacimiento = new DateTime(2010, 1, 1),
+            NombreTutor     = "Tutor X",
+            TelefonoTutor   = "6671234567",
+            EmailTutor      = "x@email.com",
+            Enfermedades    = "No"
+        };
+
+        // ACT & ASSERT
+        await _servicio
+            .Invoking(s => s.ActualizarAsync("no-existe", dto))
+            .Should().ThrowAsync<KeyNotFoundException>()
+            .WithMessage("Alumno no encontrado");
+    }
+
+    [Fact]
+    public async Task ActualizarAsync_EmailDuplicadoDeOtroAlumno_LanzaInvalidOperationException()
+    {
+        // ARRANGE — STUB: alumno existe pero el email ya lo usa otro alumno
+        var alumnoExistente = new Alumno
+        {
+            Id              = 1,
+            Slug            = "carlos-lopez",
+            Nombre          = "Carlos",
+            ApellidoPaterno = "Lopez",
+            ApellidoMaterno = "Ruiz",
+            CintaActualId   = null
+        };
+
+        var dto = new ModificarAlumnoDto
+        {
+            Slug            = "carlos-lopez",
+            Nombre          = "Carlos",
+            ApellidoPaterno = "Lopez",
+            ApellidoMaterno = "Ruiz",
+            FechaNacimiento = new DateTime(2010, 1, 1),
+            NombreTutor     = "Tutor",
+            TelefonoTutor   = "6671234567",
+            EmailTutor      = "duplicado@email.com",
+            Enfermedades    = "No"
+        };
+
+        _repositorioMock.Setup(r => r.ObtenerPorSlugAsync("carlos-lopez")).ReturnsAsync(alumnoExistente);
+
+        // STUB: el email ya existe en otro alumno (excluyendo al actual)
+        _repositorioMock
+            .Setup(r => r.ExistePorEmailAsync("duplicado@email.com", "carlos-lopez"))
+            .ReturnsAsync(true);
+
+        // ACT & ASSERT
+        await _servicio
+            .Invoking(s => s.ActualizarAsync("carlos-lopez", dto))
+            .Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Ya existe un alumno con este email");
+
+        // MOCK: verificar que ActualizarAsync NUNCA fue llamado
+        _repositorioMock.Verify(r => r.ActualizarAsync(It.IsAny<Alumno>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ActualizarAsync_TelefonoDuplicadoDeOtroAlumno_LanzaInvalidOperationException()
+    {
+        // ARRANGE — STUB: alumno existe pero el teléfono ya lo usa otro alumno
+        var alumnoExistente = new Alumno
+        {
+            Id              = 1,
+            Slug            = "carlos-lopez",
+            Nombre          = "Carlos",
+            ApellidoPaterno = "Lopez",
+            ApellidoMaterno = "Ruiz",
+            CintaActualId   = null
+        };
+
+        var dto = new ModificarAlumnoDto
+        {
+            Slug            = "carlos-lopez",
+            Nombre          = "Carlos",
+            ApellidoPaterno = "Lopez",
+            ApellidoMaterno = "Ruiz",
+            FechaNacimiento = new DateTime(2010, 1, 1),
+            NombreTutor     = "Tutor",
+            TelefonoTutor   = "6670000000",
+            EmailTutor      = "carlos@email.com",
+            Enfermedades    = "No"
+        };
+
+        _repositorioMock.Setup(r => r.ObtenerPorSlugAsync("carlos-lopez")).ReturnsAsync(alumnoExistente);
+        _repositorioMock.Setup(r => r.ExistePorEmailAsync("carlos@email.com", "carlos-lopez")).ReturnsAsync(false);
+
+        // STUB: el teléfono ya existe en otro alumno
+        _repositorioMock
+            .Setup(r => r.ExistePorTelefonoAsync("6670000000", "carlos-lopez"))
+            .ReturnsAsync(true);
+
+        // ACT & ASSERT
+        await _servicio
+            .Invoking(s => s.ActualizarAsync("carlos-lopez", dto))
+            .Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Ya existe un alumno con este teléfono");
+
+        _repositorioMock.Verify(r => r.ActualizarAsync(It.IsAny<Alumno>()), Times.Never);
     }
 
     // ==========================================================================
