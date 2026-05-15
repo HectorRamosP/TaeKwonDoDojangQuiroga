@@ -1,16 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { obtenerAlertasVencimiento } from '../services/alumnosService';
 import { obtenerDiasConfig } from '../services/configAlertaService';
-import { 
-  Alert, 
-  AlertTitle, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  Typography, 
-  Box, 
-  Chip, 
-  CircularProgress 
+import {
+  Alert,
+  AlertTitle,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  Box,
+  Chip,
+  CircularProgress
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -19,34 +19,30 @@ const AlertasVencimiento = () => {
   const [alertas, setAlertas] = useState([]);
   const [diasAnticipacion, setDiasAnticipacion] = useState(5);
   const [cargando, setCargando] = useState(true);
-  const [peticionEnCurso, setPeticionEnCurso] = useState(false); // Guard para evitar error 429
+  const peticionEnCurso = useRef(false);
 
-  const cargarDatos = useCallback(async () => {
-    // Si ya hay una petición volando, no iniciamos otra
-    if (peticionEnCurso) return;
+  const cargarDatos = async () => {
+    if (peticionEnCurso.current) return;
 
     try {
-      setPeticionEnCurso(true);
+      peticionEnCurso.current = true;
       const dias = obtenerDiasConfig();
       setDiasAnticipacion(dias);
 
       const data = await obtenerAlertasVencimiento();
-      
-      // Filtrado local basado en la configuración actual
       const filtradas = data.filter(alumno => alumno.diasParaVencer <= dias);
       setAlertas(filtradas);
     } catch (err) {
       console.error("Error al obtener alertas de vencimiento:", err);
     } finally {
       setCargando(false);
-      setPeticionEnCurso(false);
+      peticionEnCurso.current = false;
     }
-  }, [peticionEnCurso]);
+  };
 
   useEffect(() => {
     cargarDatos();
 
-    // Escucha cambios en la configuración desde otros componentes/pestañas
     const manejarCambioStorage = (e) => {
       if (e.key === 'diasAlerta') {
         cargarDatos();
@@ -55,7 +51,7 @@ const AlertasVencimiento = () => {
 
     window.addEventListener('storage', manejarCambioStorage);
     return () => window.removeEventListener('storage', manejarCambioStorage);
-  }, [cargarDatos]);
+  }, []);
 
   if (cargando && alertas.length === 0) {
     return (
