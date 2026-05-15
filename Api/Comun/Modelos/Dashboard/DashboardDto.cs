@@ -9,6 +9,8 @@ public class DashboardDto
     public int TotalEsperadosDia { get; set; }
     public List<ClaseDashboardItem> ClasesHoy { get; set; } = new();
     public List<AlumnosMesItem> NuevosAlumnosPorMes { get; set; } = new();
+
+    public List<CumpleaniosDashboardItem> Cumpleanios { get; set; } = new();
 }
 
 public class ClaseDashboardItem
@@ -28,4 +30,13 @@ public class AlumnosMesItem
     public int Anio { get; set; }
     public int NumMes { get; set; }
     public int Nuevos { get; set; }
+}
+
+public class CumpleaniosDashboardItem
+{
+    public int Id { get; set; }
+    public string NombreCompleto { get; set; } = string.Empty;
+    public DateTime FechaNacimiento { get; set; }
+    public int DiasRestantes { get; set; }
+    public bool EsHoy { get; set; }
 }

@@ -223,6 +223,46 @@ export default function Dashboard() {
         </Popover>
       </Box>
 
+      <Alert
+        severity={datos?.cumpleanios?.length > 0 ? "info" : "success"}
+        sx={{
+          mb: 2.5,
+          borderRadius: "16px",
+          border: "1px solid rgba(220, 20, 60, 0.12)",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+          "& .MuiAlert-icon": {
+            color: ROJO,
+          },
+        }}
+      >
+        <Typography sx={{ fontWeight: 800, mb: 1 }}>
+          Cumpleaños 🎂
+        </Typography>
+
+        {datos?.cumpleanios?.length > 0 ? (
+          datos.cumpleanios.map((alumno) => (
+            <Typography
+              key={alumno.id}
+              variant="body2"
+              sx={{
+                mb: 0.5,
+                fontWeight: alumno.esHoy ? 700 : 500,
+                color: alumno.esHoy ? ROJO : "#333",
+              }}
+            >
+              {alumno.nombreCompleto} —{" "}
+              {alumno.esHoy
+                ? "¡Cumple años hoy!"
+                : `Cumple en ${alumno.diasRestantes} día(s)`}
+            </Typography>
+          ))
+        ) : (
+          <Typography variant="body2">
+            No hay cumpleaños próximos.
+          </Typography>
+        )}
+      </Alert>
+
       {/* Tarjetas de métricas */}
       <Grid container spacing={2} sx={{ mb: 2.5 }}>
         <Grid item xs={12} sm={6} md={4}>
@@ -251,10 +291,6 @@ export default function Dashboard() {
           />
         </Grid>
       </Grid>
-        <Box sx={{ mb: 2.5 }}>
-            <ConfiguracionAlertas />
-            <AlertasVencimiento />
-        </Box>
 
       {/* Segunda fila: Clases + Gráfica */}
       <Grid container spacing={2} sx={{ mb: 2.5 }}>
@@ -390,6 +426,8 @@ export default function Dashboard() {
           </Card>
         </Grid>
       </Grid>
+
+      <AlertasVencimiento />
 
       {/* Barra de progreso de asistencia — solo si hay clases hoy */}
       {datos.totalEsperadosDia > 0 && (
