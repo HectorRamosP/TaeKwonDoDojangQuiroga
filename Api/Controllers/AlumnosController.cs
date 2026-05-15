@@ -112,9 +112,9 @@ public class AlumnosController : ControllerBase
     }
 
     [HttpGet("alertas-vencimiento")]
-    public async Task<ActionResult<IEnumerable<BuscarAlumnoDto>>> ObtenerAlertasVencimiento()
+    public async Task<ActionResult<IEnumerable<BuscarAlumnoDto>>> ObtenerAlertasVencimiento([FromQuery] int dias = 30)
     {
-        var alumnos = await _alumnoServicio.ObtenerProximosAVencerAsync(dias: 5);
+        var alumnos = await _alumnoServicio.ObtenerProximosAVencerAsync(dias);
 
         if (alumnos == null || !alumnos.Any())
         {

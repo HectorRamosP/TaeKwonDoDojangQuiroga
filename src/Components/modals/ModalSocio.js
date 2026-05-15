@@ -249,8 +249,14 @@ export default function ModalSocio({ abierto, cerrar, recargar, modo = "crear", 
     const onSubmit = async (data) => {
         setGuardando(true);
         try {
+            const fn = data.fechaNacimiento;
+            const fechaNacimientoLocal = fn instanceof Date
+                ? `${fn.getFullYear()}-${String(fn.getMonth() + 1).padStart(2, "0")}-${String(fn.getDate()).padStart(2, "0")}`
+                : fn;
+
             const payload = {
                 ...data,
+                fechaNacimiento: fechaNacimientoLocal,
                 curp: data.curp ? data.curp.toUpperCase() : null,
                 enfermedades: data.enfermedades?.trim() || "No",
                 cintaActualId: data.cintaActualId || null,

@@ -2,18 +2,25 @@ import React, { useEffect, useState, useRef } from 'react';
 import { obtenerAlertasVencimiento } from '../services/alumnosService';
 import { obtenerDiasConfig } from '../services/configAlertaService';
 import {
-  Alert,
-  AlertTitle,
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  CircularProgress,
   List,
   ListItem,
   ListItemText,
-  Typography,
-  Box,
-  Chip,
-  CircularProgress
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+
+const ROJO = "#DC143C";
+const CARD_SX = {
+  borderRadius: "16px",
+  border: "1px solid rgba(220, 20, 60, 0.12)",
+  boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+};
 
 const AlertasVencimiento = () => {
   const [alertas, setAlertas] = useState([]);
@@ -23,15 +30,12 @@ const AlertasVencimiento = () => {
 
   const cargarDatos = async () => {
     if (peticionEnCurso.current) return;
-
     try {
       peticionEnCurso.current = true;
       const dias = obtenerDiasConfig();
       setDiasAnticipacion(dias);
-
-      const data = await obtenerAlertasVencimiento();
-      const filtradas = data.filter(alumno => alumno.diasParaVencer <= dias);
-      setAlertas(filtradas);
+      const data = await obtenerAlertasVencimiento(dias);
+      setAlertas(data);
     } catch (err) {
       console.error("Error al obtener alertas de vencimiento:", err);
     } finally {
@@ -42,84 +46,79 @@ const AlertasVencimiento = () => {
 
   useEffect(() => {
     cargarDatos();
-
-    const manejarCambioStorage = (e) => {
-      if (e.key === 'diasAlerta') {
-        cargarDatos();
-      }
-    };
-
-    window.addEventListener('storage', manejarCambioStorage);
-    return () => window.removeEventListener('storage', manejarCambioStorage);
+    window.addEventListener('alertasConfigChange', cargarDatos);
+    return () => window.removeEventListener('alertasConfigChange', cargarDatos);
   }, []);
 
   if (cargando && alertas.length === 0) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-        <CircularProgress size={24} sx={{ color: '#DC143C' }} />
-      </Box>
-    );
-  }
-
-  if (alertas.length === 0) {
-    return (
-      <Box sx={{ mb: 2 }}>
-        <Alert 
-          severity="success" 
-          variant="outlined"
-          icon={<CheckCircleOutlineIcon fontSize="inherit" />}
-          sx={{ borderRadius: '12px' }}
-        >
-          <AlertTitle sx={{ fontWeight: 'bold' }}>Sin vencimientos próximos</AlertTitle>
-          Ningún alumno vence en los próximos <strong>{diasAnticipacion}</strong> días.
-        </Alert>
+        <CircularProgress size={24} sx={{ color: ROJO }} />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ mb: 2 }}>
-      <Alert 
-        severity="warning" 
-        variant="outlined"
-        icon={<WarningAmberIcon fontSize="inherit" />}
-        sx={{ 
-          borderRadius: '12px',
-          '& .MuiAlert-message': { width: '100%' } 
-        }}
-      >
-        <AlertTitle sx={{ fontWeight: 'bold' }}>
-          Vencimientos próximos ({alertas.length})
-        </AlertTitle>
-        <Typography variant="caption" display="block" sx={{ mb: 1, opacity: 0.8 }}>
-          Mostrando alumnos que vencen en {diasAnticipacion} días o menos.
-        </Typography>
-        <List dense sx={{ width: '100%', bgcolor: 'transparent' }}>
-          {alertas.map((a, i) => (
-            <ListItem 
-              key={a.id || i} 
-              divider={i !== alertas.length - 1}
-              sx={{ px: 0, py: 1 }}
-            >
-              <ListItemText 
-                primary={
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {a.nombreCompleto}
-                  </Typography>
-                } 
-                secondary={`Tutor: ${a.nombreTutor || 'No registrado'}`} 
-              />
-              <Chip 
-                label={a.diasParaVencer === 0 ? "Vence hoy" : `Faltan ${a.diasParaVencer} días`} 
-                size="small"
-                color={a.diasParaVencer === 0 ? "error" : "warning"}
-                sx={{ fontWeight: 700, fontSize: '0.7rem' }}
-              />
-            </ListItem>
-          ))}
-        </List>
-      </Alert>
-    </Box>
+    <Card elevation={0} sx={{ ...CARD_SX, mb: 2.5 }}>
+      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+          {alertas.length > 0
+            ? <WarningAmberIcon sx={{ color: ROJO, fontSize: 18 }} />
+            : <CheckCircleOutlineIcon sx={{ color: "#4caf50", fontSize: 18 }} />
+          }
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            Vencimientos próximos
+          </Typography>
+          {alertas.length > 0 && (
+            <Chip
+              label={alertas.length}
+              size="small"
+              sx={{ bgcolor: ROJO, color: "white", fontWeight: 700, fontSize: "0.7rem", height: 20 }}
+            />
+          )}
+        </Box>
+
+        {alertas.length === 0 ? (
+          <Typography variant="body2" sx={{ color: "#888" }}>
+            Ningún alumno vence en los próximos <strong>{diasAnticipacion}</strong> días.
+          </Typography>
+        ) : (
+          <>
+            <Typography variant="caption" sx={{ color: "#aaa", display: "block", mb: 1 }}>
+              Alumnos que vencen en {diasAnticipacion} días o menos
+            </Typography>
+            <List dense disablePadding>
+              {alertas.map((a, i) => (
+                <ListItem
+                  key={a.id || i}
+                  divider={i !== alertas.length - 1}
+                  sx={{ px: 0, py: 1 }}
+                >
+                  <ListItemText
+                    primary={
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#1a1a1a" }}>
+                        {a.nombreCompleto}
+                      </Typography>
+                    }
+                    secondary={`Tutor: ${a.nombreTutor || 'No registrado'}`}
+                  />
+                  <Chip
+                    label={a.diasParaVencer === 0 ? "Vence hoy" : `${a.diasParaVencer}d`}
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "0.7rem",
+                      bgcolor: a.diasParaVencer === 0 ? ROJO : "rgba(220,20,60,0.08)",
+                      color: a.diasParaVencer === 0 ? "white" : ROJO,
+                    }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

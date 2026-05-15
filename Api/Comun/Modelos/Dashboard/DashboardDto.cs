@@ -35,6 +35,7 @@ public class AlumnosMesItem
 public class CumpleaniosDashboardItem
 {
     public int Id { get; set; }
+    public string Slug { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;
     public DateTime FechaNacimiento { get; set; }
     public int DiasRestantes { get; set; }

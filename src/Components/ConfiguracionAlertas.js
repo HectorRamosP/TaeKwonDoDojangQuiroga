@@ -15,7 +15,7 @@ const ConfiguracionAlertas = () => {
         guardarDiasConfig(diasNum);
         setStatus(true);
         setTimeout(() => setStatus(false), 3000);
-        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('alertasConfigChange'));
     };
 
     return (

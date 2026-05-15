@@ -127,6 +127,7 @@ public class DashboardServicio : IDashboardServicio
                 return new CumpleaniosDashboardItem
                 {
                     Id = a.Id,
+                    Slug = a.Slug,
                     NombreCompleto = $"{a.Nombre} {a.ApellidoPaterno} {a.ApellidoMaterno}",
                     FechaNacimiento = a.FechaNacimiento,
                     DiasRestantes = diasRestantes,

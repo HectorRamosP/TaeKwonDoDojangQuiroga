@@ -87,8 +87,8 @@ export const obtenerPerfilAlumno = async (slug, fechaInicio, fechaFin) => {
  *
  * @returns {Promise<Array>} Lista de alumnos próximos a vencer.
  */
-export const obtenerAlertasVencimiento = async () => {
-    const response = await api.get('/alumnos/alertas-vencimiento');
+export const obtenerAlertasVencimiento = async (dias) => {
+    const response = await api.get('/alumnos/alertas-vencimiento', { params: { dias } });
     return response.data;
 };
 

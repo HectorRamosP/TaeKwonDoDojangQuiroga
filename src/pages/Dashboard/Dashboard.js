@@ -13,6 +13,8 @@ import {
   Tooltip,
   IconButton,
   Popover,
+  Avatar,
+  Divider,
 } from "@mui/material";
 import {
   People,
@@ -22,6 +24,7 @@ import {
   PersonAdd,
   ArrowForwardIos,
   Settings,
+  Cake,
 } from "@mui/icons-material";
 import {
   BarChart,
@@ -223,46 +226,6 @@ export default function Dashboard() {
         </Popover>
       </Box>
 
-      <Alert
-        severity={datos?.cumpleanios?.length > 0 ? "info" : "success"}
-        sx={{
-          mb: 2.5,
-          borderRadius: "16px",
-          border: "1px solid rgba(220, 20, 60, 0.12)",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
-          "& .MuiAlert-icon": {
-            color: ROJO,
-          },
-        }}
-      >
-        <Typography sx={{ fontWeight: 800, mb: 1 }}>
-          Cumpleaños 🎂
-        </Typography>
-
-        {datos?.cumpleanios?.length > 0 ? (
-          datos.cumpleanios.map((alumno) => (
-            <Typography
-              key={alumno.id}
-              variant="body2"
-              sx={{
-                mb: 0.5,
-                fontWeight: alumno.esHoy ? 700 : 500,
-                color: alumno.esHoy ? ROJO : "#333",
-              }}
-            >
-              {alumno.nombreCompleto} —{" "}
-              {alumno.esHoy
-                ? "¡Cumple años hoy!"
-                : `Cumple en ${alumno.diasRestantes} día(s)`}
-            </Typography>
-          ))
-        ) : (
-          <Typography variant="body2">
-            No hay cumpleaños próximos.
-          </Typography>
-        )}
-      </Alert>
-
       {/* Tarjetas de métricas */}
       <Grid container spacing={2} sx={{ mb: 2.5 }}>
         <Grid item xs={12} sm={6} md={4}>
@@ -292,10 +255,10 @@ export default function Dashboard() {
         </Grid>
       </Grid>
 
-      {/* Segunda fila: Clases + Gráfica */}
+      {/* Segunda fila: Clases + Gráfica + Cumpleaños */}
       <Grid container spacing={2} sx={{ mb: 2.5 }}>
         {/* Clases de hoy — clickeables */}
-        <Grid item xs={12} md={5}>
+        <Grid item xs={12} md={4}>
           <Card elevation={0} sx={CARD_SX}>
             <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
@@ -376,7 +339,7 @@ export default function Dashboard() {
         </Grid>
 
         {/* Gráfica nuevos alumnos por mes */}
-        <Grid item xs={12} md={7}>
+        <Grid item xs={12} md={5}>
           <Card elevation={0} sx={CARD_SX}>
             <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
@@ -422,6 +385,63 @@ export default function Dashboard() {
                   <Bar dataKey="nuevos" fill={ROJO} radius={[5, 5, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Cumpleaños próximos */}
+        <Grid item xs={12} md={3}>
+          <Card elevation={0} sx={CARD_SX}>
+            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
+                <Cake sx={{ color: ROJO, fontSize: 18 }} />
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                  Cumpleaños
+                </Typography>
+              </Box>
+              {datos?.cumpleanios?.length > 0 ? (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {datos.cumpleanios.map((alumno) => {
+                    const iniciales = alumno.nombreCompleto
+                      .split(" ").slice(0, 2).map((n) => n[0]).join("");
+                    const fecha = new Date(alumno.fechaNacimiento);
+                    const fechaStr = fecha.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+                    return (
+                      <Box key={alumno.id} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Avatar sx={{
+                          width: 32, height: 32, fontSize: "0.7rem", fontWeight: 700,
+                          bgcolor: alumno.esHoy ? ROJO : "rgba(220,20,60,0.1)",
+                          color: alumno.esHoy ? "white" : ROJO, flexShrink: 0,
+                        }}>
+                          {iniciales}
+                        </Avatar>
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Tooltip title="Ver perfil" arrow placement="top">
+                            <Typography
+                              variant="caption"
+                              onClick={() => navigate(`/alumnos/${alumno.slug}/perfil`)}
+                              sx={{
+                                fontWeight: 600, color: ROJO, display: "block",
+                                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                                cursor: "pointer", "&:hover": { textDecoration: "underline" },
+                              }}
+                            >
+                              {alumno.nombreCompleto}
+                            </Typography>
+                          </Tooltip>
+                          <Typography variant="caption" sx={{ color: "#888", fontSize: "0.65rem" }}>
+                            {alumno.esHoy ? "¡Hoy!" : `${fechaStr} · en ${alumno.diasRestantes}d`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              ) : (
+                <Typography variant="caption" sx={{ color: "#aaa" }}>
+                  Sin cumpleaños esta semana.
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
