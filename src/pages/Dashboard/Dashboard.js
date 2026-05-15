@@ -233,6 +233,7 @@ export default function Dashboard() {
             icono={<People sx={{ color: "white", fontSize: 24 }} />}
           />
         </Grid>
+
         <Grid item xs={12} sm={6} md={4}>
           <TarjetaMetrica
             titulo="Ingresos del Mes"
@@ -250,6 +251,10 @@ export default function Dashboard() {
           />
         </Grid>
       </Grid>
+        <Box sx={{ mb: 2.5 }}>
+            <ConfiguracionAlertas />
+            <AlertasVencimiento />
+        </Box>
 
       {/* Segunda fila: Clases + Gráfica */}
       <Grid container spacing={2} sx={{ mb: 2.5 }}>
@@ -334,7 +339,6 @@ export default function Dashboard() {
           </Card>
         </Grid>
 
-
         {/* Gráfica nuevos alumnos por mes */}
         <Grid item xs={12} md={7}>
           <Card elevation={0} sx={CARD_SX}>
@@ -386,9 +390,6 @@ export default function Dashboard() {
           </Card>
         </Grid>
       </Grid>
-
-      {/* Alertas de vencimiento de membresías */}
-      <AlertasVencimiento />
 
       {/* Barra de progreso de asistencia — solo si hay clases hoy */}
       {datos.totalEsperadosDia > 0 && (
