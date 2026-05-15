@@ -72,10 +72,6 @@ public class AlumnoServicio : IAlumnoServicio
             throw new InvalidOperationException("Ya existe un alumno con este email");
         }
 
-        if (await _repositorio.ExistePorTelefonoAsync(dto.TelefonoTutor))
-        {
-            throw new InvalidOperationException("Ya existe un alumno con este teléfono");
-        }
 
         var alumno = _mapper.Map<Alumno>(dto);
         
@@ -124,11 +120,6 @@ public class AlumnoServicio : IAlumnoServicio
         if (!string.IsNullOrEmpty(dto.EmailTutor) && await _repositorio.ExistePorEmailAsync(dto.EmailTutor, slug))
         {
             throw new InvalidOperationException("Ya existe un alumno con este email");
-        }
-
-        if (await _repositorio.ExistePorTelefonoAsync(dto.TelefonoTutor, slug))
-        {
-            throw new InvalidOperationException("Ya existe un alumno con este teléfono");
         }
 
         // Capturar la cinta anterior antes de actualizar
