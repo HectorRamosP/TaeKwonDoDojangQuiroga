@@ -22,6 +22,7 @@ public class AplicacionBdContexto : DbContext, IAplicacionBdContexto
     public DbSet<Cinta> Cintas { get; set; }
     public DbSet<Clase> Clases { get; set; }
     public DbSet<Concepto> Conceptos { get; set; }
+    public DbSet<TipoConcepto> TiposConcepto { get; set; }
     public DbSet<AlumnoInscripcion> AlumnoInscripciones { get; set; }
     public DbSet<Pago> Pagos { get; set; }
     public DbSet<Asistencia> Asistencias { get; set; }

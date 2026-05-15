@@ -22,7 +22,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { CheckCircle, CalendarToday, Delete, Visibility } from "@mui/icons-material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import api from "../../services/api";
@@ -44,7 +44,7 @@ import ModernModal from "./ModernModal";
  * @param {string} props.clase.nombre - Nombre de la clase.
  * @param {string} props.clase.dias - Días de la semana de la clase.
  */
-export default function ModalPasarLista({ abierto, cerrar, clase }) {
+export default function ModalPasarLista({ abierto, cerrar, clase, restoredState }) {
   const navigate = useNavigate();
   const [alumnos, setAlumnos] = useState([]);
   const [asistencias, setAsistencias] = useState({});
@@ -53,19 +53,32 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
   const [cargando, setCargando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState(null);
+  const hasRestoredRef = useRef(false);
 
   useEffect(() => {
     if (abierto && clase) {
+      if (restoredState) {
+        setFecha(restoredState.fecha);
+        hasRestoredRef.current = false;
+      } else {
+        setFecha(new Date().toISOString().split('T')[0]);
+        hasRestoredRef.current = true;
+      }
       cargarAlumnos();
       cargarHistorialFechas();
     }
-  }, [abierto, clase]);
+  }, [abierto, clase, restoredState]);
 
   useEffect(() => {
     if (abierto && clase && alumnos.length > 0) {
-      cargarAsistenciasPorFecha();
+      if (restoredState && !hasRestoredRef.current) {
+        setAsistencias(restoredState.asistencias);
+        hasRestoredRef.current = true;
+      } else {
+        cargarAsistenciasPorFecha();
+      }
     }
-  }, [fecha, alumnos]);
+  }, [fecha, alumnos, abierto, clase, restoredState]);
 
   const cargarHistorialFechas = async () => {
     try {
@@ -745,7 +758,15 @@ export default function ModalPasarLista({ abierto, cerrar, clase }) {
                               startIcon={<Visibility />}
                               onClick={() => {
                                 cerrar();
-                                navigate(`/alumnos/${alumno.slug}/perfil`);
+                                navigate(`/alumnos/${alumno.slug}/perfil`, {
+                                  state: {
+                                    returnTo: '/asistencia',
+                                    modalToOpen: 'pasarLista',
+                                    clase: clase,
+                                    fecha: fecha,
+                                    asistencias: asistencias
+                                  }
+                                });
                               }}
                               sx={{
                                 borderColor: "rgba(220, 20, 60, 0.3)",

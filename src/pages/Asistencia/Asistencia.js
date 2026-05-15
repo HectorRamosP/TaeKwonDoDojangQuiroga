@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import { Search, Clear, CheckCircle } from "@mui/icons-material";
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { obtenerClases } from "../../services/clasesService";
 import ModalPasarLista from "../../Components/modals/ModalPasarLista";
 import "./Asistencia.css";
@@ -38,6 +39,22 @@ export default function Asistencia() {
   const [clasePasarLista, setClasePasarLista] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  const [restoredState, setRestoredState] = useState(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.modalToOpen === 'pasarLista' && location.state?.clase) {
+      setClasePasarLista(location.state.clase);
+      setRestoredState({
+        fecha: location.state.fecha,
+        asistencias: location.state.asistencias
+      });
+      setModalPasarListaAbierto(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const itemsPorPagina = 10;
 
@@ -306,8 +323,10 @@ export default function Asistencia() {
         cerrar={() => {
           setModalPasarListaAbierto(false);
           setClasePasarLista(null);
+          setRestoredState(null);
         }}
         clase={clasePasarLista}
+        restoredState={restoredState}
       />
     </div>
   );
