@@ -25,9 +25,13 @@ import {
   Pagination,
   Divider,
   Tooltip,
+  Typography,
 } from "@mui/material";
-import { Search, Clear, Add, Category } from "@mui/icons-material";
+import { Search, Clear, Add, Category, DragIndicator, Delete, Edit } from "@mui/icons-material";
 import { useEffect, useState } from "react";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import Swal from "sweetalert2";
 import api from "../../services/api";
 import ModalMembresia from "../../Components/modals/ModalMembresia";
@@ -384,10 +388,60 @@ function SeccionConceptos() {
 // Sub-página: Tipos de Concepto
 // ─────────────────────────────────────────────────────────────
 
-/**
- * Sección de gestión del catálogo de tipos de concepto de cobro.
- * @component
- */
+function FilaTipoConcepto({ tipo, onEditar, onEliminar }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tipo.id });
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        px: 2,
+        py: 1.5,
+        borderRadius: "12px",
+        border: "1px solid rgba(220,20,60,0.1)",
+        mb: 1,
+        backgroundColor: isDragging ? "rgba(220,20,60,0.04)" : "white",
+        boxShadow: isDragging ? "0 4px 16px rgba(0,0,0,0.12)" : "0 1px 4px rgba(0,0,0,0.05)",
+        opacity: tipo.activo ? 1 : 0.55,
+        transition: "box-shadow 0.2s",
+      }}
+    >
+      <Box {...attributes} {...listeners} sx={{ cursor: "grab", color: "#bbb", display: "flex", "&:active": { cursor: "grabbing" } }}>
+        <DragIndicator />
+      </Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>{tipo.nombre}</span>
+          <Chip
+            label={tipo.activo ? "Activo" : "Inactivo"}
+            color={tipo.activo ? "success" : "default"}
+            size="small"
+          />
+        </Box>
+        {tipo.descripcion && (
+          <span style={{ fontSize: "0.82rem", color: "#888" }}>{tipo.descripcion}</span>
+        )}
+      </Box>
+      <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+        <Tooltip title="Editar">
+          <IconButton size="small" onClick={() => onEditar(tipo)} sx={{ color: "#1976d2" }}>
+            <Edit fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Eliminar">
+          <IconButton size="small" onClick={() => onEliminar(tipo)} sx={{ color: "#d32f2f" }}>
+            <Delete fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </Box>
+  );
+}
+
 function SeccionTiposConcepto() {
   const [tipos, setTipos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -396,6 +450,8 @@ function SeccionTiposConcepto() {
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [tipoEditar, setTipoEditar] = useState(null);
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const cargarTipos = async () => {
     setCargando(true);
@@ -427,55 +483,52 @@ function SeccionTiposConcepto() {
 
   const confirmarEliminar = (tipo) => {
     Swal.fire({
-      title: "¿Desactivar tipo?",
-      html: `¿Estás seguro de desactivar <strong>"${tipo.nombre}"</strong>?<br/>
-             <small>El tipo no se eliminará, solo quedará inactivo y no aparecerá en los listados de nuevos conceptos.</small>`,
+      title: `¿Eliminar "${tipo.nombre}"?`,
+      html: `<b style="color:#d32f2f">⚠️ Advertencia:</b> Esta acción es permanente.<br/><br/>
+             Los conceptos de cobro que usen este tipo <b>quedarán sin categoría</b>.<br/>
+             <small style="color:#888">Esta acción no se puede deshacer.</small>`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d32f2f",
       cancelButtonColor: "#666",
-      confirmButtonText: "Sí, desactivar",
+      confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await api.delete(`/tipos-concepto/${tipo.id}`);
-          Swal.fire({
-            icon: "success",
-            title: "Tipo desactivado",
-            text: `"${tipo.nombre}" fue desactivado exitosamente`,
-            confirmButtonColor: "#d32f2f",
-          });
+          await api.delete(`/tipos-concepto/${tipo.id}/eliminar`);
+          Swal.fire({ icon: "success", title: "Eliminado", text: `"${tipo.nombre}" fue eliminado`, confirmButtonColor: "#d32f2f" });
           cargarTipos();
         } catch (err) {
-          const msg =
-            err.response?.data?.mensaje || "No se pudo desactivar el tipo de concepto";
+          const msg = err.response?.data?.mensaje || "No se pudo eliminar el tipo de concepto";
           Swal.fire({ icon: "error", title: "Error", text: msg, confirmButtonColor: "#d32f2f" });
         }
       }
     });
   };
 
-  const reactivarTipo = async (tipo) => {
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const tiposFiltrados = tipos.filter((t) => {
+      if (estadoFiltro === "Activos") return t.activo;
+      if (estadoFiltro === "Inactivos") return !t.activo;
+      return true;
+    });
+
+    const oldIndex = tiposFiltrados.findIndex((t) => t.id === active.id);
+    const newIndex = tiposFiltrados.findIndex((t) => t.id === over.id);
+    const reordenados = arrayMove(tiposFiltrados, oldIndex, newIndex);
+
+    const actualizados = reordenados.map((t, i) => ({ ...t, orden: i }));
+    const noFiltrados = tipos.filter((t) => !tiposFiltrados.find((tf) => tf.id === t.id));
+    setTipos([...actualizados, ...noFiltrados]);
+
     try {
-      await api.put(`/tipos-concepto/${tipo.id}`, {
-        id: tipo.id,
-        nombre: tipo.nombre,
-        descripcion: tipo.descripcion,
-        orden: tipo.orden,
-        activo: true,
-      });
-      Swal.fire({
-        icon: "success",
-        title: "Tipo activado",
-        text: `"${tipo.nombre}" fue reactivado exitosamente`,
-        confirmButtonColor: "#d32f2f",
-      });
+      await api.patch("/tipos-concepto/reordenar", actualizados.map((t) => ({ id: t.id, orden: t.orden })));
+    } catch {
       cargarTipos();
-    } catch (err) {
-      const msg =
-        err.response?.data?.mensaje || "No se pudo reactivar el tipo de concepto";
-      Swal.fire({ icon: "error", title: "Error", text: msg, confirmButtonColor: "#d32f2f" });
     }
   };
 
@@ -548,118 +601,23 @@ function SeccionTiposConcepto() {
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <CircularProgress />
         </Box>
+      ) : tiposFiltrados.length === 0 ? (
+        <Box sx={{ textAlign: "center", py: 4, color: "#999" }}>
+          No se encontraron tipos de concepto
+        </Box>
       ) : (
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{
-            borderRadius: "16px",
-            overflow: "hidden",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-            border: "1px solid rgba(220, 20, 60, 0.1)",
-          }}
-        >
-          <Table>
-            <TableHead>
-              <TableRow
-                sx={{
-                  background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
-                  "& th": {
-                    color: "white",
-                    fontWeight: 800,
-                    fontSize: "0.95rem",
-                    letterSpacing: "0.5px",
-                  },
-                }}
-              >
-                <TableCell sx={{ width: 60 }}>Orden</TableCell>
-                <TableCell>Nombre</TableCell>
-                <TableCell>Descripción</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell align="center">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {tiposFiltrados.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4, color: "#999" }}>
-                    No se encontraron tipos de concepto
-                  </TableCell>
-                </TableRow>
-              ) : (
-                tiposFiltrados.map((tipo) => (
-                  <TableRow
-                    key={tipo.id}
-                    hover
-                    sx={{
-                      opacity: tipo.activo ? 1 : 0.65,
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        backgroundColor: "rgba(220, 20, 60, 0.04)",
-                        transform: "scale(1.001)",
-                      },
-                    }}
-                  >
-                    <TableCell>
-                      <Chip label={tipo.orden} size="small" variant="outlined" sx={{ minWidth: 40 }} />
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{tipo.nombre}</TableCell>
-                    <TableCell sx={{ color: "#666", fontSize: "0.9rem" }}>
-                      {tipo.descripcion || <em style={{ color: "#bbb" }}>Sin descripción</em>}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={tipo.activo ? "Activo" : "Inactivo"}
-                        color={tipo.activo ? "success" : "default"}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                        <Tooltip title="Editar tipo">
-                          <Button
-                            variant="outlined"
-                            color="primary"
-                            size="small"
-                            onClick={() => abrirModalEditar(tipo)}
-                            id={`btn-editar-tipo-${tipo.id}`}
-                          >
-                            Editar
-                          </Button>
-                        </Tooltip>
-                        {tipo.activo ? (
-                          <Tooltip title="Desactivar (borrado lógico)">
-                            <Button
-                              variant="outlined"
-                              color="error"
-                              size="small"
-                              onClick={() => confirmarEliminar(tipo)}
-                              id={`btn-desactivar-tipo-${tipo.id}`}
-                            >
-                              Desactivar
-                            </Button>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip title="Reactivar tipo">
-                            <Button
-                              variant="outlined"
-                              color="success"
-                              size="small"
-                              onClick={() => reactivarTipo(tipo)}
-                              id={`btn-reactivar-tipo-${tipo.id}`}
-                            >
-                              Activar
-                            </Button>
-                          </Tooltip>
-                        )}
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={tiposFiltrados.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+            {tiposFiltrados.map((tipo) => (
+              <FilaTipoConcepto
+                key={tipo.id}
+                tipo={tipo}
+                onEditar={abrirModalEditar}
+                onEliminar={confirmarEliminar}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       )}
 
       <ModalTipoConcepto

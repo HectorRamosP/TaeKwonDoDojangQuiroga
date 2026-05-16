@@ -65,11 +65,31 @@ public class TipoConceptoServicio : ITipoConceptoServicio
     {
         var tipo = await _repositorio.ObtenerPorIdAsync(id);
         if (tipo == null)
-        {
             throw new KeyNotFoundException("Tipo de concepto no encontrado.");
-        }
 
         tipo.Activo = false;
         await _repositorio.ActualizarAsync(tipo);
+    }
+
+    public async Task EliminarAsync(int id)
+    {
+        var tipo = await _repositorio.ObtenerPorIdAsync(id);
+        if (tipo == null)
+            throw new KeyNotFoundException("Tipo de concepto no encontrado.");
+
+        await _repositorio.EliminarAsync(tipo);
+    }
+
+    public async Task ReordenarAsync(IEnumerable<ReordenarTipoConceptoDto> items)
+    {
+        foreach (var item in items)
+        {
+            var tipo = await _repositorio.ObtenerPorIdAsync(item.Id);
+            if (tipo != null)
+            {
+                tipo.Orden = item.Orden;
+                await _repositorio.ActualizarAsync(tipo);
+            }
+        }
     }
 }

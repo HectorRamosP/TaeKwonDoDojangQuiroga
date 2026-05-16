@@ -9,4 +9,6 @@ public interface ITipoConceptoServicio
     Task<BuscarTipoConceptoDto> CrearAsync(CrearTipoConceptoDto dto);
     Task<BuscarTipoConceptoDto> ActualizarAsync(int id, ModificarTipoConceptoDto dto);
     Task DesactivarAsync(int id);
+    Task EliminarAsync(int id);
+    Task ReordenarAsync(IEnumerable<ReordenarTipoConceptoDto> items);
 }

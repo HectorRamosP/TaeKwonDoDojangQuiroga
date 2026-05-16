@@ -71,4 +71,20 @@ public class TiposConceptoController : ControllerBase
         await _servicio.DesactivarAsync(id);
         return Ok(new { mensaje = "Tipo de concepto desactivado correctamente" });
     }
+
+    /// <summary>Elimina permanentemente un tipo de concepto.</summary>
+    [HttpDelete("{id:int}/eliminar")]
+    public async Task<ActionResult> EliminarTipo(int id)
+    {
+        await _servicio.EliminarAsync(id);
+        return Ok(new { mensaje = "Tipo de concepto eliminado correctamente" });
+    }
+
+    /// <summary>Actualiza el orden de varios tipos de concepto en lote.</summary>
+    [HttpPatch("reordenar")]
+    public async Task<ActionResult> Reordenar([FromBody] List<ReordenarTipoConceptoDto> items)
+    {
+        await _servicio.ReordenarAsync(items);
+        return Ok(new { mensaje = "Orden actualizado correctamente" });
+    }
 }
