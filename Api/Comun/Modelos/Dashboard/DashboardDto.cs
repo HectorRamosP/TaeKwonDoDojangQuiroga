@@ -28,4 +28,5 @@ public class AlumnosMesItem
     public int Anio { get; set; }
     public int NumMes { get; set; }
     public int Nuevos { get; set; }
+    public int NoRenovaron { get; set; }
 }

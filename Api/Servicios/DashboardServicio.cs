@@ -79,7 +79,7 @@ public class DashboardServicio : IDashboardServicio
             ? Math.Round((double)totalPresentes / totalEsperados * 100, 1)
             : 0.0;
 
-        // 5. Nuevos alumnos por mes (últimos 6 meses)
+        // 5. Nuevos alumnos y Pérdidas por mes (últimos 6 meses)
         var hace6Meses = new DateTime(anioActual, mesActual, 1).AddMonths(-5);
         var cultura = new System.Globalization.CultureInfo("es-MX");
 
@@ -88,6 +88,17 @@ public class DashboardServicio : IDashboardServicio
             .GroupBy(a => new { a.FechaInscripcion.Year, a.FechaInscripcion.Month })
             .Select(g => new { g.Key.Year, g.Key.Month, Nuevos = g.Count() })
             .ToListAsync();
+
+        var perdidasPorMesQuery = await _contexto.AlumnoInscripciones
+            .GroupBy(i => i.AlumnoId)
+            .Select(g => new { AlumnoId = g.Key, MaxFechaFin = g.Max(i => i.FechaFin) })
+            .Where(x => x.MaxFechaFin >= hace6Meses && x.MaxFechaFin < hoy)
+            .ToListAsync();
+
+        var perdidasPorMes = perdidasPorMesQuery
+            .GroupBy(x => new { x.MaxFechaFin.Year, x.MaxFechaFin.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Perdidas = g.Count() })
+            .ToList();
 
         // Rellenar los meses sin inscripciones con cero
         var mesesCompletos = Enumerable.Range(0, 6)
@@ -99,7 +110,10 @@ public class DashboardServicio : IDashboardServicio
                 NumMes = fecha.Month,
                 Nuevos = nuevosPorMes
                     .FirstOrDefault(x => x.Year == fecha.Year && x.Month == fecha.Month)
-                    ?.Nuevos ?? 0
+                    ?.Nuevos ?? 0,
+                NoRenovaron = perdidasPorMes
+                    .FirstOrDefault(x => x.Year == fecha.Year && x.Month == fecha.Month)
+                    ?.Perdidas ?? 0
             })
             .ToList();
 
