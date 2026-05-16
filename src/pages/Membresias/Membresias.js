@@ -29,14 +29,84 @@ import {
 } from "@mui/material";
 import { Search, Clear, Add, Category, DragIndicator, Delete, Edit } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, useDroppable } from "@dnd-kit/core";
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Swal from "sweetalert2";
 import api from "../../services/api";
 import ModalMembresia from "../../Components/modals/ModalMembresia";
 import ModalTipoConcepto from "../../Components/modals/ModalTipoConcepto";
 import "./Membresias.css";
+
+// ─────────────────────────────────────────────────────────────
+// Tab draggable para tipos de concepto
+// ─────────────────────────────────────────────────────────────
+
+function TrashDropZone() {
+  const { isOver, setNodeRef } = useDroppable({ id: "trash" });
+  return (
+    <Box
+      ref={setNodeRef}
+      sx={{
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        px: 2.5,
+        py: 1.5,
+        mx: 1,
+        borderRadius: "10px",
+        border: isOver ? "2px dashed #d32f2f" : "2px dashed #ddd",
+        backgroundColor: isOver ? "rgba(211,47,47,0.08)" : "transparent",
+        color: isOver ? "#d32f2f" : "#bbb",
+        transition: "all 0.2s",
+        userSelect: "none",
+        fontSize: "0.8rem",
+        fontWeight: 600,
+        letterSpacing: "0.3px",
+        minWidth: isOver ? 180 : 52,
+      }}
+    >
+      <Delete sx={{ fontSize: 22 }} />
+      {isOver && <span>Soltar para eliminar</span>}
+    </Box>
+  );
+}
+
+function SortableTabItem({ tipo, selected, onSelect }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: tipo.id });
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0.75,
+        px: 2.5,
+        py: 1.5,
+        cursor: "pointer",
+        borderBottom: selected ? "2px solid #d32f2f" : "2px solid transparent",
+        color: selected ? "#d32f2f" : "#555",
+        fontWeight: selected ? 700 : 500,
+        fontSize: "0.875rem",
+        letterSpacing: "0.5px",
+        textTransform: "uppercase",
+        opacity: isDragging ? 0.4 : 1,
+        userSelect: "none",
+        flexShrink: 0,
+        transition: "color 0.2s, border-color 0.2s",
+        "&:hover": { color: "#d32f2f" },
+      }}
+    >
+      <Box {...attributes} {...listeners} sx={{ cursor: "grab", display: "flex", color: "#ccc", "&:active": { cursor: "grabbing" } }}>
+        <DragIndicator sx={{ fontSize: 18 }} />
+      </Box>
+      <Box onClick={onSelect}>{tipo.nombre}</Box>
+    </Box>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────
 // Sub-página: Conceptos (Membresías)
@@ -58,7 +128,67 @@ function SeccionConceptos() {
   const [tipoFiltro, setTipoFiltro] = useState("Todos");
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
   const [pagina, setPagina] = useState(1);
+  const [tiposConcepto, setTiposConcepto] = useState([]);
   const itemsPorPagina = 10;
+
+  const sensorsTabs = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const cargarTiposConcepto = async () => {
+    try {
+      const res = await api.get("/tipos-concepto", { params: { activo: true } });
+      const datos = (res.data || []).sort((a, b) => a.orden - b.orden);
+      setTiposConcepto(datos);
+    } catch {
+      // silencioso: los tabs quedarán vacíos
+    }
+  };
+
+  const handleDragEndTabs = async ({ active, over }) => {
+    if (!over) return;
+
+    if (over.id === "trash") {
+      const tipo = tiposConcepto.find((t) => t.id === active.id);
+      if (tipo) confirmarEliminarTipo(tipo);
+      return;
+    }
+
+    if (active.id === over.id) return;
+    const oldIndex = tiposConcepto.findIndex((t) => t.id === active.id);
+    const newIndex = tiposConcepto.findIndex((t) => t.id === over.id);
+    const nuevo = arrayMove(tiposConcepto, oldIndex, newIndex);
+    setTiposConcepto(nuevo);
+    try {
+      await api.patch("/tipos-concepto/reordenar", nuevo.map((t, i) => ({ id: t.id, orden: i })));
+    } catch {
+      cargarTiposConcepto();
+    }
+  };
+
+  const confirmarEliminarTipo = (tipo) => {
+    Swal.fire({
+      title: `¿Eliminar tipo "${tipo.nombre}"?`,
+      html: `<b>Se eliminarán permanentemente todos los conceptos asociados a este tipo.</b><br/>Esta acción no se puede deshacer.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d32f2f",
+      cancelButtonColor: "#666",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/tipos-concepto/${tipo.id}/eliminar`);
+          if (tipoFiltro === tipo.nombre) setTipoFiltro("Todos");
+          await cargarTiposConcepto();
+          await cargarMembresias();
+          Swal.fire({ icon: "success", title: "Tipo eliminado", text: `"${tipo.nombre}" fue eliminado correctamente.`, confirmButtonColor: "#d32f2f" });
+        } catch (err) {
+          const msg = err.response?.data?.mensaje || "No se pudo eliminar el tipo de concepto.";
+          Swal.fire({ icon: "error", title: "Error", text: msg, confirmButtonColor: "#d32f2f" });
+        }
+      }
+    });
+  };
 
   const cargarMembresias = async () => {
     setCargando(true);
@@ -87,6 +217,7 @@ function SeccionConceptos() {
 
   useEffect(() => {
     cargarMembresias();
+    cargarTiposConcepto();
   }, []);
 
   useEffect(() => {
@@ -101,7 +232,7 @@ function SeccionConceptos() {
     }
     if (tipoFiltro !== "Todos") {
       datosFiltrados = datosFiltrados.filter(
-        (m) => m.tipoConcepto === tipoFiltro
+        (m) => m.tipoConcepto?.toLowerCase() === tipoFiltro.toLowerCase()
       );
     }
     if (estadoFiltro !== "Todos") {
@@ -113,7 +244,6 @@ function SeccionConceptos() {
     setPagina(1);
   }, [filtro, membresias, tipoFiltro, estadoFiltro]);
 
-  const tiposUnicos = ["Todos", ...new Set(membresias.map((m) => m.tipoConcepto))];
   const indiceInicio = (pagina - 1) * itemsPorPagina;
   const datosPaginados = filtrados.slice(indiceInicio, indiceInicio + itemsPorPagina);
   const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
@@ -229,23 +359,41 @@ function SeccionConceptos() {
         </Grid>
       </Paper>
 
-      {/* Tabs por tipo */}
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-        <Tabs
-          value={tipoFiltro}
-          onChange={(_, v) => setTipoFiltro(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            "& .Mui-selected": { color: "#d32f2f !important" },
-            "& .MuiTabs-indicator": { backgroundColor: "#d32f2f" },
-          }}
-        >
-          {tiposUnicos.map((tipo) => (
-            <Tab key={tipo} label={tipo} value={tipo} />
-          ))}
-        </Tabs>
-      </Box>
+      {/* Tabs por tipo con drag-and-drop */}
+      <DndContext sensors={sensorsTabs} collisionDetection={closestCenter} onDragEnd={handleDragEndTabs}>
+        <Box sx={{ borderBottom: "1px solid #e0e0e0", mb: 3, display: "flex", alignItems: "center" }}>
+          {/* Área scrollable de tabs */}
+          <Box sx={{ display: "flex", alignItems: "center", flex: 1, overflow: "hidden" }}>
+            {/* Tab fijo "Todos" */}
+            <Box
+              onClick={() => setTipoFiltro("Todos")}
+              sx={{
+                px: 2.5, py: 1.5, cursor: "pointer", flexShrink: 0,
+                borderBottom: tipoFiltro === "Todos" ? "2px solid #d32f2f" : "2px solid transparent",
+                color: tipoFiltro === "Todos" ? "#d32f2f" : "#555",
+                fontWeight: tipoFiltro === "Todos" ? 700 : 500,
+                fontSize: "0.875rem", letterSpacing: "0.5px", textTransform: "uppercase",
+                userSelect: "none", transition: "color 0.2s, border-color 0.2s",
+                "&:hover": { color: "#d32f2f" },
+              }}
+            >
+              TODOS
+            </Box>
+            <SortableContext items={tiposConcepto.map((t) => t.id)} strategy={horizontalListSortingStrategy}>
+              {tiposConcepto.map((tipo) => (
+                <SortableTabItem
+                  key={tipo.id}
+                  tipo={tipo}
+                  selected={tipoFiltro === tipo.nombre}
+                  onSelect={() => setTipoFiltro(tipo.nombre)}
+                />
+              ))}
+            </SortableContext>
+          </Box>
+          {/* Bote fijo a la derecha, siempre visible */}
+          <TrashDropZone />
+        </Box>
+      </DndContext>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

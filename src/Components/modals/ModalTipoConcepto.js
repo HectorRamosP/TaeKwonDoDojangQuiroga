@@ -3,7 +3,6 @@ import {
     TextField,
     FormControlLabel,
     Switch,
-    InputAdornment,
 } from "@mui/material";
 import { Category, Edit } from "@mui/icons-material";
 import { useState, useEffect } from "react";
@@ -25,12 +24,6 @@ const esquema = yup.object().shape({
         .string()
         .max(300, "La descripción no puede exceder 300 caracteres")
         .nullable(),
-    orden: yup
-        .number()
-        .typeError("El orden debe ser un número")
-        .min(0, "El orden debe ser mayor o igual a 0")
-        .max(9999, "El orden no puede superar 9999")
-        .integer("El orden debe ser un número entero"),
     activo: yup.boolean(),
 });
 
@@ -66,7 +59,6 @@ export default function ModalTipoConcepto({
         defaultValues: {
             nombre: "",
             descripcion: "",
-            orden: 0,
             activo: true,
         },
     });
@@ -76,14 +68,12 @@ export default function ModalTipoConcepto({
             reset({
                 nombre: tipo.nombre,
                 descripcion: tipo.descripcion || "",
-                orden: tipo.orden ?? 0,
                 activo: tipo.activo,
             });
         } else if (!esEditar) {
             reset({
                 nombre: "",
                 descripcion: "",
-                orden: 0,
                 activo: true,
             });
         }
@@ -102,7 +92,6 @@ export default function ModalTipoConcepto({
             const payload = {
                 nombre: data.nombre.trim(),
                 descripcion: data.descripcion?.trim() || null,
-                orden: Number(data.orden),
                 ...(esEditar && { id: tipo.id, activo: data.activo }),
             };
 
@@ -176,27 +165,6 @@ export default function ModalTipoConcepto({
                     disabled={guardando}
                     placeholder="Describe brevemente este tipo de concepto..."
                     id="tipo-concepto-descripcion"
-                />
-
-                <TextField
-                    label="Orden de visualización"
-                    type="number"
-                    fullWidth
-                    {...register("orden")}
-                    error={!!errors.orden}
-                    helperText={
-                        errors.orden?.message ||
-                        "Controla el orden en que aparece en los listados (menor = primero)"
-                    }
-                    margin="normal"
-                    disabled={guardando}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">#</InputAdornment>
-                        ),
-                        inputProps: { min: 0, max: 9999, step: 1 },
-                    }}
-                    id="tipo-concepto-orden"
                 />
 
                 {esEditar && (
