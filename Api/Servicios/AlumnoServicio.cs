@@ -218,10 +218,22 @@ public class AlumnoServicio : IAlumnoServicio
         var asistenciasDto = _mapper.Map<List<BuscarAsistenciaDto>>(asistencias);
 
         var totalPresencias = asistencias.Count(a => a.Presente);
-        var totalFaltas = asistencias.Count(a => !a.Presente);
-        var totalRegistros = asistencias.Count;
-        var porcentaje = totalRegistros > 0 ? Math.Round((decimal)totalPresencias / totalRegistros * 100, 1) : 0;
-        var totalJustificadas = asistencias.Count(a => !a.Presente && a.Justificada);
+
+        var totalJustificadas = asistencias.Count(a =>
+            !a.Presente && a.Justificada
+        );
+
+        // Solo faltas reales (no justificadas)
+        var totalFaltas = asistencias.Count(a =>
+            !a.Presente && !a.Justificada
+        );
+
+        // Total evaluable para examen
+        var totalRegistros = totalPresencias + totalFaltas;
+
+        var porcentaje = totalRegistros > 0
+            ? Math.Round((decimal)totalPresencias / totalRegistros * 100, 1)
+            : 0;
 
         var historialCintas = await _contexto.HistorialCintas
             .Include(h => h.Cinta)
