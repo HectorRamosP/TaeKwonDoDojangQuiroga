@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { obtenerAlertasVencimiento } from '../services/alumnosService';
 import { Alert, AlertTitle, List, ListItem, ListItemText, Typography, Box, Chip, CircularProgress } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 const AlertasVencimiento = () => {
+  const navigate = useNavigate();
   const [alertas, setAlertas] = useState([]);
   const [cargando, setCargando] = useState(true);
 
@@ -74,7 +76,29 @@ const AlertasVencimiento = () => {
               }}
             >
               <ListItemText
-                primary={<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{a.nombreCompleto}</Typography>}
+                primary={
+                  <Typography
+                    variant="subtitle2"
+                    onClick={() => navigate(`/alumnos/${a.slug}/perfil`)}
+                    sx={{
+                      fontWeight: 700,
+                      color: '#92400e',
+                      cursor: 'pointer',
+                      display: 'inline',
+                      textDecoration: 'underline',
+                      textDecorationStyle: 'dotted',
+                      textDecorationColor: 'rgba(146, 64, 14, 0.4)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        color: '#7c3000',
+                        textDecorationStyle: 'solid',
+                        textDecorationColor: '#7c3000',
+                      },
+                    }}
+                  >
+                    {a.nombreCompleto}
+                  </Typography>
+                }
                 secondary={`Tutor: ${a.nombreTutor}`}
                 primaryTypographyProps={{ color: '#92400e' }}
                 secondaryTypographyProps={{ color: '#b45309' }}
