@@ -24,11 +24,23 @@ import {
   CardContent,
   Typography,
   Grid,
+  Dialog,          // Integrado para el Modal de Pago Rápido
+  DialogTitle,     // Integrado para el Modal de Pago Rápido
+  DialogContent,   // Integrado para el Modal de Pago Rápido
+  DialogActions,   // Integrado para el Modal de Pago Rápido
+  List,            // Integrado para listar alumnos encontrados
+  ListItem,        // Integrado para listar alumnos encontrados
+  ListItemText,    // Integrado para listar alumnos encontrados
+  Tabs,
+  Tab,
 } from "@mui/material";
-import { Search, Clear, PaymentRounded, AttachMoney, TrendingUp, CalendarToday } from "@mui/icons-material";
+import { Search, Clear, PaymentRounded, AttachMoney, TrendingUp, CalendarToday, FlashOn, CheckCircle } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { obtenerPagos, eliminarPago, obtenerEstadisticasPagos } from "../../services/pagosService";
+// Agregamos 'registrarPago' que ya venía en tu service original
+import { obtenerPagos, eliminarPago, obtenerEstadisticasPagos, registrarPago } from "../../services/pagosService";
+import { obtenerAlumnos } from "../../services/alumnosService";
+import api from "../../services/api"; // Importamos la API configurada para buscar alumnos/socios
 import ModalPago from "../../Components/modals/ModalPago";
 import "./Pagos.css";
 
@@ -39,6 +51,7 @@ import "./Pagos.css";
  * @returns {JSX.Element} Dashboard de pagos con tarjetas de resumen y tabla filtrable.
  */
 export default function Pagos() {
+  // --- ESTADOS ORIGINALES DEL EQUIPO ---
   const [pagos, setPagos] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState("");
@@ -51,8 +64,22 @@ export default function Pagos() {
   const [error, setError] = useState(null);
   const [estadisticas, setEstadisticas] = useState(null);
 
+  // --- NUEVOS ESTADOS PARA HISTORIA DE USUARIO (COBRANZA MENSUAL) ---
+  const [tabIndex, setTabIndex] = useState(0);
+  const [mesCobranza, setMesCobranza] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [alumnosMensual, setAlumnosMensual] = useState([]);
+  const [pagosMensual, setPagosMensual] = useState([]);
+  const [cargandoCobranza, setCargandoCobranza] = useState(false);
+
+  const [modalRapidoAbierto, setModalRapidoAbierto] = useState(false);
+  const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
+  const [montoRapido, setMontoRapido] = useState("");
+  const [metodoPagoRapido, setMetodoPagoRapido] = useState("Efectivo");
+  const [guardandoPagoRapido, setGuardandoPagoRapido] = useState(false);
+
   const itemsPorPagina = 10;
 
+  // --- FUNCIONES ORIGINALES DEL EQUIPO ---
   const cargarEstadisticas = async () => {
     try {
       const data = await obtenerEstadisticasPagos();
@@ -98,7 +125,6 @@ export default function Pagos() {
     cargarPagos();
   }, [estadoFiltro]);
 
-  // Recalcula estadísticas cada vez que la lista de pagos cambia (tras cargar o eliminar)
   useEffect(() => {
     cargarEstadisticas();
   }, [pagos]);
@@ -111,10 +137,8 @@ export default function Pagos() {
         .includes(filtro.toLowerCase())
     );
 
-    // Filtrar por rango de fechas
     if (fechaInicio) {
       const inicio = new Date(fechaInicio);
-      // 00:00:00.000 para incluir todos los pagos del día de inicio desde el primer momento
       inicio.setHours(0, 0, 0, 0);
       datosFiltrados = datosFiltrados.filter((p) => {
         const fechaPago = new Date(p.fecha);
@@ -124,7 +148,6 @@ export default function Pagos() {
 
     if (fechaFin) {
       const fin = new Date(fechaFin);
-      // 23:59:59.999 para incluir todos los pagos del día de fin hasta el último instante
       fin.setHours(23, 59, 59, 999);
       datosFiltrados = datosFiltrados.filter((p) => {
         const fechaPago = new Date(p.fecha);
@@ -207,6 +230,106 @@ export default function Pagos() {
 
   const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
 
+  // --- NUEVA LÓGICA DE COBRANZA MENSUAL ---
+  useEffect(() => {
+    if (tabIndex === 1) {
+      cargarCobranzaMensual();
+    }
+  }, [tabIndex, mesCobranza]);
+
+  const cargarCobranzaMensual = async () => {
+    setCargandoCobranza(true);
+    try {
+      const activeStudents = await obtenerAlumnos({ activo: true });
+      
+      const parts = mesCobranza.split("-");
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      
+      const inicio = new Date(year, month - 1, 1, 0, 0, 0);
+      const fin = new Date(year, month, 0, 23, 59, 59);
+
+      const pagosDelMes = await obtenerPagos({
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString()
+      });
+
+      // Filtrar pagos confirmados que sean de mensualidad
+      const pagosMensualidad = (pagosDelMes || []).filter(p => 
+        (p.conceptoNombre?.toLowerCase().includes("mensualidad") || p.conceptoId === 1) &&
+        p.estado === "Confirmado"
+      );
+
+      setAlumnosMensual(activeStudents.elementos || activeStudents || []);
+      setPagosMensual(pagosMensualidad);
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo cargar la información de cobranza mensual."
+      });
+    } finally {
+      setCargandoCobranza(false);
+    }
+  };
+
+  const handleAbrirPagoRapido = (alumno) => {
+    setAlumnoSeleccionado(alumno);
+    setMontoRapido("");
+    setMetodoPagoRapido("Efectivo");
+    setModalRapidoAbierto(true);
+  };
+
+  const handleConfirmarPagoRapido = async (e) => {
+    e.preventDefault();
+    if (!montoRapido || montoRapido <= 0) {
+      Swal.fire({ icon: "warning", title: "Monto requerido", text: "Por favor ingresa una cantidad válida." });
+      return;
+    }
+
+    setGuardandoPagoRapido(true);
+    try {
+      // Payload exacto requerido por el Backend (CrearPagoDto)
+      const payload = {
+        alumnoId: alumnoSeleccionado.id,
+        conceptoId: 1, // ID asignado en BD para 'Mensualidad'
+        monto: Number(montoRapido),
+        metodoPago: metodoPagoRapido, // 'Efectivo', 'Tarjeta', 'Transferencia'
+        referencia: "",
+        notas: "Cobro rápido diario de Mensualidad"
+      };
+
+      await registrarPago(payload);
+
+      Swal.fire({
+        icon: "success",
+        title: "Cobro Exitoso",
+        text: `Se registró la mensualidad de ${alumnoSeleccionado.nombre} correctamente.`,
+        confirmButtonColor: "#2e7d32",
+      });
+
+      // Limpiar estados y actualizar listas globales
+      setModalRapidoAbierto(false);
+      setAlumnoSeleccionado(null);
+      setMontoRapido("");
+      setMetodoPagoRapido("Efectivo");
+      
+      cargarPagos(); // Recargar tabla original
+      if (tabIndex === 1) cargarCobranzaMensual(); // Recargar mensual
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        icon: "error",
+        title: "Error al procesar",
+        text: "No se pudo registrar el pago. Inténtalo de nuevo.",
+        confirmButtonColor: "#d32f2f",
+      });
+    } finally {
+      setGuardandoPagoRapido(false);
+    }
+  };
+
   return (
     <div className="pagos-container">
       <Box
@@ -214,32 +337,56 @@ export default function Pagos() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 3,
+          mb: 1,
         }}
       >
         <h1 className="page-title">Gestión de Pagos</h1>
-        <Button
-          variant="contained"
-          startIcon={<PaymentRounded />}
-          onClick={() => setModalAbierto(true)}
-          sx={{
-            background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
-            boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
-            fontWeight: 700,
-            padding: "10px 24px",
-            borderRadius: "12px",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
-              boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
-              transform: "translateY(-2px)",
-            },
-          }}
-        >
-          Registrar Pago
-        </Button>
+        
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<PaymentRounded />}
+            onClick={() => setModalAbierto(true)}
+            sx={{
+              background: "linear-gradient(135deg, #DC143C 0%, #B22222 100%)",
+              boxShadow: "0 4px 12px rgba(220, 20, 60, 0.3)",
+              fontWeight: 700,
+              padding: "10px 24px",
+              borderRadius: "12px",
+              transition: "all 0.3s ease",
+              "&:hover": {
+                background: "linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%)",
+                boxShadow: "0 6px 20px rgba(220, 20, 60, 0.4)",
+                transform: "translateY(-2px)",
+              },
+            }}
+          >
+            Registrar Pago
+          </Button>
+        </Box>
       </Box>
 
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs 
+          value={tabIndex} 
+          onChange={(e, val) => setTabIndex(val)}
+          TabIndicatorProps={{ style: { backgroundColor: "#DC143C" } }}
+          sx={{
+            "& .MuiTab-root": { fontWeight: "bold", fontSize: "1rem" },
+            "& .Mui-selected": { color: "#DC143C !important" },
+          }}
+        >
+          <Tab label="Historial General" />
+          <Tab label="Cobranza Mensual" />
+        </Tabs>
+      </Box>
+
+      {/* ============================================== */}
+      {/* PESTAÑA 0: HISTORIAL GENERAL ORIGINAL          */}
+      {/* ============================================== */}
+      {tabIndex === 0 && (
+        <Box>
+          {/* --- DASHBOARD DE ESTADÍSTICAS ORIGINAL --- */}
       {estadisticas && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} md={3}>
@@ -299,6 +446,7 @@ export default function Pagos() {
         </Grid>
       )}
 
+      {/* --- FILTROS ORIGINALES --- */}
       <Box sx={{ mb: 2, display: "flex", gap: 2, flexWrap: "wrap", alignItems: "center" }}>
         <TextField
           placeholder="Buscar por alumno, concepto o referencia..."
@@ -422,6 +570,7 @@ export default function Pagos() {
         </Box>
       ) : (
         <>
+          {/* --- TABLA PRINCIPAL DE PAGOS ORIGINAL --- */}
           <TableContainer
             component={Paper}
             elevation={0}
@@ -447,36 +596,15 @@ export default function Pagos() {
                     background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
                   }
                 }}>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Fecha
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Alumno
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Concepto
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Monto
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Método
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Estado
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Referencia
-                  </TableCell>
-                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>
-                    Notas
-                  </TableCell>
-                  <TableCell
-                    sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}
-                    align="center"
-                  >
-                    Acciones
-                  </TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Fecha</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Alumno</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Concepto</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Monto</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Método</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Estado</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Referencia</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }}>Notas</TableCell>
+                  <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }} align="center">Acciones</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -504,11 +632,7 @@ export default function Pagos() {
                       <TableCell>
                         {pago.conceptoNombre}
                         {pago.tipoConcepto && (
-                          <Chip
-                            label={pago.tipoConcepto}
-                            size="small"
-                            sx={{ ml: 1 }}
-                          />
+                          <Chip label={pago.tipoConcepto} size="small" sx={{ ml: 1 }} />
                         )}
                       </TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>
@@ -516,11 +640,7 @@ export default function Pagos() {
                       </TableCell>
                       <TableCell>{pago.metodoPago}</TableCell>
                       <TableCell>
-                        <Chip
-                          label={pago.estado}
-                          color={obtenerColorEstado(pago.estado)}
-                          size="small"
-                        />
+                        <Chip label={pago.estado} color={obtenerColorEstado(pago.estado)} size="small" />
                       </TableCell>
                       <TableCell>{pago.referencia || "N/A"}</TableCell>
                       <TableCell>{pago.notas || "N/A"}</TableCell>
@@ -541,6 +661,7 @@ export default function Pagos() {
             </Table>
           </TableContainer>
 
+          {/* --- PAGINACIÓN ORIGINAL --- */}
           {totalPaginas > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
               <Pagination
@@ -571,12 +692,207 @@ export default function Pagos() {
           )}
         </>
       )}
+        </Box>
+      )}
 
+      {/* ============================================== */}
+      {/* PESTAÑA 1: COBRANZA MENSUAL (PAGO RÁPIDO)      */}
+      {/* ============================================== */}
+      {tabIndex === 1 && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, p: 2, bgcolor: "#fff", borderRadius: "12px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#1b5e20" }}>
+              Seleccionar Mes:
+            </Typography>
+            <TextField
+              type="month"
+              value={mesCobranza}
+              onChange={(e) => setMesCobranza(e.target.value)}
+              size="small"
+              sx={{ minWidth: 200 }}
+            />
+          </Box>
+
+          {cargandoCobranza ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress color="success" />
+            </Box>
+          ) : (
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)", border: "1px solid rgba(46, 125, 50, 0.1)" }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ background: "linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%)" }}>
+                    <TableCell sx={{ color: "white", fontWeight: 800 }}>Socio / Alumno</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800 }}>Estado de Pago</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800 }} align="center">Acción</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {alumnosMensual.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} align="center">No hay alumnos activos registrados.</TableCell>
+                    </TableRow>
+                  ) : (
+                    alumnosMensual.map(alumno => {
+                      const haPagado = pagosMensual.some(p => p.alumnoId === alumno.id);
+                      return (
+                        <TableRow key={alumno.id} hover sx={{ transition: "all 0.2s ease" }}>
+                          <TableCell sx={{ fontWeight: 600 }}>{`${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ""}`}</TableCell>
+                          <TableCell>
+                            {haPagado ? (
+                              <Chip icon={<CheckCircle />} label="Pagado" color="success" sx={{ fontWeight: "bold" }} />
+                            ) : (
+                              <Chip label="Pendiente" color="warning" sx={{ fontWeight: "bold" }} />
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {!haPagado && (
+                              <Button
+                                variant="contained"
+                                color="success"
+                                startIcon={<FlashOn />}
+                                size="small"
+                                onClick={() => handleAbrirPagoRapido(alumno)}
+                                sx={{ borderRadius: "20px", textTransform: "none", fontWeight: "bold", bgcolor: "#2e7d32", "&:hover": { bgcolor: "#1b5e20" } }}
+                              >
+                                Cobrar
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      )}
+
+      {/* --- MODAL ORIGINAL DEL EQUIPO --- */}
       <ModalPago
         abierto={modalAbierto}
         cerrar={() => setModalAbierto(false)}
         recargar={cargarPagos}
       />
+
+      {/* ======================================================================= */}
+      {/* NUEVO MODAL COMPLETO DE PAGO RÁPIDO DIARIO (INTEGRADO CON MATERIAL-UI)  */}
+      {/* ======================================================================= */}
+      <Dialog 
+        open={modalRapidoAbierto} 
+        onClose={() => {
+          if (!guardandoPagoRapido) {
+            setModalRapidoAbierto(false);
+            setAlumnoSeleccionado(null);
+          }
+        }}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: { borderRadius: "16px", p: 1 }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1, color: "#1b5e20" }}>
+          <FlashOn color="success" /> Módulo de Pago Rápido (Mensualidad)
+        </DialogTitle>
+        
+        <DialogContent dividers>
+          {alumnoSeleccionado && (
+            // FORMULARIO CON CAMPOS PRECARGADOS, BLOQUEADOS Y MONTO EDITABLE
+            <Box component="form" onSubmit={handleConfirmarPagoRapido} sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+              
+              {/* Campo Alumno: Precargado y Bloqueado */}
+              <TextField
+                label="Alumno Seleccionado"
+                variant="outlined"
+                fullWidth
+                disabled
+                value={`${alumnoSeleccionado.nombre} ${alumnoSeleccionado.apellidoPaterno} ${alumnoSeleccionado.apellidoMaterno || ""}`}
+                InputProps={{ readOnly: true }}
+              />
+              
+              {/* Campo Concepto: Precargado y Bloqueado */}
+              <TextField
+                label="Concepto de Pago"
+                variant="outlined"
+                fullWidth
+                disabled
+                value="Mensualidad"
+                InputProps={{ readOnly: true }}
+              />
+
+              {/* Campo Monto: Completamente Editable */}
+              <TextField
+                label="Monto a Recibir ($)"
+                variant="outlined"
+                type="number"
+                fullWidth
+                required
+                autoFocus
+                value={montoRapido}
+                onChange={(e) => setMontoRapido(e.target.value)}
+                inputProps={{ min: "1", step: "0.01" }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
+
+              {/* Selector de Método de Pago rápido */}
+              <FormControl fullWidth size="small">
+                <InputLabel>Método de Recepción</InputLabel>
+                <Select
+                  value={metodoPagoRapido}
+                  label="Método de Recepción"
+                  onChange={(e) => setMetodoPagoRapido(e.target.value)}
+                >
+                  <MenuItem value="Efectivo">Efectivo</MenuItem>
+                  <MenuItem value="Tarjeta">Tarjeta Bancaria</MenuItem>
+                  <MenuItem value="Transferencia">Transferencia Electrónica</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+                <Button 
+                  variant="outlined" 
+                  fullWidth 
+                  onClick={() => {
+                    setModalRapidoAbierto(false);
+                    setAlumnoSeleccionado(null);
+                  }}
+                  disabled={guardandoPagoRapido}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  variant="contained" 
+                  color="success" 
+                  fullWidth 
+                  type="submit"
+                  disabled={guardandoPagoRapido}
+                  sx={{ fontWeight: "bold", bgcolor: "#2e7d32", "&:hover": { bgcolor: "#1b5e20" } }}
+                >
+                  {guardandoPagoRapido ? "Procesando..." : "Registrar Cobro"}
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={() => {
+              setModalRapidoAbierto(false);
+              setAlumnoSeleccionado(null);
+            }} 
+            color="inherit"
+            disabled={guardandoPagoRapido}
+          >
+            Cerrar Ventana
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
