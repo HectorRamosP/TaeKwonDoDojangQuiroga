@@ -24,24 +24,19 @@ import {
   CardContent,
   Typography,
   Grid,
-  Dialog,          // Integrado para el Modal de Pago Rápido
-  DialogTitle,     // Integrado para el Modal de Pago Rápido
-  DialogContent,   // Integrado para el Modal de Pago Rápido
-  DialogActions,   // Integrado para el Modal de Pago Rápido
-  List,            // Integrado para listar alumnos encontrados
-  ListItem,        // Integrado para listar alumnos encontrados
-  ListItemText,    // Integrado para listar alumnos encontrados
   Tabs,
   Tab,
 } from "@mui/material";
-import { Search, Clear, PaymentRounded, AttachMoney, TrendingUp, CalendarToday, FlashOn, CheckCircle } from "@mui/icons-material";
+import { Search, Clear, PaymentRounded, AttachMoney, TrendingUp, CalendarToday, FlashOn, CheckCircle, ArrowDownward, ArrowUpward } from "@mui/icons-material";
 import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 // Agregamos 'registrarPago' que ya venía en tu service original
 import { obtenerPagos, eliminarPago, obtenerEstadisticasPagos, registrarPago } from "../../services/pagosService";
 import { obtenerAlumnos } from "../../services/alumnosService";
 import api from "../../services/api"; // Importamos la API configurada para buscar alumnos/socios
 import ModalPago from "../../Components/modals/ModalPago";
+import ModernModal from "../../Components/modals/ModernModal";
 import "./Pagos.css";
 
 /**
@@ -64,12 +59,23 @@ export default function Pagos() {
   const [error, setError] = useState(null);
   const [estadisticas, setEstadisticas] = useState(null);
 
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   // --- NUEVOS ESTADOS PARA HISTORIA DE USUARIO (COBRANZA MENSUAL) ---
-  const [tabIndex, setTabIndex] = useState(0);
-  const [mesCobranza, setMesCobranza] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [tabIndex, setTabIndex] = useState(() => searchParams.get("tab") === "cobranza" ? 1 : 0);
+  const [mesCobranza, setMesCobranza] = useState(() => searchParams.get("mes") || new Date().toISOString().slice(0, 7));
   const [alumnosMensual, setAlumnosMensual] = useState([]);
   const [pagosMensual, setPagosMensual] = useState([]);
   const [cargandoCobranza, setCargandoCobranza] = useState(false);
+  const [filtroCobranza, setFiltroCobranza] = useState("");
+  const [sortCol, setSortCol] = useState("estado");
+  const [sortDir, setSortDir] = useState("asc");
+
+  const toggleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(col); setSortDir("asc"); }
+  };
 
   const [modalRapidoAbierto, setModalRapidoAbierto] = useState(false);
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
@@ -306,7 +312,7 @@ export default function Pagos() {
         icon: "success",
         title: "Cobro Exitoso",
         text: `Se registró la mensualidad de ${alumnoSeleccionado.nombre} correctamente.`,
-        confirmButtonColor: "#2e7d32",
+        confirmButtonColor: "#DC143C",
       });
 
       // Limpiar estados y actualizar listas globales
@@ -369,7 +375,11 @@ export default function Pagos() {
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs 
           value={tabIndex} 
-          onChange={(e, val) => setTabIndex(val)}
+          onChange={(e, val) => {
+            setTabIndex(val);
+            if (val === 1) setSearchParams({ tab: "cobranza", mes: mesCobranza });
+            else setSearchParams({});
+          }}
           TabIndicatorProps={{ style: { backgroundColor: "#DC143C" } }}
           sx={{
             "& .MuiTab-root": { fontWeight: "bold", fontSize: "1rem" },
@@ -700,60 +710,183 @@ export default function Pagos() {
       {/* ============================================== */}
       {tabIndex === 1 && (
         <Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, p: 2, bgcolor: "#fff", borderRadius: "12px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#1b5e20" }}>
-              Seleccionar Mes:
-            </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, flexWrap: "wrap" }}>
             <TextField
+              label="Mes"
               type="month"
               value={mesCobranza}
-              onChange={(e) => setMesCobranza(e.target.value)}
+              onChange={(e) => {
+                setMesCobranza(e.target.value);
+                setSearchParams({ tab: "cobranza", mes: e.target.value });
+              }}
               size="small"
               sx={{ minWidth: 200 }}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              placeholder="Buscar alumno..."
+              size="small"
+              value={filtroCobranza}
+              onChange={(e) => setFiltroCobranza(e.target.value)}
+              sx={{ minWidth: 240, flex: 1 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: filtroCobranza && (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={() => setFiltroCobranza("")}>
+                      <Clear fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
           </Box>
 
           {cargandoCobranza ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-              <CircularProgress color="success" />
+              <CircularProgress sx={{ color: "#DC143C" }} />
             </Box>
           ) : (
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)", border: "1px solid rgba(46, 125, 50, 0.1)" }}>
+            <TableContainer
+              component={Paper}
+              elevation={0}
+              sx={{
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+                border: "1px solid rgba(220, 20, 60, 0.1)",
+              }}
+            >
               <Table>
                 <TableHead>
-                  <TableRow sx={{ background: "linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%)" }}>
-                    <TableCell sx={{ color: "white", fontWeight: 800 }}>Socio / Alumno</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: 800 }}>Estado de Pago</TableCell>
-                    <TableCell sx={{ color: "white", fontWeight: 800 }} align="center">Acción</TableCell>
+                  <TableRow
+                    sx={{
+                      background: "linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%)",
+                      position: "relative",
+                      "&::after": {
+                        content: '""',
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: "3px",
+                        background: "linear-gradient(90deg, #DC143C 0%, #B22222 50%, #8B0000 100%)",
+                      },
+                    }}
+                  >
+                    <TableCell
+                      sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px", cursor: "pointer", userSelect: "none" }}
+                      onClick={() => toggleSort("nombre")}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        Alumno
+                        {sortCol === "nombre"
+                          ? sortDir === "asc" ? <ArrowDownward sx={{ fontSize: 15 }} /> : <ArrowUpward sx={{ fontSize: 15 }} />
+                          : <ArrowDownward sx={{ fontSize: 15, opacity: 0.3 }} />
+                        }
+                      </Box>
+                    </TableCell>
+                    <TableCell
+                      sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px", cursor: "pointer", userSelect: "none" }}
+                      onClick={() => toggleSort("estado")}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        Estado
+                        {sortCol === "estado"
+                          ? sortDir === "asc" ? <ArrowDownward sx={{ fontSize: 15 }} /> : <ArrowUpward sx={{ fontSize: 15 }} />
+                          : <ArrowDownward sx={{ fontSize: 15, opacity: 0.3 }} />
+                        }
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800, fontSize: "0.95rem", letterSpacing: "0.5px" }} align="center">Acción</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {alumnosMensual.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center">No hay alumnos activos registrados.</TableCell>
-                    </TableRow>
-                  ) : (
-                    alumnosMensual.map(alumno => {
+                  {(() => {
+                    const filtrados = alumnosMensual
+                      .filter(a =>
+                        `${a.nombre} ${a.apellidoPaterno} ${a.apellidoMaterno || ""}`.toLowerCase().includes(filtroCobranza.toLowerCase())
+                      )
+                      .sort((a, b) => {
+                        if (sortCol === "nombre") {
+                          const na = `${a.nombre} ${a.apellidoPaterno}`.toLowerCase();
+                          const nb = `${b.nombre} ${b.apellidoPaterno}`.toLowerCase();
+                          return sortDir === "asc" ? na.localeCompare(nb) : nb.localeCompare(na);
+                        }
+                        const aPagado = pagosMensual.some(p => p.alumnoId === a.id);
+                        const bPagado = pagosMensual.some(p => p.alumnoId === b.id);
+                        return sortDir === "asc" ? aPagado - bPagado : bPagado - aPagado;
+                      });
+                    if (alumnosMensual.length === 0) return (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">No hay alumnos activos registrados.</TableCell>
+                      </TableRow>
+                    );
+                    if (filtrados.length === 0) return (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">No se encontraron alumnos con ese nombre.</TableCell>
+                      </TableRow>
+                    );
+                    return filtrados.map(alumno => {
                       const haPagado = pagosMensual.some(p => p.alumnoId === alumno.id);
+                      const nombreCompleto = `${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ""}`.trim();
                       return (
-                        <TableRow key={alumno.id} hover sx={{ transition: "all 0.2s ease" }}>
-                          <TableCell sx={{ fontWeight: 600 }}>{`${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ""}`}</TableCell>
+                        <TableRow
+                          key={alumno.id}
+                          hover
+                          sx={{
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              backgroundColor: "rgba(220, 20, 60, 0.04)",
+                              transform: "scale(1.001)",
+                            },
+                          }}
+                        >
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            <Typography
+                              variant="body2"
+                              onClick={() => navigate(`/alumnos/${alumno.slug}/perfil`)}
+                              sx={{
+                                fontWeight: 700,
+                                color: "#1a1a1a",
+                                cursor: "pointer",
+                                display: "inline",
+                                "&:hover": { color: "#DC143C", textDecoration: "underline" },
+                              }}
+                            >
+                              {nombreCompleto}
+                            </Typography>
+                          </TableCell>
                           <TableCell>
                             {haPagado ? (
-                              <Chip icon={<CheckCircle />} label="Pagado" color="success" sx={{ fontWeight: "bold" }} />
+                              <Chip icon={<CheckCircle />} label="Pagado" color="success" size="small" sx={{ fontWeight: 700 }} />
                             ) : (
-                              <Chip label="Pendiente" color="warning" sx={{ fontWeight: "bold" }} />
+                              <Chip label="Pendiente" color="warning" size="small" sx={{ fontWeight: 700 }} />
                             )}
                           </TableCell>
                           <TableCell align="center">
                             {!haPagado && (
                               <Button
                                 variant="contained"
-                                color="success"
-                                startIcon={<FlashOn />}
                                 size="small"
+                                startIcon={<AttachMoney />}
                                 onClick={() => handleAbrirPagoRapido(alumno)}
-                                sx={{ borderRadius: "20px", textTransform: "none", fontWeight: "bold", bgcolor: "#2e7d32", "&:hover": { bgcolor: "#1b5e20" } }}
+                                sx={{
+                                  background: "linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%)",
+                                  boxShadow: "0 4px 12px rgba(46, 125, 50, 0.3)",
+                                  fontWeight: 600,
+                                  borderRadius: "10px",
+                                  transition: "all 0.3s ease",
+                                  "&:hover": {
+                                    background: "linear-gradient(135deg, #43a047 0%, #2e7d32 100%)",
+                                    boxShadow: "0 6px 16px rgba(46, 125, 50, 0.4)",
+                                    transform: "translateY(-2px)",
+                                  },
+                                }}
                               >
                                 Cobrar
                               </Button>
@@ -761,8 +894,8 @@ export default function Pagos() {
                           </TableCell>
                         </TableRow>
                       );
-                    })
-                  )}
+                    });
+                  })()}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -777,60 +910,46 @@ export default function Pagos() {
         recargar={cargarPagos}
       />
 
-      {/* ======================================================================= */}
-      {/* NUEVO MODAL COMPLETO DE PAGO RÁPIDO DIARIO (INTEGRADO CON MATERIAL-UI)  */}
-      {/* ======================================================================= */}
-      <Dialog 
-        open={modalRapidoAbierto} 
+      <ModernModal
+        open={modalRapidoAbierto}
         onClose={() => {
           if (!guardandoPagoRapido) {
             setModalRapidoAbierto(false);
             setAlumnoSeleccionado(null);
           }
         }}
-        fullWidth
+        title="Pago Rápido — Mensualidad"
+        icon={<FlashOn />}
         maxWidth="sm"
-        PaperProps={{
-          sx: { borderRadius: "16px", p: 1 }
-        }}
+        formId="form-pago-rapido"
+        loading={guardandoPagoRapido}
+        submitLabel="Registrar Cobro"
+        loadingLabel="Procesando..."
       >
-        <DialogTitle sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1, color: "#1b5e20" }}>
-          <FlashOn color="success" /> Módulo de Pago Rápido (Mensualidad)
-        </DialogTitle>
-        
-        <DialogContent dividers>
+        <form id="form-pago-rapido" onSubmit={handleConfirmarPagoRapido}>
           {alumnoSeleccionado && (
-            // FORMULARIO CON CAMPOS PRECARGADOS, BLOQUEADOS Y MONTO EDITABLE
-            <Box component="form" onSubmit={handleConfirmarPagoRapido} sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
-              
-              {/* Campo Alumno: Precargado y Bloqueado */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
               <TextField
-                label="Alumno Seleccionado"
-                variant="outlined"
+                label="Alumno"
                 fullWidth
                 disabled
+                margin="normal"
                 value={`${alumnoSeleccionado.nombre} ${alumnoSeleccionado.apellidoPaterno} ${alumnoSeleccionado.apellidoMaterno || ""}`}
-                InputProps={{ readOnly: true }}
               />
-              
-              {/* Campo Concepto: Precargado y Bloqueado */}
               <TextField
-                label="Concepto de Pago"
-                variant="outlined"
+                label="Concepto"
                 fullWidth
                 disabled
+                margin="normal"
                 value="Mensualidad"
-                InputProps={{ readOnly: true }}
               />
-
-              {/* Campo Monto: Completamente Editable */}
               <TextField
-                label="Monto a Recibir ($)"
-                variant="outlined"
+                label="Monto"
                 type="number"
                 fullWidth
                 required
                 autoFocus
+                margin="normal"
                 value={montoRapido}
                 onChange={(e) => setMontoRapido(e.target.value)}
                 inputProps={{ min: "1", step: "0.01" }}
@@ -838,61 +957,22 @@ export default function Pagos() {
                   startAdornment: <InputAdornment position="start">$</InputAdornment>,
                 }}
               />
-
-              {/* Selector de Método de Pago rápido */}
-              <FormControl fullWidth size="small">
-                <InputLabel>Método de Recepción</InputLabel>
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Método de Pago</InputLabel>
                 <Select
                   value={metodoPagoRapido}
-                  label="Método de Recepción"
+                  label="Método de Pago"
                   onChange={(e) => setMetodoPagoRapido(e.target.value)}
                 >
                   <MenuItem value="Efectivo">Efectivo</MenuItem>
-                  <MenuItem value="Tarjeta">Tarjeta Bancaria</MenuItem>
-                  <MenuItem value="Transferencia">Transferencia Electrónica</MenuItem>
+                  <MenuItem value="Tarjeta">Tarjeta</MenuItem>
+                  <MenuItem value="Transferencia">Transferencia</MenuItem>
                 </Select>
               </FormControl>
-
-              <Box sx={{ display: "flex", gap: 2, mt: 1 }}>
-                <Button 
-                  variant="outlined" 
-                  fullWidth 
-                  onClick={() => {
-                    setModalRapidoAbierto(false);
-                    setAlumnoSeleccionado(null);
-                  }}
-                  disabled={guardandoPagoRapido}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  variant="contained" 
-                  color="success" 
-                  fullWidth 
-                  type="submit"
-                  disabled={guardandoPagoRapido}
-                  sx={{ fontWeight: "bold", bgcolor: "#2e7d32", "&:hover": { bgcolor: "#1b5e20" } }}
-                >
-                  {guardandoPagoRapido ? "Procesando..." : "Registrar Cobro"}
-                </Button>
-              </Box>
             </Box>
           )}
-        </DialogContent>
-        
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
-            onClick={() => {
-              setModalRapidoAbierto(false);
-              setAlumnoSeleccionado(null);
-            }} 
-            color="inherit"
-            disabled={guardandoPagoRapido}
-          >
-            Cerrar Ventana
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </form>
+      </ModernModal>
     </div>
   );
 }
