@@ -399,7 +399,9 @@ export default function Socios() {
             return fechaAsistencia >= fechaInicio && fechaAsistencia <= fechaFin;
           });
 
-          const totalRegistros = asistenciasEnRango.length;
+          // Las faltas justificadas se excluyen del total para no penalizar el porcentaje
+          const totalJustificadas = asistenciasEnRango.filter((a) => !a.presente && a.justificada).length;
+          const totalRegistros = asistenciasEnRango.length - totalJustificadas;
           const totalPresente = asistenciasEnRango.filter((a) => a.presente).length;
           const porcentaje = totalRegistros > 0 ? (totalPresente / totalRegistros) * 100 : 0;
 
@@ -411,6 +413,7 @@ export default function Socios() {
             claseNombre: alumno.claseNombre,
             totalRegistros,
             totalPresente,
+            totalJustificadas,
             porcentaje: Math.round(porcentaje * 10) / 10,
             elegible: porcentaje >= PORCENTAJE_MINIMO,
           });
@@ -1251,9 +1254,19 @@ export default function Socios() {
                             {resultado.claseNombre || 'Sin clase'}
                           </TableCell>
                           <TableCell align="center">
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {resultado.totalPresente} / {resultado.totalRegistros}
-                            </Typography>
+                            <Tooltip
+                              title={resultado.totalJustificadas > 0 ? `${resultado.totalJustificadas} falta(s) justificada(s) excluida(s) del total` : ''}
+                              arrow
+                            >
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {resultado.totalPresente} / {resultado.totalRegistros}
+                                {resultado.totalJustificadas > 0 && (
+                                  <Typography component="span" variant="caption" sx={{ ml: 0.5, color: 'text.secondary' }}>
+                                    (+{resultado.totalJustificadas}J)
+                                  </Typography>
+                                )}
+                              </Typography>
+                            </Tooltip>
                           </TableCell>
                           <TableCell>
                             <Tooltip title={`${resultado.porcentaje}% — Mínimo requerido: ${PORCENTAJE_MINIMO}%`} arrow>
