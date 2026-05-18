@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { obtenerAlertasVencimiento } from '../services/alumnosService';
 import { obtenerDiasConfig } from '../services/configAlertaService';
 import {
@@ -23,6 +24,7 @@ const CARD_SX = {
 };
 
 const AlertasVencimiento = () => {
+  const navigate = useNavigate();
   const [alertas, setAlertas] = useState([]);
   const [diasAnticipacion, setDiasAnticipacion] = useState(5);
   const [cargando, setCargando] = useState(true);
@@ -96,7 +98,17 @@ const AlertasVencimiento = () => {
                 >
                   <ListItemText
                     primary={
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: "#1a1a1a" }}>
+                      <Typography
+                        variant="body2"
+                        onClick={() => navigate(`/alumnos/${a.slug}/perfil`)}
+                        sx={{
+                          fontWeight: 700,
+                          color: "#1a1a1a",
+                          cursor: 'pointer',
+                          display: 'inline',
+                          '&:hover': { color: ROJO, textDecoration: 'underline' },
+                        }}
+                      >
                         {a.nombreCompleto}
                       </Typography>
                     }
