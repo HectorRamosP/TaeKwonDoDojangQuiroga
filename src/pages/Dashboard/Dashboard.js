@@ -34,6 +34,7 @@ import {
   CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import { obtenerDashboard } from "../../services/dashboardService";
 import AlertasVencimiento from "../../Components/AlertasVencimiento";
@@ -338,7 +339,7 @@ export default function Dashboard() {
           </Card>
         </Grid>
 
-        {/* Gráfica nuevos alumnos por mes */}
+        {/* Gráfica de balance: Nuevos vs Pérdidas */}
         <Grid item xs={12} md={5}>
           <Card elevation={0} sx={CARD_SX}>
             <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
@@ -346,7 +347,7 @@ export default function Dashboard() {
                 <PersonAdd sx={{ color: ROJO, fontSize: 18 }} />
                 <Box>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                    Nuevos Alumnos por Mes
+                    Captación vs Pérdida de Socios
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#888" }}>
                     Últimos 6 meses
@@ -374,7 +375,7 @@ export default function Dashboard() {
                     tickLine={false}
                   />
                   <RechartsTooltip
-                    formatter={(value) => [value, "Nuevos alumnos"]}
+                    formatter={(value, name) => [value, name === "Nuevos" ? "Captación" : "Pérdida (No renovaron)"]}
                     contentStyle={{
                       borderRadius: 8,
                       border: "1px solid #eee",
@@ -382,7 +383,9 @@ export default function Dashboard() {
                     }}
                     cursor={{ fill: "rgba(220,20,60,0.05)" }}
                   />
-                  <Bar dataKey="nuevos" fill={ROJO} radius={[5, 5, 0, 0]} maxBarSize={40} />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                  <Bar dataKey="nuevos" name="Nuevos" fill={ROJO} radius={[5, 5, 0, 0]} maxBarSize={30} />
+                  <Bar dataKey="noRenovaron" name="No Renovaron" fill="#888888" radius={[5, 5, 0, 0]} maxBarSize={30} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
