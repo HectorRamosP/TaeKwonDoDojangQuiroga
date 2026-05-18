@@ -31,12 +31,15 @@ import {
   List,            // Integrado para listar alumnos encontrados
   ListItem,        // Integrado para listar alumnos encontrados
   ListItemText,    // Integrado para listar alumnos encontrados
+  Tabs,
+  Tab,
 } from "@mui/material";
-import { Search, Clear, PaymentRounded, AttachMoney, TrendingUp, CalendarToday, FlashOn } from "@mui/icons-material";
+import { Search, Clear, PaymentRounded, AttachMoney, TrendingUp, CalendarToday, FlashOn, CheckCircle } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 // Agregamos 'registrarPago' que ya venía en tu service original
 import { obtenerPagos, eliminarPago, obtenerEstadisticasPagos, registrarPago } from "../../services/pagosService";
+import { obtenerAlumnos } from "../../services/alumnosService";
 import api from "../../services/api"; // Importamos la API configurada para buscar alumnos/socios
 import ModalPago from "../../Components/modals/ModalPago";
 import "./Pagos.css";
@@ -61,11 +64,14 @@ export default function Pagos() {
   const [error, setError] = useState(null);
   const [estadisticas, setEstadisticas] = useState(null);
 
-  // --- NUEVOS ESTADOS PARA HISTORIA DE USUARIO (PAGO RÁPIDO) ---
+  // --- NUEVOS ESTADOS PARA HISTORIA DE USUARIO (COBRANZA MENSUAL) ---
+  const [tabIndex, setTabIndex] = useState(0);
+  const [mesCobranza, setMesCobranza] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [alumnosMensual, setAlumnosMensual] = useState([]);
+  const [pagosMensual, setPagosMensual] = useState([]);
+  const [cargandoCobranza, setCargandoCobranza] = useState(false);
+
   const [modalRapidoAbierto, setModalRapidoAbierto] = useState(false);
-  const [busquedaAlumno, setBusquedaAlumno] = useState("");
-  const [alumnosEncontrados, setAlumnosEncontrados] = useState([]);
-  const [cargandoAlumnos, setCargandoAlumnos] = useState(false);
   const [alumnoSeleccionado, setAlumnoSeleccionado] = useState(null);
   const [montoRapido, setMontoRapido] = useState("");
   const [metodoPagoRapido, setMetodoPagoRapido] = useState("Efectivo");
@@ -224,34 +230,55 @@ export default function Pagos() {
 
   const totalPaginas = Math.ceil(filtrados.length / itemsPorPagina);
 
+  // --- NUEVA LÓGICA DE COBRANZA MENSUAL ---
+  useEffect(() => {
+    if (tabIndex === 1) {
+      cargarCobranzaMensual();
+    }
+  }, [tabIndex, mesCobranza]);
 
-  // --- NUEVAS FUNCIONES DE CONTROL PARA EL PAGO RÁPIDO ---
-  const handleBuscarAlumnoRapido = async (e) => {
-    if (e) e.preventDefault();
-    if (!busquedaAlumno.trim()) return;
-
-    setCargandoAlumnos(true);
+  const cargarCobranzaMensual = async () => {
+    setCargandoCobranza(true);
     try {
-      // Endpoint dinámico sincronizado con las rutas del backend de C# y React Router
-      const response = await api.get(`/socios?nombre=${busquedaAlumno}`);
-      if (Array.isArray(response.data)) {
-        setAlumnosEncontrados(response.data);
-      } else if (response.data && Array.isArray(response.data.elementos)) {
-        setAlumnosEncontrados(response.data.elementos);
-      } else {
-        setAlumnosEncontrados([]);
-      }
+      const activeStudents = await obtenerAlumnos({ activo: true });
+      
+      const parts = mesCobranza.split("-");
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      
+      const inicio = new Date(year, month - 1, 1, 0, 0, 0);
+      const fin = new Date(year, month, 0, 23, 59, 59);
+
+      const pagosDelMes = await obtenerPagos({
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString()
+      });
+
+      // Filtrar pagos confirmados que sean de mensualidad
+      const pagosMensualidad = (pagosDelMes || []).filter(p => 
+        (p.conceptoNombre?.toLowerCase().includes("mensualidad") || p.conceptoId === 1) &&
+        p.estado === "Confirmado"
+      );
+
+      setAlumnosMensual(activeStudents.elementos || activeStudents || []);
+      setPagosMensual(pagosMensualidad);
     } catch (err) {
       console.error(err);
       Swal.fire({
         icon: "error",
-        title: "Error de conexión",
-        text: "No se pudo buscar al alumno en el servidor.",
-        confirmButtonColor: "#d32f2f",
+        title: "Error",
+        text: "No se pudo cargar la información de cobranza mensual."
       });
     } finally {
-      setCargandoAlumnos(false);
+      setCargandoCobranza(false);
     }
+  };
+
+  const handleAbrirPagoRapido = (alumno) => {
+    setAlumnoSeleccionado(alumno);
+    setMontoRapido("");
+    setMetodoPagoRapido("Efectivo");
+    setModalRapidoAbierto(true);
   };
 
   const handleConfirmarPagoRapido = async (e) => {
@@ -284,13 +311,12 @@ export default function Pagos() {
 
       // Limpiar estados y actualizar listas globales
       setModalRapidoAbierto(false);
-      setBusquedaAlumno("");
-      setAlumnosEncontrados([]);
       setAlumnoSeleccionado(null);
       setMontoRapido("");
       setMetodoPagoRapido("Efectivo");
       
       cargarPagos(); // Recargar tabla original
+      if (tabIndex === 1) cargarCobranzaMensual(); // Recargar mensual
     } catch (err) {
       console.error(err);
       Swal.fire({
@@ -311,35 +337,12 @@ export default function Pagos() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 3,
+          mb: 1,
         }}
       >
         <h1 className="page-title">Gestión de Pagos</h1>
         
-        {/* GRUPO DE ACCIONES: BOTÓN ORIGINAL + BOTÓN NUEVO DE PAGO RÁPIDO */}
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<FlashOn />}
-            onClick={() => setModalRapidoAbierto(true)}
-            sx={{
-              background: "linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%)",
-              boxShadow: "0 4px 12px rgba(46, 125, 50, 0.3)",
-              fontWeight: 700,
-              padding: "10px 24px",
-              borderRadius: "12px",
-              transition: "all 0.3s ease",
-              "&:hover": {
-                background: "linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)",
-                boxShadow: "0 6px 20px rgba(46, 125, 50, 0.4)",
-                transform: "translateY(-2px)",
-              },
-            }}
-          >
-            Pago Rápido
-          </Button>
-
           <Button
             variant="contained"
             startIcon={<PaymentRounded />}
@@ -363,7 +366,27 @@ export default function Pagos() {
         </Box>
       </Box>
 
-      {/* --- DASHBOARD DE ESTADÍSTICAS ORIGINAL --- */}
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Tabs 
+          value={tabIndex} 
+          onChange={(e, val) => setTabIndex(val)}
+          TabIndicatorProps={{ style: { backgroundColor: "#DC143C" } }}
+          sx={{
+            "& .MuiTab-root": { fontWeight: "bold", fontSize: "1rem" },
+            "& .Mui-selected": { color: "#DC143C !important" },
+          }}
+        >
+          <Tab label="Historial General" />
+          <Tab label="Cobranza Mensual" />
+        </Tabs>
+      </Box>
+
+      {/* ============================================== */}
+      {/* PESTAÑA 0: HISTORIAL GENERAL ORIGINAL          */}
+      {/* ============================================== */}
+      {tabIndex === 0 && (
+        <Box>
+          {/* --- DASHBOARD DE ESTADÍSTICAS ORIGINAL --- */}
       {estadisticas && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} md={3}>
@@ -669,6 +692,83 @@ export default function Pagos() {
           )}
         </>
       )}
+        </Box>
+      )}
+
+      {/* ============================================== */}
+      {/* PESTAÑA 1: COBRANZA MENSUAL (PAGO RÁPIDO)      */}
+      {/* ============================================== */}
+      {tabIndex === 1 && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, p: 2, bgcolor: "#fff", borderRadius: "12px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
+            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#1b5e20" }}>
+              Seleccionar Mes:
+            </Typography>
+            <TextField
+              type="month"
+              value={mesCobranza}
+              onChange={(e) => setMesCobranza(e.target.value)}
+              size="small"
+              sx={{ minWidth: 200 }}
+            />
+          </Box>
+
+          {cargandoCobranza ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress color="success" />
+            </Box>
+          ) : (
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)", border: "1px solid rgba(46, 125, 50, 0.1)" }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ background: "linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%)" }}>
+                    <TableCell sx={{ color: "white", fontWeight: 800 }}>Socio / Alumno</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800 }}>Estado de Pago</TableCell>
+                    <TableCell sx={{ color: "white", fontWeight: 800 }} align="center">Acción</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {alumnosMensual.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} align="center">No hay alumnos activos registrados.</TableCell>
+                    </TableRow>
+                  ) : (
+                    alumnosMensual.map(alumno => {
+                      const haPagado = pagosMensual.some(p => p.alumnoId === alumno.id);
+                      return (
+                        <TableRow key={alumno.id} hover sx={{ transition: "all 0.2s ease" }}>
+                          <TableCell sx={{ fontWeight: 600 }}>{`${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ""}`}</TableCell>
+                          <TableCell>
+                            {haPagado ? (
+                              <Chip icon={<CheckCircle />} label="Pagado" color="success" sx={{ fontWeight: "bold" }} />
+                            ) : (
+                              <Chip label="Pendiente" color="warning" sx={{ fontWeight: "bold" }} />
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {!haPagado && (
+                              <Button
+                                variant="contained"
+                                color="success"
+                                startIcon={<FlashOn />}
+                                size="small"
+                                onClick={() => handleAbrirPagoRapido(alumno)}
+                                sx={{ borderRadius: "20px", textTransform: "none", fontWeight: "bold", bgcolor: "#2e7d32", "&:hover": { bgcolor: "#1b5e20" } }}
+                              >
+                                Cobrar
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
+      )}
 
       {/* --- MODAL ORIGINAL DEL EQUIPO --- */}
       <ModalPago
@@ -686,8 +786,6 @@ export default function Pagos() {
           if (!guardandoPagoRapido) {
             setModalRapidoAbierto(false);
             setAlumnoSeleccionado(null);
-            setAlumnosEncontrados([]);
-            setBusquedaAlumno("");
           }
         }}
         fullWidth
@@ -701,72 +799,8 @@ export default function Pagos() {
         </DialogTitle>
         
         <DialogContent dividers>
-          {!alumnoSeleccionado ? (
-            // PASO 1: BUSCADOR DE ALUMNOS Y BOTÓN DE ACCESO DIRECTO
-            <Box sx={{ py: 1 }}>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                Ingresa el nombre del alumno/socio para aplicar el cobro rápido diario de su mensualidad.
-              </Typography>
-              <Box component="form" onSubmit={handleBuscarAlumnoRapido} sx={{ display: "flex", gap: 1, mb: 2 }}>
-                <TextField
-                  placeholder="Escribe el nombre del alumno a cobrar..."
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={busquedaAlumno}
-                  onChange={(e) => setBusquedaAlumno(e.target.value)}
-                  autoFocus
-                />
-                <Button variant="contained" color="success" type="submit" disabled={cargandoAlumnos} sx={{ bgcolor: "#2e7d32" }}>
-                  {cargandoAlumnos ? <CircularProgress size={24} color="inherit" /> : "Buscar"}
-                </Button>
-              </Box>
-
-              {alumnosEncontrados.length > 0 && (
-                <List sx={{ maxHeight: "250px", overflow: "auto", border: "1px solid #e0e0e0", borderRadius: "8px", bgcolor: "#fafafa" }}>
-                  {alumnosEncontrados.map((alumno) => (
-                    <ListItem 
-                      key={alumno.id}
-                      secondaryAction={
-                        /* BOTÓN VERDE DE ACCESO DIRECTO EXIGIDO */
-                        <Button 
-                          variant="contained" 
-                          color="success" 
-                          size="small"
-                          onClick={() => {
-                            setAlumnoSeleccionado(alumno);
-                            setMontoRapido("");
-                            setMetodoPagoRapido("Efectivo");
-                          }}
-                          sx={{ 
-                            borderRadius: "20px", 
-                            textTransform: "none", 
-                            fontWeight: "bold",
-                            bgcolor: "#2e7d32",
-                            "&:hover": { bgcolor: "#1b5e20" }
-                          }}
-                        >
-                          <FlashOn fontSize="small" sx={{ mr: 0.5 }} /> Cobrar Mensualidad
-                        </Button>
-                      }
-                    >
-                      <ListItemText 
-                        primary={`${alumno.nombre} ${alumno.apellidoPaterno} ${alumno.apellidoMaterno || ""}`} 
-                        secondary={`ID Socio: ${alumno.id}`}
-                        primaryTypographyProps={{ fontWeight: "bold" }}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-              )}
-              {busquedaAlumno && alumnosEncontrados.length === 0 && !cargandoAlumnos && (
-                <Typography variant="body2" color="error" align="center" sx={{ mt: 2, fw: "bold" }}>
-                  No se encontraron registros de alumnos con ese nombre.
-                </Typography>
-              )}
-            </Box>
-          ) : (
-            // PASO 2: FORMULARIO CON CAMPOS PRECARGADOS, BLOQUEADOS Y MONTO EDITABLE
+          {alumnoSeleccionado && (
+            // FORMULARIO CON CAMPOS PRECARGADOS, BLOQUEADOS Y MONTO EDITABLE
             <Box component="form" onSubmit={handleConfirmarPagoRapido} sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
               
               {/* Campo Alumno: Precargado y Bloqueado */}
@@ -823,10 +857,13 @@ export default function Pagos() {
                 <Button 
                   variant="outlined" 
                   fullWidth 
-                  onClick={() => setAlumnoSeleccionado(null)}
+                  onClick={() => {
+                    setModalRapidoAbierto(false);
+                    setAlumnoSeleccionado(null);
+                  }}
                   disabled={guardandoPagoRapido}
                 >
-                  Cambiar Alumno
+                  Cancelar
                 </Button>
                 <Button 
                   variant="contained" 
@@ -848,8 +885,6 @@ export default function Pagos() {
             onClick={() => {
               setModalRapidoAbierto(false);
               setAlumnoSeleccionado(null);
-              setAlumnosEncontrados([]);
-              setBusquedaAlumno("");
             }} 
             color="inherit"
             disabled={guardandoPagoRapido}

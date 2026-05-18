@@ -37,7 +37,6 @@ export default function Usuarios() {
     pagina, setPagina,
     cargando, error,
     datosPaginados: usuariosPaginados,
-    filtrados,
     totalPaginas,
     recargar: cargarUsuarios,
   } = useLista(
